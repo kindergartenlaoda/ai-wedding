@@ -24,7 +24,7 @@ export function ShareModal({
   const { profile } = useAuth();
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const inviteCode = profile?.invite_code;
+  const inviteCode = profile?.invite_code ?? profile?.inviteCode ?? undefined;
 
   const finalShareUrl = useMemo(() => {
     if (!shareUrl) return shareUrl;
@@ -37,7 +37,7 @@ export function ShareModal({
     templateName,
     imageUrl,
     imageCount,
-    inviteCode,
+    inviteCode: inviteCode ?? undefined,
     siteUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
   });
 
@@ -228,7 +228,7 @@ export function ShareModal({
                   templateName,
                   imageUrl,
                   imageCount,
-                  inviteCode: inviteCode,
+                  inviteCode: inviteCode ?? undefined,
                   siteUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
                 });
                 await downloadShareCard(card, projectName);

@@ -1,203 +1,149 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
-import { Profile } from '../types/database';
+'use client';
+
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
+
+/** Profile shape compatible with database.Profile for component compatibility */
+interface Profile {
+  id: string;
+  userId: string;
+  credits: number;
+  inviteCode: string | null;
+  invitedBy: string | null;
+  inviteCount: number;
+  rewardCredits: number;
+  role: 'user' | 'admin';
+  createdAt: string;
+  updatedAt: string;
+  /** From user, for display */
+  email: string;
+  full_name?: string;
+  invite_code?: string;
+  invited_by?: string | null;
+  invite_count?: number;
+  reward_credits?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AuthUser {
+  id: string;
+  email: string;
+  name?: string | null;
+  image?: string | null;
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  // 使用第三方登录（目前接入 Google）
-  signInWithGoogle: (redirectPath?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const loadingProfileRef = useRef(false);
+  const { data: session, status } = useSession();
 
-  const loadProfile = useCallback(async (userId: string) => {
-    // 防止重复加载
-    if (loadingProfileRef.current) {
-      return;
-    }
-
+  // Capture invite param (?inv=CODE) from URL for registration
+  useEffect(() => {
     try {
-      loadingProfileRef.current = true;
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (data) {
-        setProfile(data as Profile);
-        // 若缺少邀请码则生成并补齐
-        if (!data.invite_code) {
-          const code = generateInviteCode();
-          const { data: updated, error: updErr } = await supabase
-            .from('profiles')
-            .update({ invite_code: code })
-            .eq('id', userId)
-            .select()
-            .single();
-          if (!updErr && updated) {
-            setProfile(updated as Profile);
-          } else if (updErr) {
-            console.error('更新邀请码失败:', updErr);
-          }
-        }
-      } else {
-        // 如果没有 profile，尝试创建一个
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData.user) {
-          const code = generateInviteCode();
-          const { data: newProfile, error } = await supabase
-            .from('profiles')
-            .insert({
-              id: userId,
-              email: userData.user.email || '',
-              full_name: userData.user.user_metadata?.full_name || '',
-              credits: 50,
-              invite_code: code,
-            })
-            .select()
-            .single();
-
-          if (!error && newProfile) {
-            setProfile(newProfile);
-          } else {
-            console.error('创建 profile 失败:', error);
-          }
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        const inv = url.searchParams.get('inv');
+        if (inv) {
+          localStorage.setItem('referrer_code', inv);
         }
       }
-    } finally {
-      loadingProfileRef.current = false;
+    } catch {
+      // ignore URL parse errors
     }
   }, []);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const loading = status === 'loading';
+
+  const user: AuthUser | null = session?.user
+    ? { id: session.user.id, email: session.user.email ?? '', name: session.user.name, image: session.user.image }
+    : null;
+
+  const loadProfile = useCallback(async () => {
+    if (!session?.user?.id) {
+      setProfile(null);
+      return;
+    }
+    try {
+      const res = await fetch('/api/profile');
+      if (res.ok) {
+        const data = await res.json();
+        const email = session.user.email ?? '';
+        const name = session.user.name ?? null;
+        const inviteCodeVal = data.inviteCode ?? data.invite_code ?? undefined;
+        const createdAtVal = data.createdAt ?? data.created_at ?? '';
+        const updatedAtVal = data.updatedAt ?? data.updated_at ?? '';
+        const roleVal = data.role === 'admin' ? 'admin' : 'user';
+        setProfile({
+          ...data,
+          email,
+          full_name: name ?? undefined,
+          invite_code: inviteCodeVal,
+          invited_by: data.invitedBy ?? data.invited_by ?? undefined,
+          invite_count: data.inviteCount ?? data.invite_count ?? 0,
+          reward_credits: data.rewardCredits ?? data.reward_credits ?? 0,
+          created_at: createdAtVal,
+          updated_at: updatedAtVal,
+          role: roleVal,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+    }
+  }, [session?.user?.id, session?.user?.email, session?.user?.name]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [loadProfile]);
+    if (session?.user?.id) {
+      loadProfile();
+    } else {
+      setProfile(null);
+    }
+  }, [session?.user?.id, loadProfile]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    const result = await nextAuthSignIn('credentials', {
+      email,
+      password,
+      redirect: false,
+    });
+    if (result?.error) {
+      throw new Error(result.error === 'CredentialsSignin' ? '邮箱或密码错误' : result.error);
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name: fullName }),
+    });
 
-    if (data.user) {
-      // 创建 profile，带邀请码
-      const inviteCode = generateInviteCode();
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        email,
-        full_name: fullName,
-        credits: 50,
-        invite_code: inviteCode,
-      });
-
-      if (profileError) {
-        console.error('创建profile失败:', profileError);
-      } else {
-        // 处理邀请奖励（如果存在 referrer_code）- 走服务端 API，绕过 RLS
-        try {
-          const refCode = typeof window !== 'undefined' ? localStorage.getItem('referrer_code') : null;
-          if (refCode && refCode !== inviteCode) {
-            await fetch('/api/invite/claim', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ invitee_id: data.user.id, ref_code: refCode }),
-            }).catch(() => {});
-            localStorage.removeItem('referrer_code');
-          }
-        } catch (e) {
-          console.warn('邀请奖励处理失败（已忽略）:', e);
-        }
-      }
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || '注册失败');
     }
+
+    // Auto sign in after registration
+    await signIn(email, password);
   };
 
   const signOut = async () => {
-    try {
-      // 先清理本地状态和存储，确保前端立即退出
-      setUser(null);
-      setProfile(null);
-      
-      // 清理本地存储（Supabase 会话数据）
-      if (typeof window !== 'undefined') {
-        // 清理所有 Supabase 相关的本地存储
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('sb-')) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach(key => localStorage.removeItem(key));
-        sessionStorage.clear();
-      }
-      
-      // 尝试调用 Supabase 退出登录（仅清理本地），忽略错误
-      // 使用 scope: 'local' 避免调用可能失败的服务端注销接口
-      await supabase.auth.signOut({ scope: 'local' });
-    } catch (error) {
-      // 忽略退出登录错误，因为本地状态已清理
-      console.warn('退出登录时发生错误（已忽略）:', error);
-    }
-  };
-
-  const refreshProfile = useCallback(async () => {
-    if (user) {
-      await loadProfile(user.id);
-    }
-  }, [user, loadProfile]);
-
-  const signInWithGoogle = async (redirectPath?: string) => {
-    // 仅在浏览器环境下执行重定向
-    if (typeof window === 'undefined') return;
-    const origin = window.location.origin;
-    const redirect = redirectPath || window.location.pathname + window.location.search;
-    const redirectTo = `${origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`;
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo,
-      },
-    });
-    if (error) throw error;
+    setProfile(null);
+    await nextAuthSignOut({ redirect: false });
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signUp, signOut, refreshProfile, signInWithGoogle }}>
+    <AuthContext.Provider value={{ user, profile, loading, signIn, signUp, signOut, refreshProfile: loadProfile }}>
       {children}
     </AuthContext.Provider>
   );
@@ -209,14 +155,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
-}
-
-// 生成邀请码（6位大写字母数字）
-function generateInviteCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
 }

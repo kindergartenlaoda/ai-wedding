@@ -8,7 +8,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ onClose }: AuthModalProps) {
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -71,20 +71,6 @@ export function AuthModal({ onClose }: AuthModalProps) {
           <p className="mb-6 text-stone">
             {isLogin ? '登录以访问您的项目' : '开始创作精美婚纱照'}
           </p>
-          {/* 第三方登录区域 */}
-          <div className="space-y-3">
-            {/* <button
-              onClick={() => {
-                setError('');
-                signInWithGoogle().catch((e) => setError(e?.message || '跳转到 Google 登录失败'));
-              }}
-              className="flex gap-2 justify-center items-center py-3 w-full font-medium bg-white rounded-md border shadow-sm transition-all duration-300 text-navy border-stone/20 hover:bg-champagne hover:shadow-md"
-              type="button"
-            >
-              <span className="inline-block w-5 h-5 rounded-full bg-gradient-to-br from-[#4285F4] via-[#EA4335] to-[#FBBC05]" />
-              使用 Google 登录(暂时无效)
-            </button> */}
-          </div>
 
           <div className="flex gap-4 items-center my-6">
             <div className="flex-1 h-px bg-stone/20" />

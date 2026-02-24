@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { Cormorant, Inter } from 'next/font/google';
 import './globals.css';
-import { Providers } from './providers';
+import { Providers } from '@/components/Providers';
+import { AuthProvider } from '@/contexts/AuthContext';
 import HeaderBridge from './shared/HeaderBridge';
 import { AnnouncementBanner } from './components/AnnouncementBanner';
 import { ProgressBar } from '@/components/ui/progress-bar';
@@ -31,8 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="zh-CN">
       <body className={`${cormorant.variable} ${inter.variable} font-body`}>
         <Providers>
-          <ProgressBar />
-          <div className="min-h-screen bg-white">
+          <AuthProvider>
+            <ProgressBar />
+            <div className="min-h-screen bg-white">
             <HeaderBridge />
             <AnnouncementBanner />
             {children}
@@ -78,7 +80,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </div>
               </div>
             </footer>
-          </div>
+            </div>
+          </AuthProvider>
         </Providers>
       </body>
     </html>
