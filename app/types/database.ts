@@ -6,8 +6,8 @@ export interface Profile {
   full_name?: string;
   avatar_url?: string;
   credits: number;
+  frozen_credits?: number;
   role: 'user' | 'admin';
-  // 邀请相关字段（可选）
   invite_code?: string;
   invited_by?: string | null;
   invite_count?: number;
@@ -134,6 +134,7 @@ export interface GenerationWithRelations {
 // 画廊展示项目的类型定义
 export interface GalleryItem {
   id: string;
+  generation_id: string;
   preview_images: string[];
   project_name: string;
   template_name: string;

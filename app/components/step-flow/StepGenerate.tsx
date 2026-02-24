@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { RefreshCw, ArrowRight, Home } from 'lucide-react';
+import { RefreshCw, ArrowRight, Home, Lightbulb } from 'lucide-react';
 import type { StepFlowState, StepFlowAction, PROGRESS_TEXTS } from '@/types/step-flow';
 import { ScanningLine, SuccessBadge } from '@/components/shared-animations';
 import { GenerationResults } from '@/components/GenerationResults';
@@ -29,6 +29,15 @@ const PROGRESS_TEXT_LIST: readonly string[] = [
   '渲染最终画面...',
 ] satisfies typeof PROGRESS_TEXTS;
 
+const GENERATION_TIPS: readonly string[] = [
+  'AI 正在学习您的面部特征，这需要一些时间',
+  '上传不同角度和表情的照片会获得更自然的效果',
+  '生成的照片可以多次重新生成，直到您满意为止',
+  '平均每次生成需要 1-2 分钟，请耐心等待',
+  '生成完成后可在结果页查看和下载',
+  '多种风格可选：浪漫、复古、现代、艺术',
+];
+
 export function StepGenerate({ state, dispatch }: StepGenerateProps) {
   const router = useRouter();
   const { refreshProfile } = useAuth();
@@ -37,6 +46,16 @@ export function StepGenerate({ state, dispatch }: StepGenerateProps) {
   const badgeRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
   const [showResults, setShowResults] = useState(false);
+  const [tipIndex, setTipIndex] = useState(0);
+
+  // Rotate tips during generation
+  useEffect(() => {
+    if (state.step !== 'generate') return;
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % GENERATION_TIPS.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [state.step]);
 
   useEffect(() => {
     if (state.step !== 'generate' || hasStartedRef.current) return;
@@ -44,6 +63,19 @@ export function StepGenerate({ state, dispatch }: StepGenerateProps) {
 
     const runGeneration = async () => {
       try {
+        // Freeze credits before generation to prevent concurrent overspend
+        const freezeRes = await fetch('/api/credits/freeze', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: state.template.price_credits }),
+        });
+
+        if (!freezeRes.ok) {
+          const freezeData: { error?: string } = await freezeRes.json().catch(() => ({}));
+          throw new Error(freezeData.error || '积分不足，无法开始生成');
+        }
+
         const photoUrls = state.photos
           .map((p) => p.minioUrl)
           .filter(Boolean);
@@ -353,11 +385,30 @@ export function StepGenerate({ state, dispatch }: StepGenerateProps) {
         </p>
 
         {state.step === 'generate' && (
-          <div className="w-48 mx-auto h-1 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="w-48 mx-auto h-1 bg-white/10 rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={Math.round(state.progress)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="生成进度"
+          >
             <div
               className="h-full bg-gold/60 rounded-full transition-all duration-1000"
               style={{ width: `${state.progress}%` }}
             />
+          </div>
+        )}
+
+        {state.step === 'generate' && (
+          <div className="mt-8 flex items-start gap-2.5 max-w-xs mx-auto text-left">
+            <Lightbulb className="w-4 h-4 text-gold/60 flex-shrink-0 mt-0.5" />
+            <p
+              key={tipIndex}
+              className="text-xs text-pearl/50 font-light leading-relaxed"
+            >
+              {GENERATION_TIPS[tipIndex]}
+            </p>
           </div>
         )}
       </div>

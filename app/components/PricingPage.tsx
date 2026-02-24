@@ -2,7 +2,7 @@ import { Check, Sparkles, Zap, Crown } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Toast } from './Toast';
-import { FadeIn, GlassCard } from '@/components/react-bits';
+import { FadeIn } from '@/components/react-bits';
 
 interface PricingPageProps {
   onNavigate: (page: string) => void;
@@ -119,26 +119,26 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
         <FadeIn delay={0.1}>
           {/* Notice Banner */}
           <div className="mb-12 mx-auto max-w-3xl">
-            <div className="p-6 bg-red-50 border-2 border-red-200 rounded-xl shadow-sm">
+            <div className="p-6 bg-stone/5 border border-stone/15 rounded-sm shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-red-600" />
+                <div className="flex-shrink-0 w-10 h-10 bg-stone/10 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-gold" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="mb-3 text-lg font-semibold text-red-900 tracking-wide">
-                    暂无在线支付功能
+                  <h3 className="mb-3 text-lg font-medium text-obsidian tracking-wide">
+                    当前为体验模式
                   </h3>
-                  <ul className="space-y-2 text-sm text-red-800 font-light">
+                  <ul className="space-y-2 text-sm text-stone font-light">
                     <li className="flex items-start gap-2">
-                      <span className="text-red-600 mt-0.5">•</span>
-                      <span>新用户注册即可获得免费积分</span>
+                      <span className="text-gold mt-0.5">•</span>
+                      <span>新用户注册即可获得免费体验积分</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-red-600 mt-0.5">•</span>
-                      <span>需要更多积分?联系我们人工充值</span>
+                      <span className="text-gold mt-0.5">•</span>
+                      <span>积分可联系客服充值</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-red-600 mt-0.5">•</span>
+                      <span className="text-gold mt-0.5">•</span>
                       <span className="font-medium tracking-widest">微信: ZYH11ZYH</span>
                     </li>
                   </ul>
@@ -229,7 +229,7 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
         <FadeIn delay={0.5}>
           <div className="overflow-x-auto mb-24 border border-stone/10 rounded-sm bg-alabaster shadow-xl">
             <div className="p-10">
-              <h2 className="mb-8 text-3xl font-medium font-display text-obsidian text-center uppercase tracking-widest">参数解析</h2>
+              <h2 className="mb-8 text-3xl font-medium font-display text-obsidian text-center uppercase tracking-widest">方案对比</h2>
               <table className="min-w-full text-sm text-left">
                 <thead>
                   <tr className="border-b border-stone/10">
@@ -241,20 +241,20 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                 </thead>
                 <tbody className="divide-y divide-stone/5">
                   {[
-                    { k: '风格模版库', v: ['限 5 种', '解锁全部', '未来无限更新'] },
-                    { k: '母带级分辨率', v: ['HD 高清', '4K 蓝光级', '8K 影院级'] },
-                    { k: '后期编辑', v: ['简易微调', '深度参数', '专业渲染台'] },
-                    { k: '首席技术响应', v: ['常规队列', '优先受理', 'VIP 瞬时直达'] },
-                    { k: '协议期限', v: ['30 日', '一季度', '永久授权'] },
-                    { k: '商业发布', v: ['-', '企业版可选', '全域许可'] },
-                    { k: '原生底层接入', v: ['-', '企业版可选', '完整 API'] },
+                    { k: '可用模板', v: ['5 种基础模板', '全部模板', '全部模板 + 未来更新'] },
+                    { k: '图片分辨率', v: ['高清 (HD)', '超高清 (4K)', '最高清 (8K)'] },
+                    { k: '编辑功能', v: ['基础调整', '高级参数调整', '专业编辑工具'] },
+                    { k: '客服支持', v: ['普通排队', '优先处理', 'VIP 即时响应'] },
+                    { k: '有效期', v: ['30 天', '90 天', '永久'] },
+                    { k: '商用授权', v: ['-', '可选购买', '包含'] },
+                    { k: 'API 接口', v: ['-', '可选购买', '包含'] },
                   ].map((row, rIdx) => (
                     <tr key={rIdx} className="hover:bg-stone/5 transition-colors duration-300">
                       <td className="py-5 pr-4 whitespace-nowrap text-stone font-light text-sm">{row.k}</td>
                       {row.v.map((vv, cIdx) => (
                         <td key={cIdx} className="px-6 py-5 whitespace-nowrap text-obsidian font-light">
                           {vv === '-' ? (
-                            <span className="text-stone/30">—</span>
+                            <span className="text-stone/30">--</span>
                           ) : (
                             vv
                           )}
@@ -272,27 +272,27 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
         <FadeIn delay={0.6}>
           <div className="mx-auto max-w-4xl pt-10">
             <div className="mb-12 text-center">
-              <h2 className="mb-4 text-3xl font-medium font-display text-obsidian tracking-wider">策展人问答</h2>
-              <p className="text-stone font-light">全方位解读您的艺术权益</p>
+              <h2 className="mb-4 text-3xl font-medium font-display text-obsidian tracking-wider">常见问题</h2>
+              <p className="text-stone font-light">关于积分和使用的常见疑问</p>
             </div>
 
             <div className="space-y-6">
               {[
                 {
-                  q: '算力定额如何核算？',
-                  a: '单次母带级生成将消耗约 10-20 单位算力。每消耗 1 算力，即代表底层的另一次深度卷积尝试。'
+                  q: '积分怎么算？',
+                  a: '每次生成图片消耗 10-20 积分，具体取决于模板复杂度。积分余额可在个人中心查看。'
                 },
                 {
-                  q: '是否支持保障政策？',
-                  a: '绝对支持。如未能达到您期望的艺术水准，开卡 30 天内支持无条件退档。'
+                  q: '不满意可以退款吗？',
+                  a: '购买后 30 天内，如果对生成效果不满意，可以联系客服申请退款。'
                 },
                 {
-                  q: '数字权益有时间边界吗？',
-                  a: '取决于您选择的阶层。基础系列将在 30-90 天内更迭，而最高阶层享受时间线上的永恒授权。'
+                  q: '积分有效期多久？',
+                  a: '取决于您选择的方案：Starter 为 30 天，Popular 为 90 天，Premium 为永久有效。'
                 },
                 {
-                  q: '未来可以跨越阶层吗？',
-                  a: '当然，您的任何升阶申请都将被优先受理，现存算力无损结转。'
+                  q: '可以升级方案吗？',
+                  a: '可以随时升级到更高方案，已有积分会保留并自动合并。'
                 }
               ].map((faq, i) => (
                 <div key={i} className="p-8 rounded-sm border border-stone/10 bg-alabaster hover:shadow-lg transition-all duration-500">

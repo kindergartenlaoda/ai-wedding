@@ -31,6 +31,9 @@ export default function HeaderBridge() {
       case 'dashboard':
         router.push('/dashboard');
         break;
+      case 'profile':
+        router.push('/profile');
+        break;
       case 'results':
         if (generationId) router.push(`/results/${generationId}`);
         break;
@@ -47,6 +50,7 @@ export default function HeaderBridge() {
     if (pathname?.startsWith('/create')) return 'create';
     if (pathname?.startsWith('/pricing')) return 'pricing';
     if (pathname?.startsWith('/dashboard')) return 'dashboard';
+    if (pathname?.startsWith('/profile')) return 'profile';
     if (pathname?.startsWith('/results')) return 'results';
     if (pathname?.startsWith('/testimonials')) return 'testimonials';
     return 'home';

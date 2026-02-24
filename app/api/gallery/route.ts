@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
 
     const galleryItems: GalleryItem[] = generations.map((gen) => ({
       id: gen.id,
+      generation_id: gen.id,
       preview_images: Array.isArray(gen.previewImages) ? (gen.previewImages as string[]) : [],
       project_name: gen.project?.name || '未命名项目',
       template_name: gen.template?.name || '未知模板',

@@ -46,6 +46,13 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                   模板
                 </button>
                 <button
+                  onClick={() => onNavigate('create')}
+                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'create' ? 'text-gold' : 'text-stone hover:text-obsidian'
+                    }`}
+                >
+                  创建
+                </button>
+                <button
                   onClick={() => onNavigate('generate-single')}
                   className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'generate-single' ? 'text-gold' : 'text-stone hover:text-obsidian'
                     }`}
@@ -113,7 +120,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                     <span className="text-sm font-medium text-obsidian">{profile?.credits || 0}</span>
                   </div>
                   <button
-                    onClick={() => onNavigate('dashboard')}
+                    onClick={() => onNavigate('profile')}
                     className="flex gap-2 items-center px-4 py-2 rounded-sm transition-all duration-200 text-stone hover:text-obsidian hover:bg-stone/5 uppercase text-xs tracking-wider font-medium"
                   >
                     <User className="w-4 h-4" />
@@ -160,6 +167,15 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                 className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
               >
                 模板
+              </button>
+              <button
+                onClick={() => {
+                  onNavigate('create');
+                  setMobileMenuOpen(false);
+                }}
+                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
+              >
+                创建
               </button>
               <button
                 onClick={() => {

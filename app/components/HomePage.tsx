@@ -10,10 +10,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthModal } from './AuthModal';
-import { useAuth } from '@/contexts/AuthContext';
 import { FadeIn } from '@/components/react-bits';
 import { DOMAIN_CONFIG, GENERATION_DOMAINS } from '@/types/domain';
 import dynamic from 'next/dynamic';
@@ -39,9 +36,7 @@ const DOMAIN_IMAGES: Record<string, string> = {
 };
 
 export function HomePage({ onNavigate }: HomePageProps) {
-  const { user } = useAuth();
   const router = useRouter();
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const navigate = (page: string) => {
     if (onNavigate) {
@@ -52,11 +47,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
   };
 
   const handleGetStarted = () => {
-    if (user) {
-      navigate('templates');
-    } else {
-      setShowAuthModal(true);
-    }
+    router.push('/create');
   };
 
   return (
@@ -86,7 +77,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
               <FadeIn delay={0.3}>
                 <p className="max-w-xl mx-auto lg:mx-0 text-lg font-light text-pearl/80 leading-relaxed">
-                  将瞬间的感动，化为传世之作。我们的 AI 影棚以电影级的精细度，为您打造专业级影像——每一帧，皆是优雅与算法的交响。
+                  将瞬间的感动，化为精致作品。我们的 AI 工具以精致的算法，为您生成多种风格的高清影像——简单上传，即刻呈现。
                 </p>
               </FadeIn>
 
@@ -133,7 +124,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
             const Icon = domain.icon;
             return (
               <FadeIn key={domain.id} delay={0.1 * index}>
-                <Link href={`/create/${domain.id}`} className="group block relative aspect-[3/4] overflow-hidden rounded-sm bg-stone/5 shadow-lg">
+                <Link href={`/create?domain=${domain.id}`} className="group block relative aspect-[3/4] overflow-hidden rounded-sm bg-stone/5 shadow-lg">
                   <Image
                     src={DOMAIN_IMAGES[domainId] || DOMAIN_IMAGES.wedding}
                     alt={domain.name}
@@ -173,22 +164,22 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   <div className="flex gap-5">
                     <Check className="w-5 h-5 text-gold flex-shrink-0 mt-1" />
                     <div>
-                      <h4 className="text-lg font-medium tracking-wider">院线级画质</h4>
-                      <p className="text-pearl/50 text-sm mt-2 font-light">无可比拟的分辨率与光影驾驭，媲美国际摄影大师的掌镜之作。</p>
+                      <h4 className="text-lg font-medium tracking-wider">高清 AI 生成</h4>
+                      <p className="text-pearl/50 text-sm mt-2 font-light">高分辨率输出，多种专业风格可选，满足不同场景需求。</p>
                     </div>
                   </div>
                   <div className="flex gap-5">
                     <Check className="w-5 h-5 text-gold flex-shrink-0 mt-1" />
                     <div>
-                      <h4 className="text-lg font-medium tracking-wider">绝对隐私安全</h4>
-                      <p className="text-pearl/50 text-sm mt-2 font-light">端到端的最高加密标准，确保您的私人珍藏仅由您独享。</p>
+                      <h4 className="text-lg font-medium tracking-wider">隐私保护</h4>
+                      <p className="text-pearl/50 text-sm mt-2 font-light">照片仅用于生成，不会被保存或用于其他用途。</p>
                     </div>
                   </div>
                   <div className="flex gap-5">
                     <Check className="w-5 h-5 text-gold flex-shrink-0 mt-1" />
                     <div>
-                      <h4 className="text-lg font-medium tracking-wider">无限风格可能</h4>
-                      <p className="text-pearl/50 text-sm mt-2 font-light">从复古纪实到未来赛博，瞬息游离于光阴与空间边缘。</p>
+                      <h4 className="text-lg font-medium tracking-wider">多种风格可选</h4>
+                      <p className="text-pearl/50 text-sm mt-2 font-light">从复古纪实到现代简约，覆盖婚纱、证件照、艺术写真等多个领域。</p>
                     </div>
                   </div>
                 </div>
@@ -287,7 +278,6 @@ export function HomePage({ onNavigate }: HomePageProps) {
         </div>
       </section>
 
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
   );
 }

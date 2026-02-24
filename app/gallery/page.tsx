@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Heart, Download, User, Calendar, Image as ImageIcon, Loader2 } from 'lucide-react';
 import Masonry from 'react-masonry-css';
 import type { GalleryItem } from '@/types/database';
 import { FadeIn, GlassCard } from '@/components/react-bits';
 import { ImagePreviewModal } from '@/components/ImagePreviewModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface GalleryResponse {
   items: GalleryItem[];
@@ -18,12 +19,18 @@ interface GalleryResponse {
   };
 }
 
+interface LikeState {
+  [key: string]: boolean;
+}
+
 export default function GalleryPage() {
+  const { user } = useAuth();
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [likedImages, setLikedImages] = useState<LikeState>({});
   const [selectedImage, setSelectedImage] = useState<{
     src: string;
     alt: string;
@@ -55,6 +62,34 @@ export default function GalleryPage() {
       console.error('获取画廊数据失败:', error);
     }
   };
+
+  const toggleLike = useCallback(async (generationId: string, imageIndex: number) => {
+    if (!user) return;
+
+    const key = `${generationId}-${imageIndex}`;
+    const isCurrentlyLiked = likedImages[key] || false;
+
+    // Optimistic update
+    setLikedImages(prev => ({ ...prev, [key]: !isCurrentlyLiked }));
+
+    try {
+      await fetch('/api/image-likes', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          generationId,
+          imageIndex,
+          imageType: 'preview',
+          action: isCurrentlyLiked ? 'remove' : 'add',
+        }),
+      });
+    } catch (error) {
+      // Revert on failure
+      setLikedImages(prev => ({ ...prev, [key]: isCurrentlyLiked }));
+      console.error('点赞操作失败:', error);
+    }
+  }, [user, likedImages]);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -183,17 +218,21 @@ export default function GalleryPage() {
                         <div className="absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-700 from-obsidian/90 group-hover:opacity-100" />
 
                         {/* 悬停操作按钮 */}
-                        <div className="absolute top-4 right-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <div className="absolute top-4 right-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
                           <div className="flex gap-3">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // 这里可以添加点赞功能
+                                toggleLike(item.generation_id, imageIndex);
                               }}
-                              className="flex justify-center items-center w-10 h-10 rounded-sm shadow-xl backdrop-blur-md transition-all duration-300 bg-obsidian/50 hover:bg-gold/90 text-alabaster hover:text-obsidian border border-white/20"
-                              title="点赞"
+                              className={`flex justify-center items-center w-10 h-10 rounded-sm shadow-xl backdrop-blur-md transition-all duration-300 border border-white/20 ${
+                                likedImages[`${item.generation_id}-${imageIndex}`]
+                                  ? 'bg-gold/90 text-obsidian'
+                                  : 'bg-obsidian/50 hover:bg-gold/90 text-alabaster hover:text-obsidian'
+                              }`}
+                              title={likedImages[`${item.generation_id}-${imageIndex}`] ? '取消点赞' : '点赞'}
                             >
-                              <Heart className="w-4 h-4" />
+                              <Heart className={`w-4 h-4 ${likedImages[`${item.generation_id}-${imageIndex}`] ? 'fill-obsidian' : ''}`} />
                             </button>
                             <button
                               onClick={(e) => {

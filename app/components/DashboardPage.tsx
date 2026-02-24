@@ -8,13 +8,14 @@ import { useDashboardActions } from '@/hooks/useDashboardActions';
 import { useDashboardModals } from '@/hooks/useDashboardModals';
 import { ProjectFilters } from './ProjectFilters';
 import type { FilterState } from '@/types/filters';
-import { ProjectStatsChart } from './ProjectStatsChart';
 import { FadeIn, GlassCard } from '@/components/react-bits';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Toast } from './Toast';
 import { ProjectDetailModal } from './ProjectDetailModal';
 import { ProjectEditModal } from './ProjectEditModal';
 import { SingleGenerationDetailModal } from './SingleGenerationDetailModal';
+import { OnboardingModal, useShowOnboarding } from './OnboardingModal';
+import { InvitePanel } from './InvitePanel';
 import {
   DashboardHeader,
   DashboardTabs,
@@ -28,6 +29,8 @@ interface DashboardPageProps {
 
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const { profile, user } = useAuth();
+  const showOnboarding = useShowOnboarding(!!user);
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const { projects, loading, hasMore: projectsHasMore, loadMore: loadMoreProjects, refreshProjects } = useProjects();
   const {
     generations,
@@ -143,7 +146,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                 刷新
               </button>
               <button
-                onClick={() => onNavigate('templates')}
+                onClick={() => onNavigate('create')}
                 className="flex gap-2 items-center px-6 py-3 text-xs tracking-[0.2em] font-medium bg-obsidian rounded-sm transition-all duration-500 text-alabaster hover:bg-gold hover:text-obsidian uppercase"
               >
                 <Plus className="w-4 h-4" />
@@ -215,11 +218,14 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
               />
             )}
 
-            {/* 统计图表 */}
-            {projects.length > 0 && activeTab !== 'single' && (
-              <div className="px-8 pb-8 mt-16">
-                <h3 className="mb-8 text-xl font-medium font-display text-obsidian uppercase tracking-wider text-center">数据统计</h3>
-                <ProjectStatsChart projects={projects} />
+            {/* 邀请面板 */}
+            {profile?.invite_code && (
+              <div className="px-8 pb-6">
+                <InvitePanel
+                  inviteCode={profile.invite_code}
+                  inviteCount={profile.invite_count ?? 0}
+                  rewardCredits={profile.reward_credits ?? 0}
+                />
               </div>
             )}
 
@@ -320,6 +326,11 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           isOpen={!!modals.selectedSingleGeneration}
           onClose={() => modals.setSelectedSingleGeneration(null)}
         />
+      )}
+
+      {/* Onboarding Modal */}
+      {showOnboarding && !onboardingDismissed && (
+        <OnboardingModal onClose={() => setOnboardingDismissed(true)} />
       )}
 
       {/* Toast 通知 */}

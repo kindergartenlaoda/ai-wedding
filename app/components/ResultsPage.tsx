@@ -95,11 +95,11 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-champagne to-ivory py-12">
+      <div className="min-h-screen bg-obsidian py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-[3/4] w-full rounded-md" />
+              <Skeleton key={i} className="aspect-[3/4] w-full rounded-md bg-charcoal" />
             ))}
           </div>
         </div>
@@ -110,29 +110,29 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
   // 错误状态
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-champagne to-ivory py-12">
+      <div className="min-h-screen bg-obsidian py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn delay={0.1}>
             <button
               onClick={() => onNavigate('dashboard')}
-              className="flex items-center gap-2 text-stone hover:text-navy mb-8 transition-colors font-medium"
+              className="flex items-center gap-2 text-stone-400 hover:text-alabaster mb-8 transition-colors font-medium"
               aria-label="返回仪表盘"
             >
               <ArrowLeft className="w-5 h-5" />
               返回仪表盘
             </button>
           </FadeIn>
-          
+
           <FadeIn delay={0.2}>
-            <GlassCard className="p-8 text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-8 h-8 text-red-600" />
+            <GlassCard className="p-8 text-center bg-charcoal/50 border-white/10">
+              <div className="w-16 h-16 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                <AlertCircle className="w-8 h-8 text-red-400" />
               </div>
-              <h2 className="text-2xl font-display font-medium text-navy mb-2">加载失败</h2>
-              <p className="text-stone mb-6">{error}</p>
+              <h2 className="text-2xl font-display font-medium text-alabaster mb-2">加载失败</h2>
+              <p className="text-stone-400 mb-6">{error}</p>
               <button
                 onClick={() => onNavigate('dashboard')}
-                className="px-6 py-3 bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory rounded-md hover:shadow-glow transition-all duration-300 font-medium"
+                className="px-6 py-3 bg-charcoal text-alabaster rounded-md hover:bg-white/5 transition-all duration-300 font-medium border border-white/10"
               >
                 返回仪表盘
               </button>
@@ -146,50 +146,50 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
   // 空状态 - 没有生成结果
   if (!generation || currentImages.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-champagne to-ivory py-12">
+      <div className="min-h-screen bg-obsidian py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn delay={0.1}>
             <button
               onClick={() => onNavigate('dashboard')}
-              className="flex items-center gap-2 text-stone hover:text-navy mb-8 transition-colors font-medium"
+              className="flex items-center gap-2 text-stone-400 hover:text-alabaster mb-8 transition-colors font-medium"
               aria-label="返回仪表盘"
             >
               <ArrowLeft className="w-5 h-5" />
               返回仪表盘
             </button>
           </FadeIn>
-          
+
           <FadeIn delay={0.2}>
-            <GlassCard className="p-12 text-center">
-              <div className="w-20 h-20 bg-champagne rounded-full flex items-center justify-center mx-auto mb-6">
-                <Sparkles className="w-10 h-10 text-rose-gold" />
+            <GlassCard className="p-12 text-center bg-charcoal/50 border-white/10">
+              <div className="w-20 h-20 bg-charcoal rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5">
+                <Sparkles className="w-10 h-10 text-gold" />
               </div>
-              <h2 className="text-2xl font-display font-medium text-navy mb-2">
+              <h2 className="text-2xl font-display font-medium text-alabaster mb-2">
                 {generation ? '图片生成中' : '未找到生成结果'}
               </h2>
-              <p className="text-stone mb-6">
-                {generation?.status === 'processing' 
+              <p className="text-stone-400 mb-6">
+                {generation?.status === 'processing'
                   ? '您的图片正在生成中，请稍候片刻...'
                   : generation?.status === 'pending'
-                  ? '您的请求正在队列中，马上开始生成...'
-                  : generation?.status === 'failed'
-                  ? '生成失败，请重试或联系客服'
-                  : tab === 'high_res'
-                  ? '高清图片需要购买后才能查看'
-                  : '当前没有可用的图片'
+                    ? '您的请求正在队列中，马上开始生成...'
+                    : generation?.status === 'failed'
+                      ? '生成失败，请重试或联系客服'
+                      : tab === 'high_res'
+                        ? '高清图片需要购买后才能查看'
+                        : '当前没有可用的图片'
                 }
               </p>
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => onNavigate('dashboard')}
-                  className="px-6 py-3 bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory rounded-md hover:shadow-glow transition-all duration-300 font-medium"
+                  className="px-6 py-3 bg-charcoal text-alabaster rounded-md hover:bg-white/5 transition-all duration-300 font-medium border border-white/10"
                 >
                   返回仪表盘
                 </button>
                 {generation?.status === 'processing' && (
                   <button
                     onClick={() => window.location.reload()}
-                    className="px-6 py-3 bg-champagne text-navy rounded-md hover:bg-ivory transition-all duration-300 font-medium flex items-center gap-2"
+                    className="px-6 py-3 bg-gold text-obsidian rounded-md hover:bg-gold/90 transition-all duration-300 font-medium flex items-center gap-2"
                   >
                     <Repeat className="w-5 h-5" />
                     刷新页面
@@ -204,12 +204,12 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-champagne to-ivory py-12">
+    <div className="min-h-screen bg-obsidian py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn delay={0.1}>
           <button
             onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-2 text-stone hover:text-navy mb-8 transition-colors font-medium"
+            className="flex items-center gap-2 text-stone-400 hover:text-alabaster mb-8 transition-colors font-medium"
             aria-label="返回仪表盘"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -218,26 +218,26 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
         </FadeIn>
 
         <FadeIn delay={0.2}>
-          <GlassCard className="mb-8 bg-gradient-to-r from-rose-gold/10 to-dusty-rose/10 border-rose-gold/20">
+          <GlassCard className="mb-8 bg-charcoal/30 border-white/10">
             <div className="p-8">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-rose-gold to-dusty-rose rounded-md flex items-center justify-center shadow-sm">
-                  <Sparkles className="w-6 h-6 text-ivory" />
+                <div className="w-12 h-12 bg-charcoal border border-white/10 rounded-md flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-6 h-6 text-gold" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-display font-medium text-navy">照片已准备好！</h1>
-                  <p className="text-stone">{generation?.project?.name || '您的项目'} - 我们为您生成了 {currentImages.length} 张精美作品</p>
+                  <h1 className="text-3xl font-display font-medium text-alabaster">照片已准备好！</h1>
+                  <p className="text-stone-400">{generation?.project?.name || '您的项目'} - 我们为您生成了 {currentImages.length} 张精美作品</p>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-4 mt-6">
-                <button className="px-6 py-3 bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory rounded-md hover:shadow-glow transition-all duration-300 font-medium flex items-center gap-2 shadow-md">
+                <button className="px-6 py-3 bg-gold text-obsidian rounded-md hover:bg-gold/90 transition-all duration-300 font-medium flex items-center gap-2 shadow-md">
                   <Heart className="w-5 h-5" />
                   保存收藏
                 </button>
                 <button
                   onClick={() => setShowShareModal(true)}
-                  className="px-6 py-3 bg-ivory/50 backdrop-blur-sm text-navy rounded-md hover:bg-ivory transition-all duration-300 font-medium flex items-center gap-2 border border-stone/10"
+                  className="px-6 py-3 bg-charcoal/50 backdrop-blur-sm text-alabaster rounded-md hover:bg-white/10 transition-all duration-300 font-medium flex items-center gap-2 border border-white/10"
                 >
                   <Share2 className="w-5 h-5" />
                   分享相册
@@ -353,129 +353,126 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                 </button>
               </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {currentImages.map((url, index) => {
-              const rating = imageRatings.get(index);
-              
-              return (
-              <div
-                key={index}
-                className="relative aspect-[3/4] rounded-md overflow-hidden group cursor-pointer border border-stone/10 hover:border-rose-gold/30 transition-all duration-500"
-                onClick={() => setLightboxIndex(index)}
-              >
-                <Image
-                  src={url}
-                  alt={`Result ${index + 1}`}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {currentImages.map((url, index) => {
+                  const rating = imageRatings.get(index);
 
-                <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                <div className="absolute top-3 right-3 flex items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      (tab === 'preview' ? toggleLikePreview : toggleLikeHigh)(index);
-                    }}
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 shadow-lg ${
-                      (tab === 'preview' ? likedPreview : likedHigh).has(index)
-                        ? 'bg-dusty-rose text-ivory scale-105'
-                        : 'bg-ivory/95 backdrop-blur-sm text-navy hover:bg-ivory hover:scale-105'
-                    }`}
-                    aria-label={(tab === 'preview' ? likedPreview : likedHigh).has(index) ? '取消收藏' : '收藏'}
-                  >
-                    <Heart className={`w-5 h-5 ${(tab === 'preview' ? likedPreview : likedHigh).has(index) ? 'fill-ivory' : ''}`} />
-                  </button>
-                  {tab === 'preview' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleImageSelection(index);
-                      }}
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 shadow-lg ${
-                        selectedImages.has(index)
-                          ? 'bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory scale-110'
-                          : 'bg-ivory/95 backdrop-blur-sm text-navy hover:bg-ivory hover:scale-105 border-2 border-stone/20'
-                      }`}
-                      aria-label={selectedImages.has(index) ? '取消选择' : '选择'}
+                  return (
+                    <div
+                      key={index}
+                      className="relative aspect-[3/4] rounded-md overflow-hidden group cursor-pointer border border-stone/10 hover:border-rose-gold/30 transition-all duration-500"
+                      onClick={() => setLightboxIndex(index)}
                     >
-                      {selectedImages.has(index) ? (
-                        <Check className="w-6 h-6" />
-                      ) : (
-                        <div className="w-6 h-6 border-2 border-current rounded" />
-                      )}
-                    </button>
-                  )}
-                </div>
+                      <Image
+                        src={url}
+                        alt={`Result ${index + 1}`}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      />
 
-                {/* AI评分标签 */}
-                {rating && rating.badges.length > 0 && (
-                  <div className="absolute bottom-3 left-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    {rating.badges.map((badge, idx) => (
-                      <div 
-                        key={idx}
-                        className="px-2 py-1 bg-gradient-to-r from-yellow-500/90 to-orange-500/90 backdrop-blur-sm text-white text-xs font-bold rounded-lg shadow-lg"
-                      >
-                        {badge}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                {/* 增强水印显示 */}
-                {tab === 'preview' && (
-                  <>
-                    {/* 对角线水印 */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-                      <div
-                        className="text-ivory text-6xl font-bold opacity-10 whitespace-nowrap"
-                        style={{ transform: 'rotate(-45deg) scale(1.5)' }}
-                      >
-                        PREVIEW • 预览 • PREVIEW
-                      </div>
-                    </div>
-                    {/* 边角标签 */}
-                    <div className="absolute top-0 left-0 px-4 py-2 bg-gradient-to-br from-rose-gold/80 to-dusty-rose/80 backdrop-blur-sm text-ivory text-xs font-bold rounded-br-md">
-                      预览版
-                    </div>
-                  </>
-                )}
-
-                <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="flex items-center gap-2">
-                    {tab === 'preview' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleImageSelection(index);
-                        }}
-                        className={`flex-1 px-4 py-3 rounded-lg transition-all duration-300 font-medium text-sm flex items-center justify-center gap-2 shadow-lg ${
-                          selectedImages.has(index)
-                            ? 'bg-gradient-to-r from-rose-gold to-dusty-rose text-white'
-                            : 'bg-ivory text-navy hover:bg-champagne'
-                        }`}
-                      >
-                        {selectedImages.has(index) ? (
-                          <>
-                            <Check className="w-5 h-5" />
-                            已选择
-                          </>
-                        ) : (
-                          <>
-                            <div className="w-5 h-5 border-2 border-current rounded" />
-                            选择此图
-                          </>
+                      <div className="absolute top-3 right-3 flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            (tab === 'preview' ? toggleLikePreview : toggleLikeHigh)(index);
+                          }}
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 shadow-lg ${(tab === 'preview' ? likedPreview : likedHigh).has(index)
+                            ? 'bg-gold text-obsidian scale-105'
+                            : 'bg-charcoal/80 backdrop-blur-sm text-alabaster hover:bg-charcoal border border-white/10 hover:scale-105'
+                            }`}
+                          aria-label={(tab === 'preview' ? likedPreview : likedHigh).has(index) ? '取消收藏' : '收藏'}
+                        >
+                          <Heart className={`w-5 h-5 ${(tab === 'preview' ? likedPreview : likedHigh).has(index) ? 'fill-obsidian' : ''}`} />
+                        </button>
+                        {tab === 'preview' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleImageSelection(index);
+                            }}
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 shadow-lg ${selectedImages.has(index)
+                              ? 'bg-gold text-obsidian scale-110'
+                              : 'bg-charcoal/80 backdrop-blur-sm text-alabaster hover:bg-charcoal border border-white/20 hover:scale-105'
+                              }`}
+                            aria-label={selectedImages.has(index) ? '取消选择' : '选择'}
+                          >
+                            {selectedImages.has(index) ? (
+                              <Check className="w-6 h-6" />
+                            ) : (
+                              <div className="w-6 h-6 border-2 border-current rounded" />
+                            )}
+                          </button>
                         )}
-                      </button>
-                    )}
-                  </div>
-                </div>
+                      </div>
+
+                      {/* AI评分标签 */}
+                      {rating && rating.badges.length > 0 && (
+                        <div className="absolute bottom-3 left-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          {rating.badges.map((badge, idx) => (
+                            <div
+                              key={idx}
+                              className="px-2 py-1 bg-gradient-to-r from-yellow-500/90 to-orange-500/90 backdrop-blur-sm text-white text-xs font-bold rounded-lg shadow-lg"
+                            >
+                              {badge}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 增强水印显示 */}
+                      {tab === 'preview' && (
+                        <>
+                          {/* 对角线水印 */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+                            <div
+                              className="text-alabaster text-6xl font-bold opacity-10 whitespace-nowrap"
+                              style={{ transform: 'rotate(-45deg) scale(1.5)' }}
+                            >
+                              PREVIEW • 预览 • PREVIEW
+                            </div>
+                          </div>
+                          {/* 边角标签 */}
+                          <div className="absolute top-0 left-0 px-4 py-2 bg-charcoal/80 backdrop-blur-sm text-alabaster text-xs font-bold rounded-br-md border-b border-r border-white/10">
+                            预览版
+                          </div>
+                        </>
+                      )}
+
+                      <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="flex items-center gap-2">
+                          {tab === 'preview' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleImageSelection(index);
+                              }}
+                              className={`flex-1 px-4 py-3 rounded-lg transition-all duration-300 font-medium text-sm flex items-center justify-center gap-2 shadow-lg ${selectedImages.has(index)
+                                ? 'bg-gold text-obsidian'
+                                : 'bg-charcoal/90 text-alabaster hover:bg-stone border border-white/10'
+                                }`}
+                            >
+                              {selectedImages.has(index) ? (
+                                <>
+                                  <Check className="w-5 h-5" />
+                                  已选择
+                                </>
+                              ) : (
+                                <>
+                                  <div className="w-5 h-5 border-2 border-current rounded" />
+                                  选择此图
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              );
-            })}
-          </div>
             </div>
           </GlassCard>
         </FadeIn>
@@ -505,11 +502,10 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                   return (
                     <div
                       key={pkg.id}
-                      className={`rounded-md p-6 border-2 transition-all duration-300 cursor-pointer ${
-                        isRecommended
-                          ? 'bg-gradient-to-br from-rose-gold to-dusty-rose text-ivory border-rose-gold shadow-glow'
-                          : 'bg-ivory text-navy border-transparent hover:border-dusty-rose/30'
-                      }`}
+                      className={`rounded-md p-6 border-2 transition-all duration-300 cursor-pointer ${isRecommended
+                        ? 'bg-gradient-to-br from-rose-gold to-dusty-rose text-ivory border-rose-gold shadow-glow'
+                        : 'bg-ivory text-navy border-transparent hover:border-dusty-rose/30'
+                        }`}
                     >
                       {isRecommended && (
                         <div className="inline-block px-3 py-1 bg-ivory/20 backdrop-blur-sm rounded-full text-xs font-bold mb-3">
@@ -577,7 +573,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
 
 function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, generationId, imageType = 'preview', originalPhotos = [] }: { images: string[]; index: number; onClose: () => void; onIndexChange: (i: number) => void; liked: Set<number>; onToggleLike: (i: number) => void; generationId?: string; imageType?: 'preview' | 'high_res'; originalPhotos?: string[]; }) {
   const [compareMode, setCompareMode] = useState(false);
-  
+
   // 键盘导航：Esc 关闭，←/→ 切换，C切换对比模式
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -624,13 +620,6 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
           <X className="w-6 h-6" />
         </button>
       </div>
-      <button
-        className="absolute left-4 p-2 bg-ivory/20 backdrop-blur-sm text-ivory rounded-md hover:bg-ivory/30 transition-all duration-300 shadow-md"
-        onClick={toPrev}
-        aria-label="上一张"
-      >
-        ‹
-      </button>
       <div className="relative w-full h-full max-w-6xl max-h-[85vh]">
         {compareMode && originalPhoto ? (
           <div onClick={(e) => e.stopPropagation()}>
@@ -656,13 +645,13 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
               <>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
                   <div
-                    className="text-ivory text-8xl font-bold opacity-10 whitespace-nowrap"
+                    className="text-alabaster text-8xl font-bold opacity-10 whitespace-nowrap"
                     style={{ transform: 'rotate(-45deg)' }}
                   >
                     PREVIEW • 预览 • PREVIEW
                   </div>
                 </div>
-                <div className="absolute top-8 left-8 px-6 py-3 bg-gradient-to-br from-rose-gold/80 to-dusty-rose/80 backdrop-blur-sm text-ivory text-sm font-bold rounded-md">
+                <div className="absolute top-8 left-8 px-6 py-3 bg-charcoal/80 border border-white/10 backdrop-blur-sm text-alabaster text-sm font-bold rounded-md">
                   预览版 • 购买后无水印
                 </div>
               </>
@@ -674,7 +663,7 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
       <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-3">
         <button
           onClick={(e) => { e.stopPropagation(); onToggleLike(index); }}
-          className={`px-4 py-2 rounded-md transition-all duration-300 flex items-center gap-2 shadow-md ${liked.has(index) ? 'bg-dusty-rose text-ivory' : 'bg-ivory/20 backdrop-blur-sm text-ivory hover:bg-ivory/30'}`}
+          className={`px-4 py-2 rounded-md transition-all duration-300 flex items-center gap-2 shadow-md ${liked.has(index) ? 'bg-gold text-obsidian' : 'bg-charcoal/50 border border-white/10 backdrop-blur-sm text-alabaster hover:bg-white/10'}`}
         >
           <Heart className="w-5 h-5" />
           {liked.has(index) ? '已收藏' : '收藏'}
@@ -702,8 +691,8 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
           下载
         </a>
         <button
-          className="px-4 py-2 rounded-md transition-all duration-300 flex items-center gap-2 bg-ivory/20 backdrop-blur-sm text-ivory hover:bg-ivory/30 shadow-md"
-          onClick={(e) => { e.stopPropagation(); navigator.clipboard?.writeText(current).catch(() => {}); }}
+          className="px-4 py-2 rounded-md transition-all duration-300 flex items-center gap-2 bg-charcoal/50 border border-white/10 backdrop-blur-sm text-alabaster hover:bg-white/10 shadow-md"
+          onClick={(e) => { e.stopPropagation(); navigator.clipboard?.writeText(current).catch(() => { }); }}
         >
           <Share2 className="w-5 h-5" />
           复制链接
@@ -711,7 +700,7 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
         {originalPhotos.length > 0 && (
           <button
             onClick={(e) => { e.stopPropagation(); setCompareMode(prev => !prev); }}
-            className={`px-4 py-2 rounded-md transition-all duration-300 flex items-center gap-2 shadow-md ${compareMode ? 'bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory' : 'bg-ivory/20 backdrop-blur-sm text-ivory hover:bg-ivory/30'}`}
+            className={`px-4 py-2 rounded-md transition-all duration-300 flex items-center gap-2 shadow-md ${compareMode ? 'bg-gold text-obsidian' : 'bg-charcoal/50 border border-white/10 backdrop-blur-sm text-alabaster hover:bg-white/10'}`}
           >
             <Repeat className="w-5 h-5" />
             {compareMode ? '退出对比' : '对比原图'}
