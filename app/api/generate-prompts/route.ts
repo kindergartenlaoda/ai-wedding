@@ -168,7 +168,7 @@ async function generatePromptsWithStrategy(
 
 /**
  * POST /api/generate-prompts
- * 根据图片生成婚纱照提示词
+ * 根据图片生成风格提示词
  */
 export async function POST(req: NextRequest) {
   const requestId = `prompts_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

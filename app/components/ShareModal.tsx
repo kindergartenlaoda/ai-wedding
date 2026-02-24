@@ -69,7 +69,7 @@ export function ShareModal({
             </div>
             <div>
               <h2 className="text-xl font-display font-medium text-navy">分享作品</h2>
-              <p className="text-sm text-stone">分享您的精美婚纱照</p>
+              <p className="text-sm text-stone">分享您的精美作品</p>
             </div>
           </div>
           <button
@@ -94,7 +94,7 @@ export function ShareModal({
               />
               {/* 水印 */}
               <div className="absolute bottom-4 right-4 bg-ivory/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-md">
-                <p className="text-sm font-medium text-navy">AI婚纱照</p>
+                <p className="text-sm font-medium text-navy">AI 图片生成</p>
               </div>
             </div>
             <div className="space-y-2">
@@ -193,7 +193,7 @@ export function ShareModal({
                 onClick={() => shareToSocial('qq', {
                   url: finalShareUrl,
                   title: shareText,
-                  description: `${templateName} 风格婚纱照`,
+                  description: `${templateName} 风格作品`,
                   image: imageUrl,
                 })}
                 className="flex flex-col items-center gap-2 p-4 bg-champagne hover:bg-champagne/80 rounded-lg transition-colors border border-stone/10"

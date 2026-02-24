@@ -33,7 +33,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                   <Camera className="w-5 h-5 text-ivory" />
                 </div>
                 <span className="text-xl font-medium tracking-tight font-display text-navy">
-                  AI婚纱照
+                  AI 图片生成
                 </span>
               </button>
 

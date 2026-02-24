@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { checkImageQuality } from '@/lib/image-quality-checker';
 import { PhotoWithQuality } from '@/types/photo';
-import { supabase } from '@/lib/supabase';
 
 interface UsePhotoUploadOptions {
   maxPhotos: number;
@@ -33,23 +32,16 @@ export function usePhotoUpload({ maxPhotos, onPhotosChange }: UsePhotoUploadOpti
    * @throws Error 当识别 API 失败时抛出错误
    */
   const identifyPerson = async (dataUrl: string): Promise<IdentifyResult> => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    // 如果未登录，跳过验证
-    if (!session) {
-      return { hasPerson: true, description: '未登录，跳过验证' };
-    }
-
     const response = await fetch('/api/identify-image', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ images: [dataUrl] }),
     });
+
+    if (response.status === 401) {
+      return { hasPerson: true, description: '未登录，跳过验证' };
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: '未知错误' }));
@@ -80,6 +72,7 @@ export function usePhotoUpload({ maxPhotos, onPhotosChange }: UsePhotoUploadOpti
     try {
       const uploadResponse = await fetch('/api/upload-image', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: dataUrl, folder: 'uploads' }),
       });

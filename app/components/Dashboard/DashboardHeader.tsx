@@ -27,7 +27,7 @@ export function DashboardHeader({
           <h1 className="mb-2 text-3xl font-medium font-display text-navy">
             欢迎回来，{profile?.full_name || '亲'}！
           </h1>
-          <p className="text-stone">管理您的婚纱照项目和生成作品</p>
+          <p className="text-stone">管理您的项目和生成作品</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

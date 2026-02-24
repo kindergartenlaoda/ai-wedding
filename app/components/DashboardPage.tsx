@@ -14,7 +14,6 @@ import { Toast } from './Toast';
 import { ProjectDetailModal } from './ProjectDetailModal';
 import { ProjectEditModal } from './ProjectEditModal';
 import { SingleGenerationDetailModal } from './SingleGenerationDetailModal';
-import { supabase } from '@/lib/supabase';
 import {
   DashboardHeader,
   DashboardTabs,
@@ -129,8 +128,11 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
 
   const handleDeleteProject = async (projectId: string) => {
     try {
-      const { error } = await supabase.from('projects').delete().eq('id', projectId);
-      if (error) throw error;
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('删除失败');
       setToast({ message: '项目已删除', type: 'success' });
       await refreshProjects();
     } catch (error) {
@@ -146,14 +148,13 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     updatedData: Partial<ProjectWithTemplate>
   ) => {
     try {
-      const { error } = await supabase
-        .from('projects')
-        .update({
-          name: updatedData.name,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', projectId);
-      if (error) throw error;
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: updatedData.name }),
+      });
+      if (!res.ok) throw new Error('更新失败');
       setToast({ message: '项目更新成功', type: 'success' });
       await refreshProjects();
     } catch (error) {
@@ -184,7 +185,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     try {
       setToast({ message: '开始准备下载...', type: 'success' });
       const images = project.generation.preview_images;
-      const projectName = project.name || '婚纱照';
+      const projectName = project.name || '项目';
 
       const downloadPromises = images.map(async (imageUrl, index) => {
         try {
@@ -241,22 +242,17 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     }
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
+      const response = await fetch(`/api/generations/${generationId}/share`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isShared }),
+      });
+
+      if (response.status === 401) {
         setToast({ message: '认证失败，请重新登录', type: 'error' });
         return;
       }
-
-      const response = await fetch(`/api/generations/${generationId}/share`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ isShared }),
-      });
 
       if (!response.ok) {
         const error = await response.json();

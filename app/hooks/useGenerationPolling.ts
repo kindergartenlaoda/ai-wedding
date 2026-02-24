@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
 import type { GenerationWithRelations } from '@/types/database';
 
 export function useGenerationPolling(generationId: string | null, enabled: boolean = false) {
@@ -10,18 +9,12 @@ export function useGenerationPolling(generationId: string | null, enabled: boole
     if (!generationId) return null;
 
     try {
-      const { data, error } = await supabase
-        .from('generations')
-        .select(`
-          *,
-          project:projects(name),
-          template:templates(name)
-        `)
-        .eq('id', generationId)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data as GenerationWithRelations;
+      const res = await fetch(`/api/generations/${generationId}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as GenerationWithRelations;
+      return data;
     } catch (error) {
       console.error('获取生成状态失败:', error);
       return null;
@@ -35,35 +28,27 @@ export function useGenerationPolling(generationId: string | null, enabled: boole
     }
 
     setIsPolling(true);
-    let pollInterval: NodeJS.Timeout;
+    let pollInterval: ReturnType<typeof setInterval>;
 
-    // 根据当前状态动态调整轮询间隔
     const startPolling = (currentStatus?: string) => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-      }
-
-      // pending 状态用较长间隔（10秒），processing 状态用短间隔（3秒）
+      if (pollInterval) clearInterval(pollInterval);
       const interval = currentStatus === 'pending' ? 10000 : 3000;
 
       pollInterval = setInterval(async () => {
         const data = await fetchGeneration();
         if (data) {
           setGeneration(data);
-          
           if (data.status === 'completed' || data.status === 'failed') {
             setIsPolling(false);
             clearInterval(pollInterval);
           } else if (data.status !== currentStatus) {
-            // 状态改变时，重新设置轮询间隔
             startPolling(data.status);
           }
         }
       }, interval);
     };
 
-    // 初始获取
-    fetchGeneration().then(data => {
+    fetchGeneration().then((data) => {
       if (data) {
         setGeneration(data);
         startPolling(data.status);
@@ -73,9 +58,7 @@ export function useGenerationPolling(generationId: string | null, enabled: boole
     });
 
     return () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-      }
+      if (pollInterval) clearInterval(pollInterval);
       setIsPolling(false);
     };
   }, [generationId, enabled, fetchGeneration]);

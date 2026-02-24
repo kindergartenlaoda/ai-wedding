@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export function useEngagementStats() {
@@ -21,16 +20,12 @@ export function useEngagementStats() {
       setLoading(true);
       setError(null);
       try {
-        const { data, error } = await supabase
-          .from('image_engagement_stats')
-          .select('*');
-        if (error) throw error;
+        const res = await fetch('/api/engagement-stats', { credentials: 'include' });
+        if (!res.ok) throw new Error('获取失败');
+        const json = await res.json();
         if (!active) return;
-        const rows = data || [] as Array<{ likes_count: number; downloads_count: number }>;
-        const l = rows.reduce((sum, r) => sum + (Number(r.likes_count) || 0), 0);
-        const d = rows.reduce((sum, r) => sum + (Number(r.downloads_count) || 0), 0);
-        setLikes(l);
-        setDownloads(d);
+        setLikes(json.likes ?? 0);
+        setDownloads(json.downloads ?? 0);
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : '获取互动统计失败');
@@ -44,4 +39,3 @@ export function useEngagementStats() {
 
   return { likes, downloads, loading, error };
 }
-

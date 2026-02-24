@@ -1,7 +1,6 @@
 import { Check, Sparkles, Zap, Crown } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import { Toast } from './Toast';
 import { FadeIn, GlassCard } from '@/components/react-bits';
 
@@ -76,14 +75,10 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
     setPurchasing(planIndex);
 
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const token = session.session?.access_token;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const createRes = await fetch('/api/orders/create', {
         method: 'POST',
-        headers,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: plan.name }),
       });
       const createJson = await createRes.json();
@@ -99,7 +94,8 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
       } else {
         const confirmRes = await fetch('/api/orders/mock/confirm', {
           method: 'POST',
-          headers,
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ payment_intent_id }),
         });
         const confirmJson = await confirmRes.json();

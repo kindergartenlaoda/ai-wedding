@@ -114,10 +114,10 @@ export default function GalleryPage() {
         <FadeIn delay={0.1}>
           <div className="mb-12 text-center">
             <h1 className="mb-4 text-4xl font-medium font-display text-navy">
-              AI婚纱照画廊
+              AI 图片生成画廊
             </h1>
             <p className="mx-auto max-w-2xl text-lg text-stone">
-              欣赏由AI生成的精美婚纱照作品，发现无限创意灵感
+              欣赏由AI生成的精美作品，发现无限创意灵感
             </p>
             <div className="flex gap-6 justify-center items-center mt-6 text-sm text-stone">
               <div className="flex gap-2 items-center">

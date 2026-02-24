@@ -113,7 +113,7 @@ export function CreatePage({ onNavigate, selectedTemplate }: CreatePageProps) {
                   type="text"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="例如：我们的梦幻婚纱照"
+                  placeholder="例如：我的精彩项目"
                   className="px-4 py-3 w-full rounded-md border transition-all border-stone/20 bg-champagne focus:ring-2 focus:ring-dusty-rose/30 focus:border-dusty-rose"
                 />
               </div>
@@ -204,7 +204,7 @@ export function CreatePage({ onNavigate, selectedTemplate }: CreatePageProps) {
                   ) : (
                     <>
                       <ImageIcon className="w-5 h-5" />
-                      生成婚纱照
+                      生成图片
                     </>
                   )}
                 </button>

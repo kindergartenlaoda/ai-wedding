@@ -106,9 +106,9 @@ export function GenerateSinglePage() {
           </div>
           <h1 className="mb-4 text-4xl font-medium md:text-5xl font-display text-navy">
             生成全新的
-            <span className="text-dusty-rose"> 梦幻婚纱照</span>
+            <span className="text-dusty-rose"> 精彩作品</span>
           </h1>
-          <p className="mb-6 text-xl text-stone">上传照片，选择风格，AI智能生成专属婚纱照</p>
+          <p className="mb-6 text-xl text-stone">上传照片，选择风格，AI智能生成专属作品</p>
 
           {/* 积分余额显示 */}
           {user && profile && (

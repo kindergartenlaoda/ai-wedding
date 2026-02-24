@@ -8,7 +8,6 @@ import { ModelConfigList } from '@/components/admin/ModelConfigList';
 import { ModelConfigForm } from '@/components/admin/ModelConfigForm';
 import { Plus } from 'lucide-react';
 import type { ModelConfig, CreateModelConfigInput, UpdateModelConfigInput } from '@/types/model-config';
-import { supabase } from '@/lib/supabase';
 
 export default function AdminModelConfigsPage() {
   const router = useRouter();
@@ -23,20 +22,14 @@ export default function AdminModelConfigsPage() {
       setIsLoading(true);
       setError(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch('/api/admin/model-configs', {
+        credentials: 'include',
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch('/api/admin/model-configs', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
 
       if (!response.ok) {
         if (response.status === 403) {
@@ -62,23 +55,17 @@ export default function AdminModelConfigsPage() {
 
   const handleCreate = async (input: CreateModelConfigInput) => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch('/api/admin/model-configs', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch('/api/admin/model-configs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(input),
-      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -96,23 +83,17 @@ export default function AdminModelConfigsPage() {
 
   const handleUpdate = async (id: string, input: UpdateModelConfigInput) => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch(`/api/admin/model-configs/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch(`/api/admin/model-configs/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(input),
-      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -135,21 +116,15 @@ export default function AdminModelConfigsPage() {
     }
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch(`/api/admin/model-configs/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch(`/api/admin/model-configs/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
 
       if (!response.ok) {
         throw new Error('删除配置失败');
@@ -164,21 +139,14 @@ export default function AdminModelConfigsPage() {
 
   const handleEdit = async (config: ModelConfig) => {
     try {
-      // 获取完整的配置（包括未脱敏的 API Key）
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch(`/api/admin/model-configs/${config.id}`, {
+        credentials: 'include',
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch(`/api/admin/model-configs/${config.id}`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
 
       if (!response.ok) {
         throw new Error('获取配置详情失败');

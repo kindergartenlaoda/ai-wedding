@@ -9,7 +9,7 @@ export function TestimonialsPage({ onNavigate }: TestimonialsPageProps) {
   const testimonials = [
     {
       name: '小黎 & 阿杰',
-      quote: '在家就能完成的婚纱照，效果完全超出预期！朋友都不敢相信是AI做的。',
+      quote: '在家就能完成的AI图片，效果完全超出预期！朋友都不敢相信是AI做的。',
       avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200',
     },
     {
@@ -19,7 +19,7 @@ export function TestimonialsPage({ onNavigate }: TestimonialsPageProps) {
     },
     {
       name: 'Frank',
-      quote: '传统婚纱摄影的补充方案，先用AI风格挑选，线下再复刻同风格，效率翻倍。',
+      quote: '传统摄影的补充方案，先用AI风格挑选，线下再复刻同风格，效率翻倍。',
       avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200',
     },
   ];

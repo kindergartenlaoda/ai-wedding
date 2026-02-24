@@ -3,12 +3,10 @@
 
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { createClient } from '@supabase/supabase-js';
+import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // 仅服务端使用
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET; // Stripe Endpoint Secret
 
 // 金额到积分的简单映射（示例）
@@ -41,7 +39,7 @@ function safeEqual(a: string, b: string) {
 
 export async function POST(req: Request) {
   try {
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !STRIPE_WEBHOOK_SECRET) {
+    if (!STRIPE_WEBHOOK_SECRET) {
       return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
     }
 
@@ -79,31 +77,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
     // 依据 payment_intent_id 定位订单；若为空或未命中，可尝试使用 metadata.order_id
-    let orderRes = await admin
-      .from('orders')
-      .select('*')
-      .eq('payment_intent_id', paymentIntentId || '')
-      .maybeSingle();
+    let order = await prisma.order.findFirst({
+      where: { paymentIntentId: paymentIntentId || '' },
+    });
 
-    if ((!orderRes.data || orderRes.error) && obj?.metadata?.order_id) {
-      orderRes = await admin
-        .from('orders')
-        .select('*')
-        .eq('id', obj.metadata.order_id)
-        .maybeSingle();
+    if (!order && obj?.metadata?.order_id) {
+      order = await prisma.order.findUnique({
+        where: { id: obj.metadata.order_id },
+      });
       // 若找到但尚未写入 payment_intent_id，则补充写入
-      if (orderRes.data && !orderRes.data.payment_intent_id && paymentIntentId) {
-        await admin
-          .from('orders')
-          .update({ payment_intent_id: paymentIntentId })
-          .eq('id', orderRes.data.id);
+      if (order && !order.paymentIntentId && paymentIntentId) {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { paymentIntentId },
+        });
       }
     }
 
-    const order = orderRes.data;
     if (!order) {
       // 未匹配到订单：记录后返回 200，避免重复重试
       return NextResponse.json({ ok: true, message: 'Order not found for event' });
@@ -114,30 +105,24 @@ export async function POST(req: Request) {
     }
 
     // 更新订单状态
-    const upd = await admin
-      .from('orders')
-      .update({ status: 'completed' })
-      .eq('id', order.id);
-    if (upd.error) {
-      return NextResponse.json({ error: upd.error.message }, { status: 500 });
-    }
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: 'completed' },
+    });
 
     // 发放积分（基于订单金额映射）
     const creditsToAdd = CREDITS_BY_AMOUNT[String(order.amount)] || 0;
     if (creditsToAdd > 0) {
-      const prof = await admin
-        .from('profiles')
-        .select('credits')
-        .eq('id', order.user_id)
-        .maybeSingle();
-      if (prof.error) return NextResponse.json({ error: prof.error.message }, { status: 500 });
-
-      const newCredits = (prof.data?.credits || 0) + creditsToAdd;
-      const updCred = await admin
-        .from('profiles')
-        .update({ credits: newCredits })
-        .eq('id', order.user_id);
-      if (updCred.error) return NextResponse.json({ error: updCred.error.message }, { status: 500 });
+      const profile = await prisma.profile.findUnique({
+        where: { userId: order.userId },
+      });
+      if (profile) {
+        const newCredits = profile.credits + creditsToAdd;
+        await prisma.profile.update({
+          where: { userId: order.userId },
+          data: { credits: newCredits },
+        });
+      }
     }
 
     return NextResponse.json({ ok: true, orderId: order.id, creditsAdded: creditsToAdd });
@@ -146,4 +131,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

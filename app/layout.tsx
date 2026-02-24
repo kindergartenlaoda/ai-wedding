@@ -23,8 +23,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'AI婚纱照',
-  description: '用AI驱动的照片生成将您的婚纱梦想变为现实',
+  title: 'AI 图片生成',
+  description: '用AI驱动的照片生成，创造精彩作品',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -42,9 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                   <div className="col-span-1 md:col-span-2">
-                    <h3 className="text-xl font-display font-medium mb-4">AI婚纱照</h3>
+                    <h3 className="text-xl font-display font-medium mb-4">AI 图片生成</h3>
                     <p className="text-stone mb-4 leading-relaxed">
-                      用AI驱动的照片生成将您的婚纱梦想变为现实。创造精彩回忆，无需传统成本。
+                      用AI驱动的照片生成，创造精彩作品。多种风格，无需传统成本。
                     </p>
                   </div>
                   <div>
@@ -76,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </div>
                 </div>
                 <div className="border-t border-stone/20 mt-8 pt-8 text-center text-stone">
-                  <p>&copy; 2025 AI婚纱照. 保留所有权利。</p>
+                  <p>&copy; 2025 AI 图片生成. 保留所有权利。</p>
                 </div>
               </div>
             </footer>

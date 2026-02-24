@@ -1,47 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { requireAuth } from '@/lib/auth-api';
+import { prisma } from '@/lib/prisma';
 import type { ModelConfig } from '@/types/model-config';
+import { ModelConfigType } from '../../../generated/prisma/enums';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-// 从环境变量读取配置（作为回退）
 const ENV_IDENTIFY_API_BASE_URL = process.env.IDENTIFY_API_BASE_URL || 'https://api.openai.com';
 const ENV_IDENTIFY_API_KEY = process.env.IDENTIFY_API_KEY;
 const ENV_IDENTIFY_MODEL = process.env.IDENTIFY_MODEL || 'gpt-4o-mini';
 
-// 从环境变量读取是否禁用 SSL 验证（仅用于开发环境或信任的内网环境）
 const DISABLE_SSL_VERIFY = process.env.DISABLE_SSL_VERIFY === 'true';
-
-// 如果需要禁用 SSL 验证，设置全局环境变量
-// 这会影响所有的 Node.js HTTPS 请求
 if (DISABLE_SSL_VERIFY) {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
   console.log('[SSL] ⚠️ SSL 证书验证已全局禁用（仅用于开发环境）');
 }
 
-/**
- * 从数据库获取激活的识别模型配置
- */
-async function getActiveIdentifyConfig(supabase: unknown): Promise<ModelConfig | null> {
+async function getActiveIdentifyConfig(): Promise<ModelConfig | null> {
   try {
-    const client = supabase as ReturnType<typeof createClient>;
-    const { data, error } = await client
-      .from('model_configs')
-      .select('*')
-      .eq('type', 'identify-image')
-      .eq('status', 'active')
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return null;
-      }
-      console.error('查询激活识别配置失败:', error);
-      return null;
-    }
-
-    return data as ModelConfig;
+    const config = await prisma.modelConfig.findFirst({
+      where: { type: ModelConfigType.identify_image, status: 'active' },
+    });
+    if (!config) return null;
+    return {
+      id: config.id,
+      type: config.type as ModelConfig['type'],
+      name: config.name,
+      api_base_url: config.apiBaseUrl,
+      api_key: config.apiKey,
+      model_name: config.modelName,
+      status: config.status as ModelConfig['status'],
+      source: config.source as ModelConfig['source'],
+      description: config.description ?? undefined,
+      created_at: config.createdAt.toISOString(),
+      updated_at: config.updatedAt.toISOString(),
+      created_by: config.createdBy ?? undefined,
+    };
   } catch (err) {
     console.error('获取激活识别配置异常:', err);
     return null;
@@ -120,37 +112,12 @@ export async function POST(req: NextRequest) {
 
   try {
     // 1) 认证校验
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      console.error(`[${requestId}] ❌ Supabase 环境变量未配置`);
-      return NextResponse.json(
-        { error: 'Server misconfigured: Supabase env missing' },
-        { status: 500 }
-      );
-    }
-
-    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
-
-    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
-      console.error(`[${requestId}] ❌ 未提供认证 Token`);
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-
-    const { data: userData, error: userErr } = await supabase.auth.getUser();
-    if (userErr || !userData?.user) {
-      console.error(`[${requestId}] ❌ 用户认证失败:`, userErr);
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    console.log(`[${requestId}] ✅ 用户认证成功: ${userData.user.id}`);
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
+    console.log(`[${requestId}] ✅ 用户认证成功: ${authResult.user.id}`);
 
     // 2) 获取识别模型配置
-    const dbConfig = await getActiveIdentifyConfig(supabase);
+    const dbConfig = await getActiveIdentifyConfig();
 
     let IDENTIFY_API_BASE_URL: string;
     let IDENTIFY_API_KEY: string;

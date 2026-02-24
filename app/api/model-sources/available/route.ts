@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth-api';
+import { prisma } from '@/lib/prisma';
 import type { ModelConfigSource } from '@/types/model-config';
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+import { ModelConfigType } from '../../../../generated/prisma/enums';
 
 export interface AvailableSourcesResponse {
   sources: ModelConfigSource[];
@@ -13,44 +12,18 @@ export interface AvailableSourcesResponse {
  * GET /api/model-sources/available
  * 获取所有已配置且激活的模型来源
  */
-export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const token = authHeader?.split(' ')[1];
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-    },
-  });
-
-  // 验证用户身份（可选，根据需求决定是否需要认证）
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export async function GET() {
+  const authResult = await requireAuth();
+  if (authResult instanceof Response) return authResult;
 
   try {
-    // 查询所有激活的图片生成配置
-    const { data, error } = await supabase
-      .from('model_configs')
-      .select('source')
-      .eq('type', 'generate-image')
-      .eq('status', 'active');
+    const configs = await prisma.modelConfig.findMany({
+      where: { type: ModelConfigType.generate_image, status: 'active' },
+      select: { source: true },
+    });
 
-    if (error) {
-      console.error('查询可用模型来源失败:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    // 提取唯一的 source 值
     const uniqueSources = Array.from(
-      new Set(data?.map((config) => config.source as ModelConfigSource) || [])
+      new Set(configs.map((c) => c.source as ModelConfigSource))
     );
 
     return NextResponse.json({ sources: uniqueSources });

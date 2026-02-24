@@ -1,4 +1,4 @@
-import { Camera, Sparkles, Plus, LucideIcon } from 'lucide-react';
+import { Camera, Sparkles, Plus } from 'lucide-react';
 
 interface EmptyStateProps {
   type: 'projects' | 'single';
@@ -9,7 +9,7 @@ export function EmptyState({ type, onAction }: EmptyStateProps) {
   const config = type === 'projects' ? {
     icon: Camera,
     title: '还没有项目',
-    description: '开始用AI创作惊艳的婚纱照',
+    description: '开始用AI创作惊艳的作品',
     buttonText: '创建您的第一个项目',
   } : {
     icon: Sparkles,

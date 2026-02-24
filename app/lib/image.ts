@@ -4,19 +4,11 @@
  */
 import type { GenerateOptions } from '@/types/image';
 
-import { supabase } from '@/lib/supabase';
-
 export async function generateImage(prompt: string, options: GenerateOptions = {}) {
-  // 从 Supabase 获取会话，附带用户会话 Token 供服务端认证
-  const { data: sessionData } = await supabase.auth.getSession();
-  const accessToken = sessionData?.session?.access_token;
-
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
-
   const res = await fetch('/api/generate-image', {
     method: 'POST',
-    headers,
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt, ...options }),
   });
 

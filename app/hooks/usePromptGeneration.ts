@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import type { PromptItem, PromptsResponse } from '@/types/prompt';
 
 interface UsePromptGenerationReturn {
@@ -12,7 +11,7 @@ interface UsePromptGenerationReturn {
 
 /**
  * 风格方案生成 Hook
- * 用于根据上传的图片生成婚纱照风格方案
+ * 用于根据上传的图片生成风格方案
  */
 export function usePromptGeneration(): UsePromptGenerationReturn {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -25,24 +24,16 @@ export function usePromptGeneration(): UsePromptGenerationReturn {
     setPrompts([]);
 
     try {
-      // 获取当前会话
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error('未登录，无法生成风格方案');
-      }
-
-      // 调用风格方案生成 API
       const response = await fetch('/api/generate-prompts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageBase64 }),
       });
+
+      if (response.status === 401) {
+        throw new Error('未登录，无法生成风格方案');
+      }
 
       if (!response.ok) {
         const errorData = await response.json();

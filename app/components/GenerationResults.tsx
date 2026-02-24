@@ -45,7 +45,7 @@ export function GenerationResults({
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `${projectName || '婚纱照'}_预览_${index + 1}.jpg`;
+      link.download = `${projectName || '作品'}_预览_${index + 1}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -69,7 +69,7 @@ export function GenerationResults({
               </div>
               <div>
                 <h2 className="text-2xl font-medium font-display text-navy">生成完成！</h2>
-                <p className="text-stone">为您生成了 {images.length} 张精美婚纱照</p>
+                <p className="text-stone">为您生成了 {images.length} 张精美作品</p>
               </div>
             </div>
 
@@ -196,7 +196,7 @@ export function GenerationResults({
           isOpen={previewImageIndex !== null}
           onClose={() => setPreviewImageIndex(null)}
           onDownload={handleDownloadImage}
-          projectName={projectName || '婚纱照预览'}
+          projectName={projectName || '作品预览'}
         />
       )}
 

@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { requireAuth } from '@/lib/auth-api';
+import { prisma } from '@/lib/prisma';
 import type { ModelConfig, ModelConfigType } from '@/types/model-config';
+import { ModelConfigType as PrismaModelConfigType } from '../../../../generated/prisma/enums';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-// 强制动态渲染，因为需要读取请求头进行认证
 export const dynamic = 'force-dynamic';
+
+const TYPE_MAP: Record<string, (typeof PrismaModelConfigType)[keyof typeof PrismaModelConfigType]> = {
+  'generate-image': PrismaModelConfigType.generate_image,
+  'identify-image': PrismaModelConfigType.identify_image,
+  'generate-prompts': PrismaModelConfigType.generate_prompts,
+  other: PrismaModelConfigType.other,
+};
 
 /**
  * GET /api/model-configs/active?type=generate-image
@@ -14,25 +19,9 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: NextRequest) {
   try {
-    // 认证校验
-    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
-    
-    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
 
-    const token = authHeader.split(' ')[1];
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-
-    const { data: userData, error: userErr } = await supabase.auth.getUser();
-    if (userErr || !userData?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // 获取查询参数
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type') as ModelConfigType;
 
@@ -40,29 +29,38 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: '缺少 type 参数' }, { status: 400 });
     }
 
-    // 查询激活的配置
-    const { data, error } = await supabase
-      .from('model_configs')
-      .select('*')
-      .eq('type', type)
-      .eq('status', 'active')
-      .single();
-
-    if (error) {
-      // 如果没有找到配置，返回 null 而不是错误
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ data: null });
-      }
-      console.error('查询激活配置失败:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    const prismaType = TYPE_MAP[type];
+    if (!prismaType) {
+      return NextResponse.json({ error: '无效的 type 参数' }, { status: 400 });
     }
 
-    // 返回完整配置（包括 API Key，因为 generate-stream 需要使用）
-    return NextResponse.json({ data: data as ModelConfig });
+    const config = await prisma.modelConfig.findFirst({
+      where: { type: prismaType, status: 'active' },
+    });
+
+    if (!config) {
+      return NextResponse.json({ data: null });
+    }
+
+    const data: ModelConfig = {
+      id: config.id,
+      type: config.type as ModelConfig['type'],
+      name: config.name,
+      api_base_url: config.apiBaseUrl,
+      api_key: config.apiKey,
+      model_name: config.modelName,
+      status: config.status as ModelConfig['status'],
+      source: config.source as ModelConfig['source'],
+      description: config.description ?? undefined,
+      created_at: config.createdAt.toISOString(),
+      updated_at: config.updatedAt.toISOString(),
+      created_by: config.createdBy ?? undefined,
+    };
+
+    return NextResponse.json({ data });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unexpected error';
     console.error('获取激活配置异常:', err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Download, Heart, Share2, ArrowLeft, Sparkles, Lock, Check, X, Repeat, TrendingUp, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,18 +38,12 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
     (async () => {
       try {
         console.log('正在加载生成结果，ID:', generationId);
-        const { data, error } = await supabase
-          .from('generations')
-          .select(`
-            *,
-            project:projects(name, uploaded_photos),
-            template:templates(name)
-          `)
-          .eq('id', generationId)
-          .maybeSingle();
+        const res = await fetch(`/api/generations/${generationId}`, {
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error('加载失败');
+        const data = await res.json();
 
-        if (error) throw error;
-        
         if (!data) {
           throw new Error('未找到生成记录');
         }
@@ -62,7 +55,11 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
           high_res_images_count: data.high_res_images?.length || 0,
         });
 
-        setGeneration(data);
+        setGeneration({
+          ...data,
+          project: data.project || { name: '', uploaded_photos: [] },
+          template: data.template || { name: '' },
+        });
         setError(null);
       } catch (err) {
         console.error('获取生成结果失败:', err);
@@ -172,7 +169,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
               </h2>
               <p className="text-stone mb-6">
                 {generation?.status === 'processing' 
-                  ? '您的婚纱照正在生成中，请稍候片刻...'
+                  ? '您的图片正在生成中，请稍候片刻...'
                   : generation?.status === 'pending'
                   ? '您的请求正在队列中，马上开始生成...'
                   : generation?.status === 'failed'
@@ -229,7 +226,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                 </div>
                 <div>
                   <h1 className="text-3xl font-display font-medium text-navy">照片已准备好！</h1>
-                  <p className="text-stone">{generation?.project?.name || '您的项目'} - 我们为您生成了 {currentImages.length} 张精美婚纱照</p>
+                  <p className="text-stone">{generation?.project?.name || '您的项目'} - 我们为您生成了 {currentImages.length} 张精美作品</p>
                 </div>
               </div>
 
@@ -566,7 +563,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
       {/* 分享弹窗 */}
       {showShareModal && generation && currentImages.length > 0 && (
         <ShareModal
-          projectName={generation.project?.name || '我的婚纱照'}
+          projectName={generation.project?.name || '我的项目'}
           templateName={generation.template?.name || '精美风格'}
           imageUrl={currentImages[0] || ''}
           imageCount={currentImages.length}
@@ -690,13 +687,10 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
             // 异步上报下载记录（不阻断浏览器下载）
             void (async () => {
               try {
-                const { data: session } = await supabase.auth.getSession();
-                const token = session.session?.access_token;
-                const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-                if (token) headers['Authorization'] = `Bearer ${token}`;
                 await fetch('/api/images/track-download', {
                   method: 'POST',
-                  headers,
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ generation_id: generationId, index, image_type: imageType }),
                 });
               } catch (err) { void err; }

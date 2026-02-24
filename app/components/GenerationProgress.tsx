@@ -22,7 +22,7 @@ const STAGE_TEXT: Record<GenerationStage, string> = {
 const STAGE_DESCRIPTION: Record<GenerationStage, string> = {
   uploading: '正在上传您的照片到云端...',
   analyzing: '正在分析您的面部特征,这需要一些时间...',
-  generating: '正在使用AI生成您的婚纱照,通常需要1-2分钟...',
+  generating: '正在使用AI生成您的图片,通常需要1-2分钟...',
   completed: '已完成所有处理,即将跳转！',
 };
 

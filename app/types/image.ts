@@ -59,6 +59,6 @@ export interface ImageRating {
 export interface MockGenerateOptions {
   input: string; // dataURL
   variants?: number; // 默认 3
-  watermark?: string; // 默认 “AI婚纱照·试用”
+  watermark?: string; // 默认 “AI 图片生成·试用”
 }
 

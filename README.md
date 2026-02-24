@@ -1,12 +1,12 @@
-# AI 婚纱照生成平台 🎨
+# 多领域 AI 图片生成平台 🎨
 
 <div align="center">
 
-基于 AI 技术的智能婚纱照生成平台，上传照片，选择模板，AI 自动生成专业婚纱照。
+基于 AI 技术的多领域图片生成平台，上传照片，选择模板，AI 自动生成专业级作品。支持婚礼、证件、艺术、动漫、风景、商品等多种风格。
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue)](https://www.typescriptlang.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-Latest-green)](https://supabase.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma-336791)](https://www.postgresql.org/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38bdf8)](https://tailwindcss.com/)
 
 [功能特性](#-核心功能) | [快速开始](#-快速开始) | [文档](#-文档)
@@ -17,7 +17,7 @@
 
 ## 📖 项目简介
 
-通过 AI 图像生成技术，让用户上传照片并选择场景模板（巴黎、东京、冰岛等），快速生成专业级婚纱照。
+通过 AI 图像生成技术，让用户上传照片并选择场景模板（巴黎、东京、冰岛等），快速生成专业级图片。支持婚礼、证件、艺术、动漫、风景、商品等多领域。
 
 ### ✨ 核心特性
 
@@ -45,7 +45,8 @@
 ### 🏗️ 技术栈
 
 **前端**: Next.js 14 + TypeScript + TailwindCSS  
-**后端**: Supabase (PostgreSQL) + MinIO 存储  
+**后端**: PostgreSQL + Prisma + MinIO 存储  
+**认证**: NextAuth (Credentials)  
 **AI**: OpenAI / Gemini / 兼容 API
 
 ---
@@ -56,7 +57,7 @@
 
 - Node.js 18+
 - pnpm
-- Supabase 账号
+- PostgreSQL 数据库
 - OpenAI API Key 或兼容服务
 - Docker（可选，用于 MinIO 对象存储）
 
@@ -84,10 +85,12 @@ cp .env.example .env
 编辑 `.env` 文件：
 
 ```bash
-# Supabase 配置
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+# PostgreSQL (Prisma)
+DATABASE_URL="postgresql://user:password@host:5432/database"
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-random-secret-here"
 
 # MinIO 存储（可选）
 MINIO_ENDPOINT=http://localhost:9000
@@ -99,28 +102,23 @@ MINIO_USE_SSL=false
 
 ### 4️⃣ 初始化数据库
 
-在 Supabase Dashboard 的 SQL Editor 中执行：
+```bash
+# 执行 Prisma 迁移
+pnpm prisma migrate deploy
 
-```sql
--- 执行 init.sql 文件内容即可完成所有表结构、触发器、示例数据的初始化
+# 填充初始模板数据（可选）
+pnpm prisma db seed
 ```
-
-将 `init.sql` 文件的内容粘贴到 SQL Editor 中执行。
 
 ### 5️⃣ 设置管理员权限
 
-在 Supabase SQL Editor 中执行：
+在数据库中执行：
 
 ```sql
--- 通过邮箱设置管理员权限
+-- 通过邮箱设置管理员权限（profiles 表）
 UPDATE profiles 
 SET role = 'admin' 
-WHERE email = 'your-admin-email@example.com';
-
--- 验证设置是否成功
-SELECT id, email, role, created_at 
-FROM profiles 
-WHERE role = 'admin';
+WHERE user_id = (SELECT id FROM users WHERE email = 'your-admin-email@example.com');
 ```
 
 ### 6️⃣ 配置 AI 模型
@@ -205,7 +203,7 @@ API Key：sk-your-openai-api-key
 
 ### 用户端流程
 
-1. **注册登录**：邮箱注册或 Google OAuth
+1. **注册登录**：邮箱注册（NextAuth Credentials）
 2. **创建项目**：上传照片 → 选择模板 → 开始生成
 3. **查看结果**：查看生成的图片、下载、分享
 4. **画廊浏览**：浏览其他用户作品、点赞收藏
@@ -216,10 +214,10 @@ API Key：sk-your-openai-api-key
 
 | 配置项 | 位置 | 说明 |
 |--------|------|------|
-| ✅ 设置管理员权限 | Supabase `profiles` 表 | `role = 'admin'` |
-| ✅ 配置图片生成模型 | `/admin/model-configs` | `image-generation` 类型 |
+| ✅ 设置管理员权限 | 数据库 `profiles` 表 | `role = 'admin'` |
+| ✅ 配置图片生成模型 | `/admin/model-configs` | `generate-image` 类型 |
 | ✅ 配置图片识别模型 | `/admin/model-configs` | `identify-image` 类型 |
-| ✅ 检查模板 | `/admin/templates` | 已有 10 个示例模板 |
+| ✅ 检查模板 | `/admin/templates` | 运行 `pnpm prisma db seed` 初始化 |
 
 #### 模板管理
 
@@ -350,9 +348,9 @@ pnpm pm2:logs           # 查看日志
 
 | 变量名 | 说明 | 必填 |
 |--------|------|------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase 项目 URL | ✅ |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase 匿名密钥 | ✅ |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase 服务端密钥 | - |
+| `DATABASE_URL` | PostgreSQL 连接字符串 | ✅ |
+| `NEXTAUTH_URL` | NextAuth 回调 URL | ✅ |
+| `NEXTAUTH_SECRET` | NextAuth 加密密钥 | ✅ |
 | `MINIO_ENDPOINT` | MinIO 端点 | - |
 | `MINIO_ACCESS_KEY` | MinIO 访问密钥 | - |
 | `MINIO_SECRET_KEY` | MinIO 密钥 | - |
@@ -521,6 +519,6 @@ MIT License - 可自由使用、修改、分发
 
 Made with ❤️ by [AI Wedding Team](https://github.com/your-username)
 
-Copyright © 2025 AI Wedding. All rights reserved.
+Copyright © 2025 AI 图片生成. All rights reserved.
 
 </div>

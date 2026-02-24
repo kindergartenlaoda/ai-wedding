@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Template } from '@/types/database';
 
 export function useTemplates() {
@@ -9,21 +8,15 @@ export function useTemplates() {
   const fetchingRef = useRef(false);
 
   const fetchTemplates = useCallback(async () => {
-    // 防止重复请求
-    if (fetchingRef.current) {
-      return;
-    }
+    if (fetchingRef.current) return;
 
     try {
       fetchingRef.current = true;
-      const { data, error } = await supabase
-        .from('templates')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
-
-      if (error) throw error;
-      setTemplates(data || []);
+      const res = await fetch('/api/templates', { credentials: 'include' });
+      if (!res.ok) throw new Error('获取模板失败');
+      const json = await res.json();
+      const data = json.data || [];
+      setTemplates(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取模板失败');
     } finally {

@@ -105,7 +105,7 @@ export function ProjectEditModal({
                   type="text"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="例如：我们的梦幻婚纱照"
+                  placeholder="例如：我的精彩项目"
                   className="w-full px-4 py-3 border border-stone/20 bg-champagne rounded-md focus:outline-none focus:ring-2 focus:ring-dusty-rose/30 focus:border-dusty-rose transition-all"
                   disabled={saving}
                 />

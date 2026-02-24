@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AI Wedding Photo Platform - A Next.js 14 application for generating AI-powered wedding photos using OpenAI-compatible image generation APIs and Supabase backend.
+多领域 AI 图片生成平台 - A Next.js 14 application for generating AI-powered images across multiple domains (wedding, children, id_photo, artistic, portrait, anime, landscape, product) using OpenAI-compatible image generation APIs, PostgreSQL + Prisma, and NextAuth.
 
-**Tech Stack**: Next.js 14 (App Router) + React 18 + TypeScript + TailwindCSS + Supabase + shadcn/ui + Lucide Icons
+**Tech Stack**: Next.js 14 (App Router) + React 18 + TypeScript + TailwindCSS + PostgreSQL + Prisma + NextAuth + shadcn/ui + Lucide Icons
 
 ## Essential Commands
 
@@ -17,6 +17,8 @@ pnpm build        # Build for production
 pnpm start        # Start production server
 pnpm lint         # Run ESLint checks
 pnpm typecheck    # Run TypeScript type checking (strict mode)
+pnpm prisma migrate deploy  # Apply database migrations
+pnpm prisma db seed        # Seed initial templates
 ```
 
 **Note**: This project uses `pnpm` as the package manager. Do NOT use `npm` or `yarn`.
@@ -26,14 +28,16 @@ pnpm typecheck    # Run TypeScript type checking (strict mode)
 1. Copy `.env.example` to `.env`
 2. Configure required variables:
 
-   **Supabase (Required)**:
-   - `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
-   - `SUPABASE_SERVICE_ROLE_KEY` - Server-only key for bypassing RLS (webhooks only)
+   **PostgreSQL (Required)**:
+   - `DATABASE_URL` - PostgreSQL connection string (e.g., `postgresql://user:password@host:5432/database`)
+
+   **NextAuth (Required)**:
+   - `NEXTAUTH_URL` - Application URL (e.g., `http://localhost:3000`)
+   - `NEXTAUTH_SECRET` - Random secret for session encryption
 
    **Image Generation API (Required, server-only)**:
    - `IMAGE_API_MODE` - Generation mode: `images` (OpenAI/DALL-E) or `chat` (streaming, e.g., Gemini)
-   - `IMAGE_API_BASE_URL` - API base URL (e.g., `https://api.openai.com` or `https://sssss.zxiaoruan.cn`)
+   - `IMAGE_API_BASE_URL` - API base URL (e.g., `https://api.openai.com`)
    - `IMAGE_API_KEY` - API key (never expose to client)
    - `IMAGE_IMAGE_MODEL` - Model for `images` mode (default: `dall-e-3`)
    - `IMAGE_CHAT_MODEL` - Model for `chat` mode (e.g., `gemini-2.5-flash-image`)
@@ -50,7 +54,7 @@ pnpm typecheck    # Run TypeScript type checking (strict mode)
    - `STRIPE_WEBHOOK_SECRET` - For Stripe webhook signature verification
    - `PAYMENT_PROVIDER` - `mock` or `stripe`
 
-3. Run database schema: Execute `database-schema.sql` in Supabase SQL Editor
+3. Initialize database: `pnpm prisma migrate deploy` then `pnpm prisma db seed`
 
 ## Architecture Patterns
 
@@ -64,6 +68,7 @@ pnpm typecheck    # Run TypeScript type checking (strict mode)
     - `app/results/[id]/page.tsx` - Generation results
     - `app/pricing/page.tsx` - Pricing/credits
     - `app/testimonials/page.tsx` - Testimonials
+    - `app/gallery/page.tsx` - Public gallery
 
   - **API Routes** (server-side only):
     - `app/api/**/route.ts` - API route handlers
@@ -79,10 +84,10 @@ pnpm typecheck    # Run TypeScript type checking (strict mode)
 
 ### Data Layer Architecture
 
-**Client-Side Supabase**:
-- `app/lib/supabase.ts` - Lazy-initialized Supabase client with Proxy pattern
-- Throws clear error only when first accessed if env vars missing
-- Used by hooks for data fetching
+**Prisma + PostgreSQL**:
+- `app/lib/prisma.ts` - PrismaClient singleton with PrismaPg adapter
+- `prisma/schema.prisma` - Database schema
+- `generated/prisma/` - Generated Prisma client (do not edit)
 
 **Custom Hooks** (in `app/hooks/`):
 - `useProjects` - Fetch user projects with generations (sorted DESC)
@@ -95,14 +100,15 @@ pnpm typecheck    # Run TypeScript type checking (strict mode)
 - `usePhotoUpload` - Handle photo uploads
 - `usePhotoSelection` - Manage photo selection state
 
-**Database Schema** (see `database-schema.sql`):
+**Database Schema** (see `prisma/schema.prisma`):
+- `users` - NextAuth users (email, passwordHash)
 - `profiles` - User profiles with credits and invite system
   - `invite_code` - Unique invite code per user
   - `invited_by` - Referrer tracking
   - `invite_count` - Total invites sent
   - `reward_credits` - Credits earned from referrals
-- `templates` - AI generation templates (categories, prompts, pricing)
-- `projects` - User photo projects
+- `templates` - AI generation templates (categories, prompts, pricing, domain)
+- `projects` - User photo projects (domain-aware)
 - `generations` - AI generation jobs (status, images, credits used)
 - `orders` - Payment orders
 - `favorites` - User-template favorites
@@ -110,7 +116,7 @@ pnpm typecheck    # Run TypeScript type checking (strict mode)
 - `image_downloads` - Download analytics
 - `invite_events` - Invite history and audit trail
 
-All tables use RLS (Row Level Security). Users can only access their own data.
+**Domain System**: Templates and projects have a `domain` field (wedding, children, id_photo, artistic, portrait, anime, landscape, product). See `app/types/domain.ts`.
 
 ### API Routes
 
@@ -118,7 +124,7 @@ All tables use RLS (Row Level Security). Users can only access their own data.
 
 1. **Image Generation**:
    - `app/api/generate-image/route.ts` - Standard image generation (OpenAI/DALL-E style)
-     - Requires Supabase auth token in `Authorization` header
+     - Requires NextAuth session (getServerSession)
      - Rate limiting: 5 requests/minute per user (in-memory)
      - Validates prompt (max 800 chars)
      - Proxies to OpenAI-compatible endpoint
@@ -131,8 +137,7 @@ All tables use RLS (Row Level Security). Users can only access their own data.
      - Extracts images from Markdown response
 
 2. **Storage**:
-   - `app/api/upload-image/route.ts` - Upload images to MinIO/Supabase storage
-     - Supports multiple storage backends
+   - `app/api/upload-image/route.ts` - Upload images to MinIO storage
      - Image compression and optimization
 
 3. **Orders/Payments**:
@@ -140,7 +145,6 @@ All tables use RLS (Row Level Security). Users can only access their own data.
    - `app/api/orders/validate/route.ts` - Validate order status
    - `app/api/orders/mock/confirm/route.ts` - Mock payment callback (dev only)
    - `app/api/orders/webhook/stripe/route.ts` - Stripe webhook handler (production)
-     - Uses `SUPABASE_SERVICE_ROLE_KEY` to bypass RLS
      - Verify webhook signature before processing
      - Implement idempotency for duplicate events
 
@@ -151,7 +155,7 @@ All tables use RLS (Row Level Security). Users can only access their own data.
    - `app/api/images/track-download/route.ts` - Track image downloads
 
 6. **Templates**:
-   - `app/api/templates/route.ts` - Fetch templates with filters
+   - `app/api/templates/route.ts` - Fetch templates with filters (domain-aware)
 
 ### Component Organization
 
@@ -191,32 +195,34 @@ All tables use RLS (Row Level Security). Users can only access their own data.
 
 ## Key Implementation Details
 
-### Supabase Client Pattern
-The Supabase client uses a Proxy pattern for lazy initialization. It won't throw errors at import time if env vars are missing - only when first method is called. This prevents build-time crashes.
+### NextAuth Configuration
+- Credentials provider (email + password)
+- Session stored in JWT cookies (`next-auth.session-token` or `__Secure-next-auth.session-token`)
+- Middleware (`middleware.ts`) optionally protects `/dashboard`, `/results/:path*`, `/create`, `/create/:path*` when `ENABLE_SSR_GUARD=true`
 
 ### Image Generation Flow
 
 **Standard Mode** (`IMAGE_API_MODE=images`):
 1. User selects template + uploads photos
-2. Frontend calls `/api/generate-image` with auth token
-3. API validates auth, checks rate limits, proxies to OpenAI-compatible endpoint
+2. Frontend calls `/api/generate-image` with session
+3. API validates auth via getServerSession, checks rate limits, proxies to OpenAI-compatible endpoint
 4. Response contains image URLs or base64 data
-5. Frontend stores generation record in `generations` table
+5. Frontend stores generation record in `generations` table via API
 
 **Streaming Mode** (`IMAGE_API_MODE=chat`):
 1. User selects template + uploads photos
-2. Frontend calls `/api/generate-stream` with auth token and image inputs
+2. Frontend calls `/api/generate-stream` with session and image inputs
 3. API validates auth, constructs chat messages with image URLs
 4. Streams Server-Sent Events from upstream API (e.g., Gemini)
 5. Frontend parses streamed markdown chunks and extracts Base64 images
 6. Displays images progressively as they arrive
-7. Stores final result in `generations` table
+7. Stores final result in `generations` table via API
 
 ### Payment Flow (Current: Mock + Stripe Ready)
 1. User clicks "Purchase" → Create order via `/api/orders/create`
 2. **Mock mode**: Call `/api/orders/mock/confirm` to simulate success
 3. **Stripe mode**: Redirect to Stripe Checkout, receive webhook at `/api/orders/webhook/stripe`
-4. Webhook updates order status + credits using service role key
+4. Webhook updates order status + credits
 5. Frontend polls order status or uses real-time subscriptions
 
 ### Invite System Flow
@@ -229,37 +235,39 @@ The Supabase client uses a Proxy pattern for lazy initialization. It won't throw
 
 ## Common Patterns
 
-### Fetching User Data
+### Fetching User Data (API Routes)
 ```typescript
-import { supabase } from '@/lib/supabase';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth-api';
+import { prisma } from '@/lib/prisma';
 
-const { data: { user } } = await supabase.auth.getUser();
-const { data, error } = await supabase
-  .from('projects')
-  .select('*, generations(*)')
-  .eq('user_id', user.id)
-  .order('created_at', { ascending: false });
+const session = await getServerSession(authOptions);
+if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+const projects = await prisma.project.findMany({
+  where: { userId: session.user.id },
+  include: { generations: true },
+  orderBy: { createdAt: 'desc' },
+});
 ```
 
 ### Protected API Routes
 ```typescript
-const authHeader = req.headers.get('authorization');
-const token = authHeader?.split(' ')[1];
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  global: { headers: { Authorization: `Bearer ${token}` } },
-});
-const { data: { user }, error } = await supabase.auth.getUser();
-if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+import { requireAuth } from '@/lib/auth-api';
+
+const authResult = await requireAuth();
+if (authResult instanceof Response) return authResult;
+const { user } = authResult;
 ```
 
-### Using Service Role (Webhooks Only)
+### Prisma Client
 ```typescript
-import { createClient } from '@supabase/supabase-js';
+import { prisma } from '@/lib/prisma';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, // Bypasses RLS
-);
+// All data access goes through prisma
+const templates = await prisma.template.findMany({
+  where: { isActive: true, domain: 'wedding' },
+});
 ```
 
 ### Streaming Image Generation
@@ -268,9 +276,9 @@ const supabaseAdmin = createClient(
 const response = await fetch('/api/generate-stream', {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
   },
+  credentials: 'include', // Send session cookie
   body: JSON.stringify({ prompt, image_inputs }),
 });
 
@@ -298,9 +306,9 @@ while (true) {
 Next.js Image optimization is configured for (see `next.config.js`):
 - `localhost`
 - `images.pexels.com`
-- `**.supabase.co` (Supabase storage)
+- `**.supabase.co` (legacy, if images migrated)
 - `oaidalleapiprodscus.blob.core.windows.net` (OpenAI DALL-E)
-- `123.57.16.107:9000` (MinIO instance)
+- MinIO instance domains
 
 Add new domains to `next.config.js` → `images.remotePatterns` array.
 
@@ -308,7 +316,8 @@ Add new domains to `next.config.js` → `images.remotePatterns` array.
 
 Located in `app/lib/`:
 
-- `supabase.ts` - Lazy-initialized Supabase client (Proxy pattern)
+- `prisma.ts` - PrismaClient singleton (PrismaPg adapter)
+- `auth-api.ts` - NextAuth helpers, requireAuth
 - `generation-service.ts` - Image generation logic and API calls
 - `image-stream.ts` - Server-Sent Events parsing for streaming responses
 - `minio-client.ts` - MinIO storage client for image uploads

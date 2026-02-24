@@ -1,61 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
-// 该路由读取了 request.headers，强制动态渲染
+import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth-api';
+import { prisma } from '@/lib/prisma';
+
 export const dynamic = 'force-dynamic';
-import { supabase } from '@/lib/supabase';
 
-// 诊断工具：检查用户的项目和生成数据
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: '需要认证' }, { status: 401 });
-    }
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
+    const userId = authResult.user.id;
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const [projects, generations] = await Promise.all([
+      prisma.project.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.generation.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
 
-    if (authError || !user) {
-      return NextResponse.json({ error: '认证失败' }, { status: 401 });
-    }
-
-    // 查询用户的所有项目
-    const { data: projects, error: projectsError } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (projectsError) {
-      throw projectsError;
-    }
-
-    // 查询用户的所有生成记录
-    const { data: generations, error: generationsError } = await supabase
-      .from('generations')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (generationsError) {
-      throw generationsError;
-    }
-
-    // 统计信息
     const stats = {
-      totalProjects: projects?.length || 0,
-      totalGenerations: generations?.length || 0,
-      completedGenerations: generations?.filter(g => g.status === 'completed').length || 0,
-      sharedToGallery: generations?.filter(g => g.is_shared_to_gallery).length || 0,
-      generationsWithImages: generations?.filter(g => 
-        Array.isArray(g.preview_images) && g.preview_images.length > 0
-      ).length || 0,
+      totalProjects: projects.length,
+      totalGenerations: generations.length,
+      completedGenerations: generations.filter((g) => g.status === 'completed').length,
+      sharedToGallery: generations.filter((g) => g.isSharedToGallery).length,
+      generationsWithImages: generations.filter(
+        (g) => Array.isArray(g.previewImages) && (g.previewImages as string[]).length > 0
+      ).length,
     };
 
     return NextResponse.json({
-      userId: user.id,
+      userId,
       stats,
-      projects: projects || [],
-      generations: generations || [],
+      projects,
+      generations,
     });
   } catch (error) {
     console.error('数据检查失败:', error);

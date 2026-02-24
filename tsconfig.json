@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "es6"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es6"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -20,12 +24,24 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./app/*"],
-      "@/components/*": ["./app/components/*"],
-      "@/hooks/*": ["./app/hooks/*"],
-      "@/lib/*": ["./app/lib/*"],
-      "@/types/*": ["./app/types/*"],
-      "@/contexts/*": ["./app/contexts/*"]
+      "@/*": [
+        "./app/*"
+      ],
+      "@/components/*": [
+        "./app/components/*"
+      ],
+      "@/hooks/*": [
+        "./app/hooks/*"
+      ],
+      "@/lib/*": [
+        "./app/lib/*"
+      ],
+      "@/types/*": [
+        "./app/types/*"
+      ],
+      "@/contexts/*": [
+        "./app/contexts/*"
+      ]
     }
   },
   "include": [
@@ -35,6 +51,7 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "scripts"
   ]
 }

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface IdentifyResult {
   index: number;
@@ -37,24 +36,16 @@ export function useImageIdentification(): UseImageIdentificationReturn {
     setError(null);
 
     try {
-      // 获取当前会话
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error('未登录，无法进行图片识别');
-      }
-
-      // 调用识别 API
       const response = await fetch('/api/identify-image', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ images }),
       });
+
+      if (response.status === 401) {
+        throw new Error('未登录，无法进行图片识别');
+      }
 
       if (!response.ok) {
         const errorData = await response.json();

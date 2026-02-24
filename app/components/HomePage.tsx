@@ -77,7 +77,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold text-navy">多场景支持</h3>
-                    <p className="text-sm text-stone">婚纱、证件、艺术、动漫等多种风格</p>
+                    <p className="text-sm text-stone">婚礼、证件、艺术、动漫等多种风格</p>
                   </div>
                 </div>
                 <div className="flex gap-3 items-start p-4 rounded-xl border backdrop-blur-sm bg-ivory/50 border-stone/10">

@@ -1,16 +1,44 @@
-import { createClient } from '@supabase/supabase-js';
 import { GenerateImageSchema, validateData } from '@/lib/validations';
+import { requireAuth } from '@/lib/auth-api';
+import { prisma } from '@/lib/prisma';
 import type { ModelConfig } from '@/types/model-config';
+import { ModelConfigType } from '../../../generated/prisma/enums';
 
-// 使用 Edge Runtime 以支持流式响应
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 // 从环境变量读取配置（作为回退）
-const ENV_IMAGE_API_BASE_URL = process.env.IMAGE_API_BASE_URL 
+const ENV_IMAGE_API_BASE_URL = process.env.IMAGE_API_BASE_URL;
 const ENV_IMAGE_API_KEY = process.env.IMAGE_API_KEY;
 const ENV_IMAGE_CHAT_MODEL = process.env.IMAGE_CHAT_MODEL || 'gemini-2.5-flash-image';
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+/**
+ * 从数据库获取激活的模型配置
+ */
+async function getActiveModelConfig(): Promise<ModelConfig | null> {
+  try {
+    const config = await prisma.modelConfig.findFirst({
+      where: { type: ModelConfigType.generate_image, status: 'active' },
+    });
+    if (!config) return null;
+    return {
+      id: config.id,
+      type: config.type as ModelConfig['type'],
+      name: config.name,
+      api_base_url: config.apiBaseUrl,
+      api_key: config.apiKey,
+      model_name: config.modelName,
+      status: config.status as ModelConfig['status'],
+      source: config.source as ModelConfig['source'],
+      description: config.description ?? undefined,
+      created_at: config.createdAt.toISOString(),
+      updated_at: config.updatedAt.toISOString(),
+      created_by: config.createdBy ?? undefined,
+    };
+  } catch (err) {
+    console.error('获取激活配置异常:', err);
+    return null;
+  }
+}
 
 /**
  * 将 URL 转换为 base64 格式的 Data URL
@@ -37,36 +65,6 @@ async function convertUrlToBase64(url: string): Promise<string> {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     throw new Error(`Failed to convert URL to base64: ${message}`);
-  }
-}
-
-/**
- * 从数据库获取激活的模型配置
- * 如果没有激活配置，返回 null（使用环境变量回退）
- */
-async function getActiveModelConfig(supabase: unknown): Promise<ModelConfig | null> {
-  try {
-    const client = supabase as ReturnType<typeof createClient>;
-    const { data, error } = await client
-      .from('model_configs')
-      .select('*')
-      .eq('type', 'generate-image')
-      .eq('status', 'active')
-      .single();
-
-    if (error) {
-      // 如果没有找到配置（PGRST116），返回 null
-      if (error.code === 'PGRST116') {
-        return null;
-      }
-      console.error('查询激活配置失败:', error);
-      return null;
-    }
-
-    return data as ModelConfig;
-  } catch (err) {
-    console.error('获取激活配置异常:', err);
-    return null;
   }
 }
 
@@ -109,43 +107,14 @@ export async function POST(req: Request) {
   console.log(`[${requestId}] ========== 开始处理流式图片生成请求 ==========`);
   
   try {
-    // 1) 认证校验
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      console.error(`[${requestId}] ❌ Supabase 环境变量未配置`);
-      return new Response(
-        JSON.stringify({ error: 'Server misconfigured: Supabase env missing' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
-    console.log(`[${requestId}] 认证 Header:`, authHeader ? `Bearer ${authHeader.split(' ')[1]?.substring(0, 20)}...` : 'missing');
-    
-    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
-      console.error(`[${requestId}] ❌ 未提供认证 Token`);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-    const token = authHeader.split(' ')[1];
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await supabase.auth.getUser();
-    if (userErr || !userData?.user) {
-      console.error(`[${requestId}] ❌ 用户认证失败:`, userErr);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    console.log(`[${requestId}] ✅ 用户认证成功: ${userData.user.id}`);
+    // 1) 认证校验（NextAuth session from cookies）
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
+    const userId = authResult.user.id;
+    console.log(`[${requestId}] ✅ 用户认证成功: ${userId}`);
 
     // 2) 获取模型配置（优先从数据库，回退到环境变量）
-    const dbConfig = await getActiveModelConfig(supabase);
+    const dbConfig = await getActiveModelConfig();
     
     let IMAGE_API_BASE_URL: string;
     let IMAGE_API_KEY: string;
@@ -180,7 +149,6 @@ export async function POST(req: Request) {
     }
 
     // 3) 速率限制
-    const userId = userData.user.id;
     const now = Date.now();
     const rec = rateBucket.get(userId);
     if (!rec || now - rec.windowStart >= RL_WINDOW_MS) {

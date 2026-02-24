@@ -145,7 +145,7 @@ export function ProjectDetailModal({
                       </div>
                       <div>
                         <h4 className="font-medium text-navy">{project.template.name}</h4>
-                        <p className="text-sm text-stone">AI 婚纱照模板</p>
+                        <p className="text-sm text-stone">AI 图片模板</p>
                       </div>
                     </div>
                   </div>

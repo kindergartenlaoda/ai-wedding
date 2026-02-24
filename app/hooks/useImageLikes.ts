@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export function useImageLikes(generationId?: string, imageType: 'preview' | 'high_res' = 'preview') {
@@ -19,14 +18,14 @@ export function useImageLikes(generationId?: string, imageType: 'preview' | 'hig
       setLoading(true);
       setError(null);
       try {
-        const { data, error } = await supabase
-          .from('image_likes')
-          .select('image_index')
-          .eq('generation_id', generationId)
-          .eq('image_type', imageType);
-        if (error) throw error;
+        const res = await fetch(
+          `/api/image-likes?generationId=${encodeURIComponent(generationId)}&imageType=${imageType}`,
+          { credentials: 'include' }
+        );
+        if (!res.ok) throw new Error('获取失败');
+        const json = await res.json();
         if (!active) return;
-        setLiked(new Set((data || []).map((r) => r.image_index)));
+        setLiked(new Set((json.data || []) as number[]));
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : '获取收藏失败');
@@ -35,15 +34,12 @@ export function useImageLikes(generationId?: string, imageType: 'preview' | 'hig
       }
     }
     fetchLikes();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [user, generationId, imageType]);
 
   const toggleLike = useCallback(
     async (index: number) => {
       if (!user || !generationId) {
-        // 未登录或无生成ID：仅本地切换
         setLiked((prev) => {
           const next = new Set(prev);
           if (next.has(index)) next.delete(index);
@@ -58,20 +54,19 @@ export function useImageLikes(generationId?: string, imageType: 'preview' | 'hig
       else optimistic.add(index);
       setLiked(optimistic);
       try {
-        if (has) {
-          const { error } = await supabase
-            .from('image_likes')
-            .delete()
-            .match({ generation_id: generationId, user_id: user.id, image_index: index, image_type: imageType });
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from('image_likes')
-            .insert({ generation_id: generationId, user_id: user.id, image_index: index, image_type: imageType });
-          if (error) throw error;
-        }
+        const res = await fetch('/api/image-likes', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            generationId,
+            imageIndex: index,
+            imageType,
+            action: has ? 'remove' : 'add',
+          }),
+        });
+        if (!res.ok) throw new Error('更新失败');
       } catch (err) {
-        // 失败回滚
         setLiked(liked);
         setError(err instanceof Error ? err.message : '更新收藏失败');
       }

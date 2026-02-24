@@ -3,7 +3,6 @@
  * 参考 example/image-edit-demo.html 实现
  */
 
-import { supabase } from '@/lib/supabase';
 import type { StreamImageOptions, StreamImageResult } from '@/types/image';
 
 /**
@@ -23,16 +22,6 @@ export async function generateImageStream(
 
   onStatus?.('connecting');
 
-  // 从 Supabase 获取会话 token
-  const { data: sessionData } = await supabase.auth.getSession();
-  const accessToken = sessionData?.session?.access_token;
-
-  if (!accessToken) {
-    onStatus?.('error');
-    throw new Error('未登录或会话已过期');
-  }
-
-  // 构建请求体
   const requestBody = {
     prompt,
     image_inputs: imageInputs,
@@ -40,15 +29,17 @@ export async function generateImageStream(
     model,
   };
 
-  // 调用我们的 API 路由（避免暴露 API Key）
   const response = await fetch('/api/generate-stream', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(requestBody),
   });
+
+  if (response.status === 401) {
+    onStatus?.('error');
+    throw new Error('未登录或会话已过期');
+  }
 
   if (!response.ok) {
     onStatus?.('error');

@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Plus, Edit, Trash2, Eye, EyeOff, Copy } from 'lucide-react';
 import type { Template } from '@/types/database';
-import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -34,20 +33,14 @@ export default function AdminTemplatesPage() {
       setIsLoading(true);
       setError(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch('/api/admin/templates', {
+        credentials: 'include',
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch('/api/admin/templates', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
 
       if (!response.ok) {
         if (response.status === 403) {
@@ -82,21 +75,15 @@ export default function AdminTemplatesPage() {
     }
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch(`/api/admin/templates/${templateId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch(`/api/admin/templates/${templateId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
 
       if (!response.ok) {
         throw new Error('删除模板失败');
@@ -111,23 +98,17 @@ export default function AdminTemplatesPage() {
 
   const toggleActive = async (template: Template) => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch(`/api/admin/templates/${template.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !template.is_active }),
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch(`/api/admin/templates/${template.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ is_active: !template.is_active }),
-      });
 
       if (!response.ok) {
         throw new Error('更新模板失败');
@@ -143,21 +124,10 @@ export default function AdminTemplatesPage() {
   // 复制模板：创建一份副本并跳转到编辑页
   const duplicateTemplate = async (template: Template) => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        router.push('/');
-        return;
-      }
-
       const response = await fetch('/api/admin/templates', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: `${template.name}（副本）`,
           description: template.description || '',
@@ -171,6 +141,10 @@ export default function AdminTemplatesPage() {
         }),
       });
 
+      if (response.status === 401) {
+        router.push('/');
+        return;
+      }
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         throw new Error(err?.error || '复制模板失败');
@@ -191,8 +165,9 @@ export default function AdminTemplatesPage() {
 
   // 计算提示词数量（仅展示用）
   const getPromptCount = (t: Template) => {
-    const anyT = t as any;
-    const list: string[] = Array.isArray(anyT?.prompt_list) ? anyT.prompt_list : [];
+    const list: string[] = Array.isArray((t as { prompt_list?: string[] })?.prompt_list)
+      ? (t as { prompt_list: string[] }).prompt_list
+      : [];
     if (list.length > 0) return list.length;
     if (t.prompt_config?.basePrompt && t.prompt_config.basePrompt.trim().length > 0) return 1;
     return 1;

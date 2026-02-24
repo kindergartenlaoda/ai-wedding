@@ -12,14 +12,14 @@ export function generateShareText(options: ShareCardOptions): string {
   const inviteTail = inviteCode ? `\n🎁 邀请码：${inviteCode}（新用户有礼）` : '';
   const linkTail = siteUrl ? `\n🔗 体验链接：${siteUrl}${inviteCode ? `?inv=${inviteCode}` : ''}` : '';
 
-  return `✨ 我用AI婚纱照生成了${imageCount}张${templateName}风格的婚纱照！
+  return `✨ 我用AI 图片生成创作了${imageCount}张${templateName}风格的作品！
 
 📸 项目：${projectName}
 🎨 风格：${templateName}
 💝 效果超赞，快来试试吧！
 ${inviteTail}${linkTail}
 
-#AI婚纱照 #婚纱摄影 #AI生成`;
+#AI图片生成 #AI生成`;
 }
 
 /**
@@ -174,7 +174,7 @@ export async function generateShareCardImage(opts: ShareCardOptions): Promise<st
   // 标题
   ctx.fillStyle = '#0b1220';
   ctx.font = '700 44px Cormorant, serif';
-  ctx.fillText('AI婚纱照', cardX + 32, cardY + 64);
+  ctx.fillText('AI 图片生成', cardX + 32, cardY + 64);
 
   // 项目名 + 模板
   ctx.font = '600 24px Inter, system-ui, -apple-system, sans-serif';
@@ -209,7 +209,7 @@ export async function generateShareCardImage(opts: ShareCardOptions): Promise<st
   ctx.fill();
   ctx.fillStyle = '#fff';
   ctx.font = '700 18px Inter, system-ui, -apple-system, sans-serif';
-  ctx.fillText('立即生成你的婚纱照', bx + 16, by + 28);
+  ctx.fillText('立即生成你的作品', bx + 16, by + 28);
 
   return canvas.toDataURL('image/jpeg', 0.95);
 }

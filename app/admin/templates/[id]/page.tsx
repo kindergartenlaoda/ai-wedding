@@ -6,7 +6,6 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { TemplateForm } from '@/components/admin/TemplateForm';
 import type { Template } from '@/types/database';
 import type { TemplateFormInput } from '@/types/admin';
-import { supabase } from '@/lib/supabase';
 
 export default function EditTemplatePage() {
   const router = useRouter();
@@ -22,20 +21,14 @@ export default function EditTemplatePage() {
       setIsLoading(true);
       setError(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch('/api/admin/templates', {
+        credentials: 'include',
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch('/api/admin/templates', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
 
       if (!response.ok) {
         throw new Error('加载模板失败');
@@ -63,23 +56,17 @@ export default function EditTemplatePage() {
   }, [loadTemplate]);
 
   const handleSubmit = async (data: TemplateFormInput) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const response = await fetch(`/api/admin/templates/${templateId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
 
-    if (!session) {
+    if (response.status === 401) {
       router.push('/');
       return;
     }
-
-    const response = await fetch(`/api/admin/templates/${templateId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify(data),
-    });
 
     if (!response.ok) {
       const error = await response.json();

@@ -46,7 +46,7 @@ export default function Page({ params }: { params: { id: string } }) {
               <Lock className="w-8 h-8 text-dusty-rose" />
             </div>
             <h1 className="text-2xl font-display font-medium text-navy mb-2">需要登录才能查看生成结果</h1>
-            <p className="text-stone mb-8">请登录或创建账号后继续查看与管理您的婚纱照。</p>
+            <p className="text-stone mb-8">请登录或创建账号后继续查看与管理您的作品。</p>
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={() => setShowAuth(true)}

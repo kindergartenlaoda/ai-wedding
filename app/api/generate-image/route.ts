@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { GenerateImageSchema, validateData } from '@/lib/validations';
+import { requireAuth } from '@/lib/auth-api';
 
 type ChatContentItem =
   | { type: 'text'; text: string }
   | { type: 'image_url'; image_url: { url: string } };
 
-// 可选：如需运行在 Edge 环境，取消注释
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 // 从环境变量读取配置（服务端安全，不以 NEXT_PUBLIC_ 开头）
 // 兼容两套命名：优先使用 IMAGE_*，否则回退到 OPENAI_*
@@ -18,8 +17,6 @@ const IMAGE_IMAGE_MODEL = process.env.IMAGE_IMAGE_MODEL || process.env.OPENAI_IM
 const IMAGE_CHAT_MODEL = process.env.IMAGE_CHAT_MODEL || IMAGE_IMAGE_MODEL || 'gemini-2.5-flash-image';
 // 控制调用后端：'images'（默认，/v1/images/generations）或 'chat'（/v1/chat/completions 并从 Markdown 中提取 Base64 图片）
 const IMAGE_API_MODE = (process.env.IMAGE_API_MODE || 'images').toLowerCase();
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // 简单用户级限流：每个用户ID在时间窗内最多请求 N 次
 const RL_WINDOW_MS = 60 * 1000; // 1分钟
@@ -39,7 +36,6 @@ export async function POST(req: Request) {
       IMAGE_API_BASE_URL,
       IMAGE_API_KEY: IMAGE_API_KEY ? `${IMAGE_API_KEY.substring(0, 10)}...` : 'missing',
       IMAGE_CHAT_MODEL,
-      SUPABASE_URL,
     });
 
     if (!IMAGE_API_KEY) {
@@ -50,34 +46,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1) 认证校验：要求前端携带 Supabase 会话 token（Authorization: Bearer <token>）
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      console.error(`[${requestId}] ❌ Supabase 环境变量未配置`);
-      return NextResponse.json({ error: 'Server misconfigured: Supabase env missing' }, { status: 500 });
-    }
-
-    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
-    console.log(`[${requestId}] 认证 Header:`, authHeader ? `Bearer ${authHeader.split(' ')[1]?.substring(0, 20)}...` : 'missing');
-    
-    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
-      console.error(`[${requestId}] ❌ 未提供认证 Token`);
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const token = authHeader.split(' ')[1];
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await supabase.auth.getUser();
-    if (userErr || !userData?.user) {
-      console.error(`[${requestId}] ❌ 用户认证失败:`, userErr);
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    console.log(`[${requestId}] ✅ 用户认证成功: ${userData.user.id}`);
+    // 1) 认证校验（NextAuth session from cookies）
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
+    const userId = authResult.user.id;
+    console.log(`[${requestId}] ✅ 用户认证成功: ${userId}`);
 
     // 2) 速率限制（按用户维度）
-    const userId = userData.user.id;
     const now = Date.now();
     const rec = rateBucket.get(userId);
     if (!rec || now - rec.windowStart >= RL_WINDOW_MS) {
@@ -252,7 +227,7 @@ export async function POST(req: Request) {
 
       // 将生成结果上传到对象存储，并返回 URL
       const origin = new URL(req.url).origin;
-      const token = authHeader.split(' ')[1];
+      const cookieHeader = req.headers.get('cookie') || '';
       const folder = `single-shot/${Date.now()}`;
 
       const uploaded: string[] = [];
@@ -264,7 +239,7 @@ export async function POST(req: Request) {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
+              Cookie: cookieHeader,
             },
             body: JSON.stringify({ image: dataUrl, folder }),
           });
@@ -353,7 +328,7 @@ export async function POST(req: Request) {
 
       // 将上游的 b64_json 转为 dataURL 并上传到对象存储
       const origin = new URL(req.url).origin;
-      const token = authHeader.split(' ')[1];
+      const cookieHeader = req.headers.get('cookie') || '';
       const folder = `single-shot/${Date.now()}`;
 
       const uploaded: string[] = [];
@@ -372,7 +347,7 @@ export async function POST(req: Request) {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
+              Cookie: cookieHeader,
             },
             body: JSON.stringify({ image: dataUrl, folder }),
           });

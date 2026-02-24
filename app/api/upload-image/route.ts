@@ -1,35 +1,20 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { uploadDataUrlImage, uploadImage } from '@/lib/minio-client';
+import { getSessionUser } from '@/lib/auth-api';
 
-// 使用 Node.js 运行时（MinIO SDK 需要 Node.js 环境）
 export const runtime = 'nodejs';
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function POST(req: Request) {
   const requestId = `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   console.log(`[${requestId}] ========== 开始处理图片上传请求 ==========`);
 
   try {
-    // 1) 可选的认证校验（如果需要限制只有登录用户才能上传）
-    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-      const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
-      
-      if (authHeader?.toLowerCase().startsWith('bearer ')) {
-        const token = authHeader.split(' ')[1];
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          global: { headers: { Authorization: `Bearer ${token}` } },
-        });
-        
-        const { data: userData, error: userErr } = await supabase.auth.getUser();
-        if (userErr || !userData?.user) {
-          console.log(`[${requestId}] ⚠️ 认证失败，但允许匿名上传`);
-        } else {
-          console.log(`[${requestId}] ✅ 用户认证成功: ${userData.user.id}`);
-        }
-      }
+    // 1) 可选的认证校验（从 NextAuth session/cookies）
+    const user = await getSessionUser();
+    if (user) {
+      console.log(`[${requestId}] ✅ 用户认证成功: ${user.id}`);
+    } else {
+      console.log(`[${requestId}] ⚠️ 未登录，允许匿名上传`);
     }
 
     // 2) 解析请求体

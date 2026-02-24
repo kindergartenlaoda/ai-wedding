@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useImageIdentification } from './useImageIdentification';
 import { ImageUploadState } from '@/components/GenerateSinglePage/types';
 
@@ -23,18 +22,10 @@ export function useImageUpload({ user, onError, onSuccess }: UseImageUploadProps
 
   const uploadImageToMinio = async (dataUrl: string): Promise<void> => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        console.warn('未登录，跳过上传到 MinIO');
-        return;
-      }
-
       const response = await fetch('/api/upload-image', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           image: dataUrl,
           folder: 'generate-single/uploads',

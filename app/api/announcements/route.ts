@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+import { prisma } from '@/lib/prisma';
 
 /**
  * GET /api/announcements
@@ -10,26 +7,10 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
  * 此接口无需身份验证，所有用户均可访问
  */
 export async function GET() {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const announcement = await prisma.systemAnnouncement.findFirst({
+    where: { isActive: true },
+    orderBy: { publishedAt: 'desc' },
+  });
 
-  const { data, error } = await supabase
-    .from('system_announcements')
-    .select('*')
-    .eq('is_active', true)
-    .order('published_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  // 如果没有激活的公告，返回 null
-  return NextResponse.json({ announcement: data || null });
+  return NextResponse.json({ announcement: announcement || null });
 }
-
-
-
-
-
-

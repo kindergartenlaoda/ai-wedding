@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { ImageGenerationSettings, GenerationState } from '@/components/GenerateSinglePage/types';
 import type { ModelConfigSource } from '@/types/model-config';
@@ -49,18 +48,10 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
     settings: ImageGenerationSettings
   ): Promise<void> => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        console.warn('未登录，跳过上传生成图片到 MinIO');
-        return;
-      }
-
       const response = await fetch('/api/upload-image', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           image: imageDataUrl,
           folder: 'generate-single/results',
@@ -87,10 +78,8 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
             try {
               const uploadResponse = await fetch('/api/upload-image', {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${session.access_token}`,
-                },
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   image: originalImage,
                   folder: 'generate-single/uploads',
@@ -109,22 +98,24 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
             }
           }
 
-          const { error: dbError } = await supabase
-            .from('single_generations')
-            .insert({
-              user_id: user.id,  // 从 AuthContext 获取，避免额外 API 调用
-              prompt: prompt,
-              original_image: originalImageUrl,  // 使用 MinIO URL
+          const saveRes = await fetch('/api/single-generations', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt,
+              original_image: originalImageUrl,
               result_image: resultImageUrl,
               settings: {
                 facePreservation: settings.facePreservation,
                 creativityLevel: settings.creativityLevel,
               },
               credits_used: 15,
-            });
+            }),
+          });
 
-          if (dbError) {
-            console.warn('保存生成记录到数据库失败（不影响主流程）:', dbError);
+          if (!saveRes.ok) {
+            console.warn('保存生成记录到数据库失败（不影响主流程）');
           } else {
             console.log('生成记录已保存到数据库');
           }
@@ -169,11 +160,6 @@ SPECIFIC EDITING REQUEST: ${prompt}
 Please focus your modifications ONLY on the user's specific requirements while strictly following the face preservation guidelines above. Generate a high-quality edited image that maintains facial identity.`;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('未登录，请先登录');
-      }
-
       // 根据创意程度映射 temperature 和 top_p 参数
       let temperature = 0.2;
       let topP = 0.7;
@@ -190,10 +176,8 @@ Please focus your modifications ONLY on the user's specific requirements while s
 
       const response = await fetch('/api/generate-single', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: enhancedPrompt,
           image_inputs: [originalImage],
@@ -356,9 +340,9 @@ Please focus your modifications ONLY on the user's specific requirements while s
                     break;
                   }
                 }
-              }
             }
-          } catch (e) {
+          }
+          } catch {
             // 不是JSON格式，继续尝试Markdown格式
           }
         }

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
 import type { ModelConfigSource } from '@/types/model-config';
 
 export interface UseAvailableSourcesResult {
@@ -29,21 +28,15 @@ export function useAvailableSources(): UseAvailableSourcesResult {
       setLoading(true);
       setError(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch('/api/model-sources/available', {
+        credentials: 'include',
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         setError('未登录');
         setSources([]);
         return;
       }
-
-      const response = await fetch('/api/model-sources/available', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
 
       if (!response.ok) {
         const errorData = await response.json();

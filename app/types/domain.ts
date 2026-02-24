@@ -34,8 +34,8 @@ export interface DomainInfo {
 export const DOMAIN_CONFIG: Record<GenerationDomain, DomainInfo> = {
   wedding: {
     id: 'wedding',
-    name: '婚纱照',
-    description: '浪漫婚纱照，多种场景风格',
+    name: '婚礼照片',
+    description: '浪漫婚礼照片，多种场景风格',
     icon: Camera,
     color: 'from-pink-500 to-rose-500',
   },

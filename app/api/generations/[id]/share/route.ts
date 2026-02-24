@@ -1,49 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { requireAuth } from '@/lib/auth-api';
+import { prisma } from '@/lib/prisma';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const { isShared } = await request.json();
 
-    // 验证用户身份
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: '未提供认证信息' },
-        { status: 401 }
-      );
-    }
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
+    const userId = authResult.user.id;
 
-    // 从 Supabase 获取用户信息
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const generation = await prisma.generation.findUnique({
+      where: { id },
+      select: { userId: true, status: true },
+    });
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: '认证失败' },
-        { status: 401 }
-      );
-    }
-
-    // 验证生成记录是否属于当前用户
-    const { data: generation, error: fetchError } = await supabase
-      .from('generations')
-      .select('user_id, status')
-      .eq('id', id)
-      .single();
-
-    if (fetchError || !generation) {
+    if (!generation) {
       return NextResponse.json(
         { error: '生成记录不存在' },
         { status: 404 }
       );
     }
 
-    if (generation.user_id !== user.id) {
+    if (generation.userId !== userId) {
       return NextResponse.json(
         { error: '无权限操作此记录' },
         { status: 403 }
@@ -57,19 +40,10 @@ export async function PATCH(
       );
     }
 
-    // 更新分享状态
-    const { error: updateError } = await supabase
-      .from('generations')
-      .update({ is_shared_to_gallery: isShared })
-      .eq('id', id);
-
-    if (updateError) {
-      console.error('更新分享状态失败:', updateError);
-      return NextResponse.json(
-        { error: '更新分享状态失败' },
-        { status: 500 }
-      );
-    }
+    await prisma.generation.update({
+      where: { id },
+      data: { isSharedToGallery: isShared },
+    });
 
     return NextResponse.json({
       success: true,

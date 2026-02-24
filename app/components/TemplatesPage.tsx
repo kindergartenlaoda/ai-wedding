@@ -54,7 +54,7 @@ export function TemplatesPage({ onNavigate }: TemplatesPageProps) {
             选择您完美的
             <span className="text-dusty-rose"> 风格</span>
           </h1>
-          <p className="text-xl text-stone">浏览我们令人惊叹的婚纱照模板集合</p>
+          <p className="text-xl text-stone">浏览我们令人惊叹的模板集合</p>
         </div>
 
         <div className="mb-8">

@@ -1,18 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
 import { GenerateImageSchema, validateData } from '@/lib/validations';
+import { requireAuth } from '@/lib/auth-api';
+import { prisma } from '@/lib/prisma';
 import type { ModelConfig } from '@/types/model-config';
+import { ModelConfigType } from '../../../generated/prisma/enums';
 
-// 使用 Edge Runtime 以支持流式响应
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
-// 从环境变量读取配置（作为回退）
-const ENV_IMAGE_API_BASE_URL = process.env.IMAGE_API_BASE_URL 
+const ENV_IMAGE_API_BASE_URL = process.env.IMAGE_API_BASE_URL;
 const ENV_IMAGE_API_KEY = process.env.IMAGE_API_KEY;
 const ENV_IMAGE_CHAT_MODEL = process.env.IMAGE_CHAT_MODEL || 'gemini-2.5-flash-image';
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// 单次生成消耗的积分
 const CREDITS_PER_GENERATION = 15;
 
 /**
@@ -43,41 +40,32 @@ async function convertUrlToBase64(url: string): Promise<string> {
   }
 }
 
-/**
- * 从数据库获取激活的模型配置
- * 如果没有激活配置，返回 null（使用环境变量回退）
- * @param supabase Supabase client
- * @param source 可选的模型来源，如果指定则查询该来源的配置
- */
-async function getActiveModelConfig(
-  supabase: unknown,
-  source?: string
-): Promise<ModelConfig | null> {
+async function getActiveModelConfig(source?: string): Promise<ModelConfig | null> {
   try {
-    const client = supabase as ReturnType<typeof createClient>;
-    let query = client
-      .from('model_configs')
-      .select('*')
-      .eq('type', 'generate-image')
-      .eq('status', 'active');
-
-    // 如果指定了 source，则查询对应 source 的配置
-    if (source) {
-      query = query.eq('source', source);
-    }
-
-    const { data, error } = await query.single();
-
-    if (error) {
-      // 如果没有找到配置（PGRST116），返回 null
-      if (error.code === 'PGRST116') {
-        return null;
-      }
-      console.error('查询激活配置失败:', error);
-      return null;
-    }
-
-    return data as ModelConfig;
+    const sourceMap = { openRouter: 'openRouter' as const, openAi: 'openAi' as const, '302': 'source_302' as const };
+    const prismaSource = source && sourceMap[source as keyof typeof sourceMap] ? sourceMap[source as keyof typeof sourceMap] : undefined;
+    const config = await prisma.modelConfig.findFirst({
+      where: {
+        type: ModelConfigType.generate_image,
+        status: 'active',
+        ...(prismaSource && { source: prismaSource }),
+      },
+    });
+    if (!config) return null;
+    return {
+      id: config.id,
+      type: config.type as ModelConfig['type'],
+      name: config.name,
+      api_base_url: config.apiBaseUrl,
+      api_key: config.apiKey,
+      model_name: config.modelName,
+      status: config.status as ModelConfig['status'],
+      source: config.source as ModelConfig['source'],
+      description: config.description ?? undefined,
+      created_at: config.createdAt.toISOString(),
+      updated_at: config.updatedAt.toISOString(),
+      created_by: config.createdBy ?? undefined,
+    };
   } catch (err) {
     console.error('获取激活配置异常:', err);
     return null;
@@ -120,39 +108,9 @@ export async function POST(req: Request) {
 
   try {
     // 1) 认证校验
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      console.error(`[${requestId}] ❌ Supabase 环境变量未配置`);
-      return new Response(
-        JSON.stringify({ error: 'Server misconfigured: Supabase env missing' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
-    console.log(`[${requestId}] 认证 Header:`, authHeader ? `Bearer ${authHeader.split(' ')[1]?.substring(0, 20)}...` : 'missing');
-
-    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
-      console.error(`[${requestId}] ❌ 未提供认证 Token`);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-    const token = authHeader.split(' ')[1];
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await supabase.auth.getUser();
-    if (userErr || !userData?.user) {
-      console.error(`[${requestId}] ❌ 用户认证失败:`, userErr);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const userId = userData.user.id;
+    const authResult = await requireAuth();
+    if (authResult instanceof Response) return authResult;
+    const userId = authResult.user.id;
     console.log(`[${requestId}] ✅ 用户认证成功: ${userId}`);
 
     // 2) 速率限制（按用户维度）
@@ -180,14 +138,13 @@ export async function POST(req: Request) {
     console.log(`[${requestId}] 速率限制检查通过: ${rec?.count || 1}/${RL_LIMIT}`);
 
     // 3) 检查用户积分
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', userId)
-      .single();
+    const profile = await prisma.profile.findUnique({
+      where: { userId },
+      select: { credits: true },
+    });
 
-    if (profileError || !profile) {
-      console.error(`[${requestId}] ❌ 获取用户信息失败:`, profileError);
+    if (!profile) {
+      console.error(`[${requestId}] ❌ 获取用户信息失败`);
       return new Response(
         JSON.stringify({ error: '无法获取用户信息' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -210,12 +167,12 @@ export async function POST(req: Request) {
     }
 
     // 4) 扣除积分
-    const { error: deductError } = await supabase
-      .from('profiles')
-      .update({ credits: profile.credits - CREDITS_PER_GENERATION })
-      .eq('id', userId);
-
-    if (deductError) {
+    try {
+      await prisma.profile.update({
+        where: { userId },
+        data: { credits: profile.credits - CREDITS_PER_GENERATION },
+      });
+    } catch (deductError) {
       console.error(`[${requestId}] ❌ 扣除积分失败:`, deductError);
       return new Response(
         JSON.stringify({ error: '扣除积分失败，请重试' }),
@@ -244,10 +201,10 @@ export async function POST(req: Request) {
     if (!validation.success) {
       console.error(`[${requestId}] ❌ 参数验证失败:`, validation.error);
       // 退还积分
-      await supabase
-        .from('profiles')
-        .update({ credits: profile.credits })
-        .eq('id', userId);
+      await prisma.profile.update({
+        where: { userId },
+        data: { credits: profile.credits },
+      });
       return new Response(
         JSON.stringify({ error: validation.error }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -257,7 +214,7 @@ export async function POST(req: Request) {
     const { prompt, image_inputs, model, source, temperature, top_p } = validation.data;
 
     // 6.5) 获取模型配置（优先从数据库，回退到环境变量）
-    const dbConfig = await getActiveModelConfig(supabase, source);
+    const dbConfig = await getActiveModelConfig(source);
 
     let IMAGE_API_BASE_URL: string;
     let IMAGE_API_KEY: string;
@@ -293,10 +250,10 @@ export async function POST(req: Request) {
     if (!IMAGE_API_KEY) {
       console.error(`[${requestId}] ❌ IMAGE_API_KEY 未配置`);
       // 退还积分
-      await supabase
-        .from('profiles')
-        .update({ credits: profile.credits })
-        .eq('id', userId);
+      await prisma.profile.update({
+        where: { userId },
+        data: { credits: profile.credits },
+      });
       return new Response(
         JSON.stringify({ error: 'Server misconfigured: IMAGE_API_KEY is missing' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -425,7 +382,7 @@ export async function POST(req: Request) {
         try {
           const errorJson = JSON.parse(errorData);
           // 递归过滤 base64 数据
-          const filterBase64 = (obj: any): any => {
+          const filterBase64 = (obj: unknown): unknown => {
             if (typeof obj === 'string' && obj.length > 1000 && /^[A-Za-z0-9+/=]+$/.test(obj.substring(0, 100))) {
               return `<可能是base64数据，长度: ${obj.length}>`;
             }
@@ -433,12 +390,13 @@ export async function POST(req: Request) {
               return obj.map(filterBase64);
             }
             if (obj && typeof obj === 'object') {
-              const filtered: any = {};
-              for (const key in obj) {
-                if (key === 'data' && typeof obj[key] === 'string' && obj[key].length > 1000) {
-                  filtered[key] = `<base64数据已省略，长度: ${obj[key].length}>`;
+              const filtered: Record<string, unknown> = {};
+              const o = obj as Record<string, unknown>;
+              for (const key in o) {
+                if (key === 'data' && typeof o[key] === 'string' && (o[key] as string).length > 1000) {
+                  filtered[key] = `<base64数据已省略，长度: ${(o[key] as string).length}>`;
                 } else {
-                  filtered[key] = filterBase64(obj[key]);
+                  filtered[key] = filterBase64(o[key]);
                 }
               }
               return filtered;
@@ -448,7 +406,7 @@ export async function POST(req: Request) {
 
           const filteredError = filterBase64(errorJson);
           errorData = JSON.stringify(filteredError, null, 2);
-        } catch (e) {
+        } catch {
           // 如果不是 JSON，保持原样（但截断过长的内容）
           if (errorData.length > 2000) {
             errorData = errorData.substring(0, 2000) + '...(已截断)';
@@ -463,10 +421,10 @@ export async function POST(req: Request) {
         });
 
         // 退还积分
-        await supabase
-          .from('profiles')
-          .update({ credits: profile.credits })
-          .eq('id', userId);
+        await prisma.profile.update({
+          where: { userId },
+          data: { credits: profile.credits },
+        });
 
         return new Response(
           JSON.stringify({ error: `API请求失败: ${upstreamResponse.status} ${errorData}` }),
@@ -478,7 +436,7 @@ export async function POST(req: Request) {
       const responseData = await upstreamResponse.json();
 
       // 打印响应数据（过滤 base64）
-      const filterBase64FromResponse = (obj: any): any => {
+      const filterBase64FromResponse = (obj: unknown): unknown => {
         if (typeof obj === 'string' && obj.length > 1000 && /^[A-Za-z0-9+/=]+$/.test(obj.substring(0, 100))) {
           return `<可能是base64数据，长度: ${obj.length}>`;
         }
@@ -486,12 +444,13 @@ export async function POST(req: Request) {
           return obj.map(filterBase64FromResponse);
         }
         if (obj && typeof obj === 'object') {
-          const filtered: any = {};
-          for (const key in obj) {
-            if ((key === 'data' || key === 'b64_json') && typeof obj[key] === 'string' && obj[key].length > 1000) {
-              filtered[key] = `<base64数据已省略，长度: ${obj[key].length}>`;
+          const filtered: Record<string, unknown> = {};
+          const o = obj as Record<string, unknown>;
+          for (const key in o) {
+            if ((key === 'data' || key === 'b64_json') && typeof o[key] === 'string' && (o[key] as string).length > 1000) {
+              filtered[key] = `<base64数据已省略，长度: ${(o[key] as string).length}>`;
             } else {
-              filtered[key] = filterBase64FromResponse(obj[key]);
+              filtered[key] = filterBase64FromResponse(o[key]);
             }
           }
           return filtered;
@@ -687,10 +646,10 @@ export async function POST(req: Request) {
 
         // 退还积分
         console.log(`[${requestId}] 🔄 退还积分: ${CREDITS_PER_GENERATION}`);
-        await supabase
-          .from('profiles')
-          .update({ credits: profile.credits })
-          .eq('id', userId);
+        await prisma.profile.update({
+          where: { userId },
+          data: { credits: profile.credits },
+        });
 
         return new Response(
           JSON.stringify({ error: `API请求失败: ${upstreamResponse.status} ${errorData}` }),
@@ -720,27 +679,18 @@ export async function POST(req: Request) {
 
     // 尝试退还积分（如果已经扣除）
     try {
-      const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
-      if (authHeader && SUPABASE_URL && SUPABASE_ANON_KEY) {
-        const token = authHeader.split(' ')[1];
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          global: { headers: { Authorization: `Bearer ${token}` } },
+      const user = await requireAuth();
+      if (!(user instanceof Response)) {
+        const prof = await prisma.profile.findUnique({
+          where: { userId: user.user.id },
+          select: { credits: true },
         });
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('credits')
-            .eq('id', userData.user.id)
-            .single();
-
-          if (profile) {
-            console.log(`[${requestId}] 🔄 异常退还积分: ${CREDITS_PER_GENERATION}`);
-            await supabase
-              .from('profiles')
-              .update({ credits: profile.credits + CREDITS_PER_GENERATION })
-              .eq('id', userData.user.id);
-          }
+        if (prof) {
+          console.log(`[${requestId}] 🔄 异常退还积分: ${CREDITS_PER_GENERATION}`);
+          await prisma.profile.update({
+            where: { userId: user.user.id },
+            data: { credits: prof.credits + CREDITS_PER_GENERATION },
+          });
         }
       }
     } catch (refundErr) {

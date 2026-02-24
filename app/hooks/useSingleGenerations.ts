@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import type { SingleGeneration } from '@/types/database';
 
@@ -26,27 +25,20 @@ export function useSingleGenerations(options: UseSingleGenerationsOptions = {}) 
 
     try {
       setLoading(true);
-      const from = pageNum * pageSize;
-      const to = from + pageSize - 1;
-
-      const { data, error: fetchError, count } = await supabase
-        .from('single_generations')
-        .select('*', { count: 'exact' })
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (fetchError) throw fetchError;
-
-      const formattedGenerations: SingleGeneration[] = data || [];
+      const res = await fetch(`/api/single-generations/list?page=${pageNum}&pageSize=${pageSize}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('获取失败');
+      const json = await res.json();
+      const data = (json.data || []) as SingleGeneration[];
 
       if (append) {
-        setGenerations(prev => [...prev, ...formattedGenerations]);
+        setGenerations((prev) => [...prev, ...data]);
       } else {
-        setGenerations(formattedGenerations);
+        setGenerations(data);
       }
 
-      setHasMore(count ? (from + pageSize) < count : false);
+      setHasMore(json.hasMore ?? false);
       setPage(pageNum);
       setError(null);
     } catch (err) {
@@ -75,15 +67,12 @@ export function useSingleGenerations(options: UseSingleGenerationsOptions = {}) 
 
   const deleteGeneration = async (id: string) => {
     try {
-      const { error: deleteError } = await supabase
-        .from('single_generations')
-        .delete()
-        .eq('id', id);
-
-      if (deleteError) throw deleteError;
-
-      // 从本地状态中移除
-      setGenerations(prev => prev.filter(gen => gen.id !== id));
+      const res = await fetch(`/api/single-generations/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('删除失败');
+      setGenerations((prev) => prev.filter((gen) => gen.id !== id));
       return true;
     } catch (err) {
       console.error('删除单张生成记录失败:', err);
@@ -102,4 +91,3 @@ export function useSingleGenerations(options: UseSingleGenerationsOptions = {}) 
     deleteGeneration,
   };
 }
-

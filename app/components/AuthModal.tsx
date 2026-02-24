@@ -69,7 +69,7 @@ export function AuthModal({ onClose }: AuthModalProps) {
             {isLogin ? '欢迎回来' : '创建账号'}
           </h2>
           <p className="mb-6 text-stone">
-            {isLogin ? '登录以访问您的项目' : '开始创作精美婚纱照'}
+            {isLogin ? '登录以访问您的项目' : '开始创作精美作品'}
           </p>
 
           <div className="flex gap-4 items-center my-6">

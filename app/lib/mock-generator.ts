@@ -7,7 +7,7 @@
 import type { MockGenerateOptions } from '@/types/image';
 
 export async function mockGenerateImages(options: MockGenerateOptions): Promise<string[]> {
-  const { input, variants = 3, watermark = 'AI婚纱照·试用' } = options;
+  const { input, variants = 3, watermark = 'AI 图片生成·试用' } = options;
   const img = await loadImage(input);
   const results: string[] = [];
 
@@ -65,7 +65,7 @@ export async function mockGenerateImages(options: MockGenerateOptions): Promise<
     ctx.fill();
     ctx.fillStyle = '#0b1220';
     ctx.font = '600 16px Inter, system-ui, -apple-system, sans-serif';
-    ctx.fillText('AI婚纱照 预览', W - badgeW - 20 + 16, H - 20 - 12);
+    ctx.fillText('AI 图片生成 预览', W - badgeW - 20 + 16, H - 20 - 12);
 
     results.push(canvas.toDataURL('image/jpeg', 0.92));
   }

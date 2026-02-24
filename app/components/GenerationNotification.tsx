@@ -67,7 +67,7 @@ export function GenerationNotification({ generationId, onComplete, onDismiss }: 
             </div>
             <p className="text-xs text-gray-500">
               {generation.status === 'pending' && '正在排队等待处理...'}
-              {generation.status === 'processing' && 'AI正在生成您的婚纱照...'}
+              {generation.status === 'processing' && 'AI正在生成您的图片...'}
             </p>
           </div>
         )}

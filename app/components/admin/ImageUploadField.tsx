@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Loader2, X } from 'lucide-react';
 import Image from 'next/image';
-import { supabase } from '@/lib/supabase';
 
 interface ImageUploadFieldProps {
   currentUrl: string;
@@ -29,19 +28,15 @@ export function ImageUploadField({ currentUrl, onUrlChange }: ImageUploadFieldPr
       const formData = new FormData();
       formData.append('file', file);
 
-      // 获取当前会话的 access_token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('未登录或会话已过期');
-      }
-
       const response = await fetch('/api/admin/upload-template-image', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        credentials: 'include',
         body: formData,
       });
+
+      if (response.status === 401) {
+        throw new Error('未登录或会话已过期');
+      }
 
       if (!response.ok) {
         const error = await response.json();

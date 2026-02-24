@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export function useFavorites() {
@@ -16,14 +15,12 @@ export function useFavorites() {
 
     async function fetchFavorites() {
       try {
-        const { data, error } = await supabase
-          .from('favorites')
-          .select('template_id');
-
-        if (error) throw error;
-
-        const favoriteIds = new Set(data?.map(f => f.template_id) || []);
-        setFavorites(favoriteIds);
+        const res = await fetch('/api/favorites', { credentials: 'include' });
+        if (res.ok) {
+          const json = await res.json();
+          const ids = (json.data || []) as string[];
+          setFavorites(new Set(ids));
+        }
       } catch (err) {
         console.error('获取收藏失败:', err);
       } finally {
@@ -44,28 +41,33 @@ export function useFavorites() {
       newFavorites.delete(templateId);
       setFavorites(newFavorites);
 
-      const { error } = await supabase
-        .from('favorites')
-        .delete()
-        .match({ user_id: user.id, template_id: templateId });
+      const res = await fetch('/api/favorites', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId, action: 'remove' }),
+      });
 
-      if (error) {
+      if (!res.ok) {
         newFavorites.add(templateId);
         setFavorites(newFavorites);
-        console.error('取消收藏失败:', error);
+        console.error('取消收藏失败');
       }
     } else {
       newFavorites.add(templateId);
       setFavorites(newFavorites);
 
-      const { error } = await supabase
-        .from('favorites')
-        .insert({ user_id: user.id, template_id: templateId });
+      const res = await fetch('/api/favorites', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId, action: 'add' }),
+      });
 
-      if (error) {
+      if (!res.ok) {
         newFavorites.delete(templateId);
         setFavorites(newFavorites);
-        console.error('添加收藏失败:', error);
+        console.error('添加收藏失败');
       }
     }
   };

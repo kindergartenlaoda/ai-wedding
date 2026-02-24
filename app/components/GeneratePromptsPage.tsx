@@ -48,7 +48,7 @@ export function GeneratePromptsPage() {
         clearPrompts();
       };
       reader.readAsDataURL(file);
-    } catch (err) {
+    } catch {
       setError('图片读取失败，请重试');
     }
   };
@@ -112,10 +112,10 @@ export function GeneratePromptsPage() {
           </div>
           <h1 className="mb-4 text-4xl font-medium md:text-5xl font-display text-navy">
             智能生成
-            <span className="text-dusty-rose"> 婚纱照风格方案</span>
+            <span className="text-dusty-rose"> 风格方案</span>
           </h1>
           <p className="mb-6 text-xl text-stone">
-            上传参考图片，AI 为您生成 5 个专业的婚纱照风格方案
+            上传参考图片，AI 为您生成 5 个专业的风格方案
           </p>
         </div>
 
@@ -125,7 +125,7 @@ export function GeneratePromptsPage() {
             <div className="p-8 rounded-xl border shadow-sm backdrop-blur-md bg-ivory/50 border-stone/10">
               <h2 className="mb-4 text-2xl font-medium font-display text-navy">上传参考图片</h2>
               <p className="mb-6 text-sm text-stone">
-                上传一张您喜欢的婚纱照风格图片，AI 将分析并生成相似风格的拍摄方案
+                上传一张您喜欢的风格参考图片，AI 将分析并生成相似风格的拍摄方案
               </p>
 
               {/* 上传区域 */}
@@ -215,7 +215,7 @@ export function GeneratePromptsPage() {
             <div className="p-8 rounded-xl border shadow-sm backdrop-blur-md bg-ivory/50 border-stone/10">
               <h2 className="mb-4 text-2xl font-medium font-display text-navy">生成的风格方案</h2>
               <p className="mb-6 text-sm text-stone">
-                选择一个风格方案，在新窗口中生成婚纱照
+                选择一个风格方案，在新窗口中生成图片
               </p>
 
               {prompts.length === 0 && !isGenerating && (

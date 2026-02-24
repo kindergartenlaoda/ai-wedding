@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
 import { Megaphone, Save, Trash2, AlertCircle } from 'lucide-react';
 import type { SystemAnnouncement } from '@/types/database';
 
@@ -30,20 +29,14 @@ export default function AdminAnnouncementsPage() {
       setIsLoading(true);
       setError(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch('/api/admin/announcements', {
+        credentials: 'include',
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch('/api/admin/announcements', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
 
       if (!response.ok) {
         if (response.status === 403) {
@@ -87,15 +80,6 @@ export default function AdminAnnouncementsPage() {
     setSuccess(null);
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        router.push('/');
-        return;
-      }
-
       const isUpdate = formData.id && announcements.some(a => a.id === formData.id);
       const method = isUpdate ? 'PUT' : 'POST';
       const url = '/api/admin/announcements';
@@ -115,12 +99,15 @@ export default function AdminAnnouncementsPage() {
 
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       });
+
+      if (response.status === 401) {
+        router.push('/');
+        return;
+      }
 
       if (!response.ok) {
         const data = await response.json();
@@ -142,21 +129,15 @@ export default function AdminAnnouncementsPage() {
     if (!confirm('确定要删除此公告吗？')) return;
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const response = await fetch(`/api/admin/announcements?id=${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
 
-      if (!session) {
+      if (response.status === 401) {
         router.push('/');
         return;
       }
-
-      const response = await fetch(`/api/admin/announcements?id=${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
 
       if (!response.ok) {
         throw new Error('删除失败');
