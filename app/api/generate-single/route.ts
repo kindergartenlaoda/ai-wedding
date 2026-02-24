@@ -274,7 +274,7 @@ export async function POST(req: Request) {
       } else {
         console.log(`[${requestId}] ⚠️ 未找到激活的数据库配置，使用环境变量回退`);
       }
-      IMAGE_API_BASE_URL = ENV_IMAGE_API_BASE_URL;
+      IMAGE_API_BASE_URL = ENV_IMAGE_API_BASE_URL || '';
       IMAGE_API_KEY = ENV_IMAGE_API_KEY || '';
       IMAGE_CHAT_MODEL = ENV_IMAGE_CHAT_MODEL;
     }
