@@ -1,0 +1,214 @@
+{
+  "timestamp": "2026-02-24T14:27:17+08:00",
+  "project": "ai-wedding",
+  "description": "Multi-domain AI image generation platform",
+  "techStack": ["Next.js 14", "React 18", "TypeScript", "TailwindCSS", "PostgreSQL", "Prisma", "NextAuth", "shadcn/ui"],
+  "rootClaude": "CLAUDE.md",
+  "modules": [
+    {
+      "name": "API Routes",
+      "path": "app/api",
+      "claude": "app/api/CLAUDE.md",
+      "language": "TypeScript",
+      "files": 41,
+      "entry": "app/api/**/route.ts",
+      "interfaces": [
+        "app/api/generate-image/route.ts",
+        "app/api/generate-stream/route.ts",
+        "app/api/generate-single/route.ts",
+        "app/api/auth/[...nextauth]/route.ts",
+        "app/api/projects/route.ts",
+        "app/api/generations/route.ts",
+        "app/api/templates/route.ts",
+        "app/api/orders/create/route.ts"
+      ],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": true,
+        "entry": true,
+        "interfaces": true,
+        "tests": false,
+        "dataModel": true
+      },
+      "gaps": ["No automated API tests"]
+    },
+    {
+      "name": "Components",
+      "path": "app/components",
+      "claude": "app/components/CLAUDE.md",
+      "language": "TSX",
+      "files": 72,
+      "entry": "app/components/HomePage.tsx",
+      "interfaces": [],
+      "tests": [],
+      "config": ["components.json"],
+      "coverage": {
+        "scanned": true,
+        "entry": true,
+        "interfaces": true,
+        "tests": false,
+        "dataModel": true
+      },
+      "gaps": ["No component tests"]
+    },
+    {
+      "name": "Hooks",
+      "path": "app/hooks",
+      "claude": "app/hooks/CLAUDE.md",
+      "language": "TypeScript",
+      "files": 20,
+      "entry": "app/hooks/useImageGeneration.ts",
+      "interfaces": [],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": true,
+        "entry": true,
+        "interfaces": true,
+        "tests": false,
+        "dataModel": true
+      },
+      "gaps": ["No hook tests"]
+    },
+    {
+      "name": "Lib/Services",
+      "path": "app/lib",
+      "claude": "app/lib/CLAUDE.md",
+      "language": "TypeScript",
+      "files": 32,
+      "entry": "app/lib/prisma.ts",
+      "interfaces": [
+        "app/lib/auth-api.ts",
+        "app/lib/auth-admin.ts",
+        "app/lib/generation-service.ts",
+        "app/lib/validations.ts",
+        "app/lib/minio-client.ts",
+        "app/lib/prompt-strategies/index.ts"
+      ],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": true,
+        "entry": true,
+        "interfaces": true,
+        "tests": false,
+        "dataModel": true
+      },
+      "gaps": ["No unit tests for services"]
+    },
+    {
+      "name": "Types",
+      "path": "app/types",
+      "claude": "app/types/CLAUDE.md",
+      "language": "TypeScript",
+      "files": 14,
+      "entry": "app/types/database.ts",
+      "interfaces": [
+        "app/types/domain.ts",
+        "app/types/generation.ts",
+        "app/types/database.ts"
+      ],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": true,
+        "entry": true,
+        "interfaces": true,
+        "tests": false,
+        "dataModel": true
+      },
+      "gaps": []
+    },
+    {
+      "name": "Admin Pages",
+      "path": "app/admin",
+      "claude": "app/admin/CLAUDE.md",
+      "language": "TSX",
+      "files": 5,
+      "entry": "app/admin/templates/page.tsx",
+      "interfaces": [],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": true,
+        "entry": true,
+        "interfaces": true,
+        "tests": false,
+        "dataModel": true
+      },
+      "gaps": ["No admin page tests"]
+    },
+    {
+      "name": "Prisma/Data",
+      "path": "prisma",
+      "claude": "prisma/CLAUDE.md",
+      "language": "Prisma/SQL/TypeScript",
+      "files": 4,
+      "entry": "prisma/schema.prisma",
+      "interfaces": [],
+      "tests": [],
+      "config": ["prisma/schema.prisma"],
+      "coverage": {
+        "scanned": true,
+        "entry": true,
+        "interfaces": true,
+        "tests": false,
+        "dataModel": true
+      },
+      "gaps": ["No migration tests"]
+    },
+    {
+      "name": "Scripts",
+      "path": "scripts",
+      "claude": null,
+      "language": "Shell/TypeScript",
+      "files": 7,
+      "entry": "scripts/deploy.sh",
+      "interfaces": [],
+      "tests": [],
+      "config": [],
+      "coverage": {
+        "scanned": true,
+        "entry": true,
+        "interfaces": false,
+        "tests": false,
+        "dataModel": false
+      },
+      "gaps": ["Script module not deeply scanned (DevOps scripts)"]
+    }
+  ],
+  "scanStats": {
+    "totalFiles": 207,
+    "scannedFiles": 195,
+    "coveragePercent": 94.2,
+    "truncated": false,
+    "ignoredPatterns": [
+      "node_modules/**",
+      ".git/**",
+      ".next/**",
+      "generated/**",
+      "dist/**",
+      "*.lock",
+      "*.log"
+    ],
+    "ignoredStats": {
+      "node_modules": "excluded (dependency tree)",
+      "generated": "excluded (Prisma generated client)",
+      ".next": "excluded (build output)"
+    }
+  },
+  "gapSummary": {
+    "missingTests": [
+      "app/api/ (no API route tests)",
+      "app/components/ (no component tests)",
+      "app/hooks/ (no hook tests)",
+      "app/lib/ (no service unit tests)"
+    ],
+    "missingDocs": [],
+    "nextScanTargets": [
+      "scripts/ (DevOps scripts -- only path-level scan done)",
+      "app/data/mockData.ts (large mock data file -- only header scanned)"
+    ]
+  }
+}
