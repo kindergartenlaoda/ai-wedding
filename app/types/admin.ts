@@ -6,7 +6,7 @@ import type { PromptConfig } from '@/types/database';
 export interface TemplateFormInput {
   name: string;
   description: string;
-  category: 'location' | 'fantasy' | 'artistic' | 'classic';
+  category: string;
   preview_image_url: string;
   prompt_config: PromptConfig;
   // 新增：多提示词（可选）

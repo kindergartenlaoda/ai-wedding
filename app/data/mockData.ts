@@ -1,5 +1,5 @@
 import { Template } from '../types/database';
-import { Sparkles, Palette, Crown, Globe } from 'lucide-react';
+import { Sparkles, Palette, Crown, Globe, Camera, Image, Shirt, TreePine, Layout } from 'lucide-react';
 
 export const mockTemplates: Template[] = [
   {
@@ -148,25 +148,63 @@ export const mockTemplates: Template[] = [
   }
 ];
 
-export const categoryInfo = {
+export const categoryInfo: Record<
+  string,
+  { name: string; description: string; icon: typeof Globe }
+> = {
   location: {
-    name: 'Destination Locations',
+    name: '目的地场景',
     description: 'Iconic landmarks and breathtaking destinations',
     icon: Globe
   },
   fantasy: {
-    name: 'Fantasy & Creative',
+    name: '奇幻创意',
     description: 'Magical and imaginative scenes',
     icon: Sparkles
   },
   artistic: {
-    name: 'Artistic Styles',
+    name: '艺术风格',
     description: 'Classic art-inspired aesthetics',
     icon: Palette
   },
   classic: {
-    name: 'Classic Elegance',
+    name: '经典优雅',
     description: 'Traditional and timeless settings',
     icon: Crown
+  },
+  outdoor: {
+    name: '户外自然',
+    description: 'Outdoor and nature scenes',
+    icon: TreePine
+  },
+  standard: {
+    name: '标准证件',
+    description: 'Standard ID photo styles',
+    icon: Camera
+  },
+  painting: {
+    name: '油画艺术',
+    description: 'Oil painting and artistic styles',
+    icon: Image
+  },
+  fashion: {
+    name: '时尚写真',
+    description: 'Fashion and portrait photography',
+    icon: Shirt
+  },
+  japanese: {
+    name: '日系动漫',
+    description: 'Japanese anime style',
+    icon: Sparkles
+  },
+  nature: {
+    name: '自然风景',
+    description: 'Nature and landscape',
+    icon: TreePine
+  },
+  studio: {
+    name: '商品展示',
+    description: 'Studio and product photography',
+    icon: Layout
   }
 };

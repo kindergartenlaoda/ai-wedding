@@ -162,7 +162,7 @@ export function TemplatesPage({ onNavigate }: TemplatesPageProps) {
                 </p>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-xs font-medium text-stone/70 uppercase tracking-wider">
-                    {categoryInfo[template.category].name}
+                    {categoryInfo[template.category]?.name ?? template.category ?? '其他'}
                   </span>
                 </div>
               </div>

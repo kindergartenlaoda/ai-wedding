@@ -32,7 +32,7 @@ export interface Template {
   id: string;
   name: string;
   description: string;
-  category: 'location' | 'fantasy' | 'artistic' | 'classic';
+  category: string;
   preview_image_url: string;
   prompt_config: PromptConfig;
   // 多提示词（可选），为空时按单提示词处理
@@ -41,6 +41,8 @@ export interface Template {
   is_active: boolean;
   sort_order: number;
   created_at: string;
+  /** 领域：wedding/children/id_photo 等，API 返回 */
+  domain?: string;
 }
 
 export interface Project {
