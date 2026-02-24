@@ -41,15 +41,15 @@ export default function GalleryPage() {
     try {
       const response = await fetch(`/api/gallery?page=${pageNum}&limit=20`);
       if (!response.ok) throw new Error('获取画廊数据失败');
-      
+
       const data: GalleryResponse = await response.json();
-      
+
       if (append) {
         setItems(prev => [...prev, ...data.items]);
       } else {
         setItems(data.items);
       }
-      
+
       setHasMore(data.pagination.hasMore);
     } catch (error) {
       console.error('获取画廊数据失败:', error);
@@ -62,13 +62,13 @@ export default function GalleryPage() {
       await fetchGalleryItems(1);
       setLoading(false);
     };
-    
+
     loadInitialData();
   }, []);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
-    
+
     setLoadingMore(true);
     const nextPage = page + 1;
     await fetchGalleryItems(nextPage, true);
@@ -98,9 +98,9 @@ export default function GalleryPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-champagne to-ivory">
+      <div className="flex justify-center items-center min-h-screen bg-alabaster">
         <div className="flex gap-3 items-center text-stone">
-          <Loader2 className="w-8 h-8 animate-spin text-dusty-rose" />
+          <Loader2 className="w-8 h-8 animate-spin text-obsidian" />
           <span className="text-lg">正在加载画廊...</span>
         </div>
       </div>
@@ -108,24 +108,24 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="py-12 min-h-screen bg-gradient-to-b from-champagne to-ivory">
+    <div className="py-12 min-h-screen bg-alabaster">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {/* 页面标题 */}
         <FadeIn delay={0.1}>
           <div className="mb-12 text-center">
-            <h1 className="mb-4 text-4xl font-medium font-display text-navy">
+            <h1 className="mb-4 text-4xl font-medium font-display text-obsidian uppercase tracking-wider">
               AI 图片生成画廊
             </h1>
-            <p className="mx-auto max-w-2xl text-lg text-stone">
+            <p className="mx-auto max-w-2xl text-lg text-stone font-light">
               欣赏由AI生成的精美作品，发现无限创意灵感
             </p>
-            <div className="flex gap-6 justify-center items-center mt-6 text-sm text-stone">
+            <div className="flex gap-6 justify-center items-center mt-6 text-sm text-stone uppercase tracking-widest text-xs">
               <div className="flex gap-2 items-center">
-                <ImageIcon className="w-4 h-4 text-dusty-rose" />
+                <ImageIcon className="w-4 h-4 text-gold" />
                 <span>共 {items.reduce((acc, item) => acc + item.preview_images.length, 0)} 张作品</span>
               </div>
               <div className="flex gap-2 items-center">
-                <User className="w-4 h-4 text-dusty-rose" />
+                <User className="w-4 h-4 text-gold" />
                 <span>{new Set(items.map(item => item.user_name)).size} 位创作者</span>
               </div>
             </div>
@@ -136,20 +136,20 @@ export default function GalleryPage() {
         {items.length === 0 ? (
           <FadeIn delay={0.2}>
             <div className="py-20 text-center">
-              <div className="flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full bg-champagne">
+              <div className="flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full bg-stone/5 border border-stone/10">
                 <ImageIcon className="w-10 h-10 text-stone" />
               </div>
-              <h3 className="mb-2 text-xl font-medium font-display text-navy">
+              <h3 className="mb-2 text-xl font-medium font-display text-obsidian tracking-wider">
                 画廊暂时为空
               </h3>
-              <p className="mb-6 text-stone">
+              <p className="mb-6 text-stone font-light max-w-md mx-auto">
                 还没有用户分享作品到画廊，成为第一个分享者吧！
               </p>
               <a
                 href="/templates"
-                className="inline-flex gap-2 items-center px-6 py-3 font-medium bg-gradient-to-r rounded-md shadow-md transition-all duration-300 from-rose-gold to-dusty-rose text-ivory hover:shadow-glow"
+                className="inline-flex gap-2 items-center px-8 py-4 text-sm tracking-widest uppercase font-medium bg-obsidian rounded-sm transition-colors duration-700 text-alabaster hover:bg-gold hover:text-obsidian"
               >
-                <ImageIcon className="w-5 h-5" />
+                <ImageIcon className="w-4 h-4" />
                 开始创作
               </a>
             </div>
@@ -178,22 +178,22 @@ export default function GalleryPage() {
                           className="object-cover w-full h-auto transition-transform duration-700 group-hover:scale-105"
                           sizes="(max-width: 500px) 100vw, (max-width: 700px) 50vw, (max-width: 1100px) 33vw, 25vw"
                         />
-                        
+
                         {/* 悬停遮罩 */}
-                        <div className="absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-300 from-navy/70 group-hover:opacity-100" />
-                        
+                        <div className="absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-700 from-obsidian/90 group-hover:opacity-100" />
+
                         {/* 悬停操作按钮 */}
-                        <div className="absolute top-3 right-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                          <div className="flex gap-2">
+                        <div className="absolute top-4 right-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                          <div className="flex gap-3">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 // 这里可以添加点赞功能
                               }}
-                              className="flex justify-center items-center w-8 h-8 rounded-full shadow-sm backdrop-blur-sm transition-colors bg-ivory/90 hover:bg-ivory"
+                              className="flex justify-center items-center w-10 h-10 rounded-sm shadow-xl backdrop-blur-md transition-all duration-300 bg-obsidian/50 hover:bg-gold/90 text-alabaster hover:text-obsidian border border-white/20"
                               title="点赞"
                             >
-                              <Heart className="w-4 h-4 text-dusty-rose" />
+                              <Heart className="w-4 h-4" />
                             </button>
                             <button
                               onClick={(e) => {
@@ -204,30 +204,30 @@ export default function GalleryPage() {
                                 link.download = `${item.project_name}_${imageIndex + 1}.jpg`;
                                 link.click();
                               }}
-                              className="flex justify-center items-center w-8 h-8 rounded-full shadow-sm backdrop-blur-sm transition-colors bg-ivory/90 hover:bg-ivory"
+                              className="flex justify-center items-center w-10 h-10 rounded-sm shadow-xl backdrop-blur-md transition-all duration-300 bg-obsidian/50 hover:bg-gold/90 text-alabaster hover:text-obsidian border border-white/20"
                               title="下载"
                             >
-                              <Download className="w-4 h-4 text-navy" />
+                              <Download className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* 图片信息 */}
-                      <div className="p-4">
-                        <h3 className="mb-1 font-medium font-display text-navy line-clamp-1">
+                      <div className="p-5 bg-alabaster">
+                        <h3 className="mb-2 font-medium font-display text-obsidian uppercase tracking-wide line-clamp-1">
                           {item.project_name}
                         </h3>
-                        <p className="mb-2 text-sm text-stone line-clamp-1">
+                        <p className="mb-4 text-xs tracking-widest uppercase text-stone line-clamp-1">
                           模板：{item.template_name}
                         </p>
-                        <div className="flex justify-between items-center text-xs text-stone/70">
-                          <div className="flex gap-1 items-center">
-                            <User className="w-3 h-3" />
+                        <div className="flex justify-between items-center text-xs font-light text-stone/80 uppercase tracking-widest">
+                          <div className="flex gap-2 items-center">
+                            <User className="w-3.5 h-3.5" />
                             <span>{item.user_name}</span>
                           </div>
-                          <div className="flex gap-1 items-center">
-                            <Calendar className="w-3 h-3" />
+                          <div className="flex gap-2 items-center">
+                            <Calendar className="w-3.5 h-3.5" />
                             <span>{getTimeAgo(item.created_at)}</span>
                           </div>
                         </div>
@@ -240,15 +240,15 @@ export default function GalleryPage() {
 
             {/* 加载更多按钮 */}
             {hasMore && (
-              <div className="mt-12 text-center">
+              <div className="mt-16 text-center">
                 <button
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="flex gap-2 items-center px-8 py-3 mx-auto font-medium rounded-md border transition-all duration-300 bg-champagne text-navy hover:bg-ivory border-stone/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex gap-3 items-center px-10 py-4 mx-auto font-medium rounded-sm transition-all duration-700 bg-transparent border border-stone/20 text-obsidian hover:bg-stone/5 hover:border-obsidian/30 disabled:opacity-50 disabled:cursor-not-allowed uppercase text-xs tracking-[0.2em]"
                 >
                   {loadingMore ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       加载中...
                     </>
                   ) : (

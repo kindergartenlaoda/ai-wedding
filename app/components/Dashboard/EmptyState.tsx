@@ -21,15 +21,15 @@ export function EmptyState({ type, onAction }: EmptyStateProps) {
   const Icon = config.icon;
 
   return (
-    <div className="p-12 text-center">
-      <div className="flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full bg-champagne">
+    <div className="py-20 text-center">
+      <div className="flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full bg-stone/5 border border-stone/10">
         <Icon className="w-10 h-10 text-stone" />
       </div>
-      <h3 className="mb-2 text-xl font-medium font-display text-navy">{config.title}</h3>
-      <p className="mb-6 text-stone">{config.description}</p>
+      <h3 className="mb-2 text-xl font-medium font-display text-obsidian tracking-widest">{config.title}</h3>
+      <p className="mb-8 text-stone font-light max-w-md mx-auto">{config.description}</p>
       <button
         onClick={onAction}
-        className="inline-flex gap-2 items-center px-6 py-3 font-medium bg-gradient-to-r rounded-md shadow-md transition-all duration-300 from-rose-gold to-dusty-rose text-ivory hover:shadow-glow"
+        className="inline-flex gap-2 items-center px-10 py-5 font-medium bg-obsidian text-alabaster shadow-sm transition-all duration-700 rounded-sm hover:bg-gold hover:text-obsidian hover:shadow-xl hover:-translate-y-1 uppercase tracking-[0.2em] text-xs"
       >
         <Plus className="w-5 h-5" />
         {config.buttonText}
@@ -37,4 +37,3 @@ export function EmptyState({ type, onAction }: EmptyStateProps) {
     </div>
   );
 }
-

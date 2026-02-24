@@ -125,10 +125,10 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                   <Sparkles className="w-5 h-5 text-red-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="mb-3 text-lg font-semibold text-red-900">
+                  <h3 className="mb-3 text-lg font-semibold text-red-900 tracking-wide">
                     暂无在线支付功能
                   </h3>
-                  <ul className="space-y-2 text-sm text-red-800">
+                  <ul className="space-y-2 text-sm text-red-800 font-light">
                     <li className="flex items-start gap-2">
                       <span className="text-red-600 mt-0.5">•</span>
                       <span>新用户注册即可获得免费积分</span>
@@ -139,7 +139,7 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-red-600 mt-0.5">•</span>
-                      <span className="font-medium">微信: ZYH11ZYH</span>
+                      <span className="font-medium tracking-widest">微信: ZYH11ZYH</span>
                     </li>
                   </ul>
                 </div>
@@ -148,62 +148,63 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
           </div>
 
           <div className="mb-16 text-center">
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-champagne border border-rose-gold/20 text-navy rounded-full text-sm font-medium tracking-wide shadow-sm mb-6">
-              <Sparkles className="w-4 h-4 text-rose-gold" />
-              简单透明的定价
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone/5 border border-stone/10 text-obsidian rounded-sm text-xs font-medium tracking-[0.2em] shadow-sm mb-6 uppercase">
+              <Sparkles className="w-4 h-4 text-gold" />
+              极简 · 透明
             </div>
-            <h1 className="mb-4 text-4xl font-medium sm:text-5xl md:text-6xl font-display text-navy">
-              选择您完美的
-              <span className="text-dusty-rose"> 套餐</span>
+            <h1 className="mb-4 text-4xl font-medium sm:text-5xl md:text-6xl font-display text-obsidian tracking-tight">
+              选择您的
+              <span className="italic text-gold font-serif"> 艺术方案</span>
             </h1>
-            <p className="mx-auto max-w-2xl text-xl leading-relaxed text-stone">
-              免费获得50积分开始。随时升级以获得更多生成次数和高级功能。
+            <p className="mx-auto max-w-2xl text-xl leading-relaxed text-stone font-light">
+              新晋创作者尊享 50 免费积分。随时升阶，解锁更多殿堂级视效。
             </p>
           </div>
         </FadeIn>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 gap-8 mb-16 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 mb-24 md:grid-cols-3">
           {plans.map((plan, index) => (
             <FadeIn key={index} delay={0.2 + index * 0.1}>
               <div
-                className={`relative bg-ivory rounded-xl shadow-lg overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 ${
-                  plan.popular ? 'border-2 border-rose-gold/30' : 'border border-stone/10'
-                }`}
+                className={`relative bg-alabaster rounded-sm shadow-xl overflow-hidden transition-all duration-700 hover:shadow-2xl hover:-translate-y-2 ${plan.popular ? 'border border-gold shadow-[0_0_40px_rgba(200,160,100,0.15)] ring-1 ring-gold/50' : 'border border-stone/10'
+                  }`}
               >
                 {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory text-center py-2.5 text-sm font-medium tracking-wider uppercase">
-                    最受欢迎
+                  <div className="absolute top-0 left-0 right-0 bg-gold text-obsidian text-center py-2 text-xs font-medium tracking-[0.2em] uppercase">
+                    匠心之选
                   </div>
                 )}
 
-                <div className={`p-8 ${plan.popular ? 'pt-14' : ''}`}>
-                  <div className="flex justify-center items-center mb-6 w-14 h-14 bg-gradient-to-br rounded-xl border from-rose-gold/20 to-dusty-rose/20 border-rose-gold/20">
-                    <plan.icon className="w-7 h-7 text-dusty-rose" />
+                <div className={`p-10 ${plan.popular ? 'pt-14' : ''}`}>
+                  <div className="flex justify-center items-center mb-8 w-16 h-16 bg-stone/5 rounded-full border border-stone/10 mx-auto">
+                    <plan.icon className="w-6 h-6 text-obsidian" />
                   </div>
 
-                  <h3 className="mb-2 text-2xl font-medium font-display text-navy">{plan.name}</h3>
-                  <div className="flex gap-2 items-baseline mb-6">
-                    <span className="text-5xl font-semibold font-display text-navy">${plan.price}</span>
-                    <span className="text-stone">一次性付费</span>
+                  <div className="text-center">
+                    <h3 className="mb-3 text-2xl font-medium font-display text-obsidian uppercase tracking-widest">{plan.name}</h3>
+                    <div className="flex justify-center items-baseline mb-8">
+                      <span className="text-5xl font-light font-display text-obsidian">${plan.price}</span>
+                      <span className="text-xs text-stone tracking-wider uppercase ml-2 block">终身授权</span>
+                    </div>
                   </div>
 
-                  <div className="px-4 py-3 mb-6 bg-gradient-to-r rounded-lg border from-champagne to-blush border-rose-gold/10">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-navy">生成积分</span>
-                      <span className="text-2xl font-semibold font-display text-dusty-rose">
+                  <div className="px-5 py-4 mb-8 bg-stone/5 rounded-sm border border-stone/10">
+                    <div className="flex justify-between items-center text-sm uppercase tracking-wider">
+                      <span className="font-medium text-stone">生成额度</span>
+                      <span className="text-2xl font-semibold font-display text-obsidian">
                         {plan.credits}
                       </span>
                     </div>
                   </div>
 
-                  <ul className="mb-8 space-y-4">
+                  <ul className="mb-10 space-y-5">
                     {plan.features.map((feature, i) => (
-                      <li key={i} className="flex gap-3 items-start">
-                        <div className="w-5 h-5 rounded-full bg-rose-gold/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3 h-3 text-rose-gold" />
+                      <li key={i} className="flex gap-4 items-start">
+                        <div className="w-5 h-5 rounded-full bg-stone/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-obsidian" />
                         </div>
-                        <span className="leading-relaxed text-stone">{feature}</span>
+                        <span className="leading-relaxed text-stone font-light">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -211,13 +212,12 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                   <button
                     onClick={() => handlePurchase(index)}
                     disabled={purchasing !== null}
-                    className={`w-full py-4 rounded-md font-medium text-lg transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-                      plan.popular
-                        ? 'bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory hover:shadow-glow'
-                        : 'bg-champagne text-navy hover:bg-champagne/80 border border-stone/10'
-                    }`}
+                    className={`w-full py-5 rounded-sm font-medium text-sm transition-all duration-500 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed tracking-widest uppercase ${plan.popular
+                        ? 'bg-obsidian text-alabaster hover:bg-gold hover:text-obsidian'
+                        : 'bg-transparent text-obsidian hover:bg-stone/5 border border-stone/20'
+                      }`}
                   >
-                    {purchasing === index ? '购买中...' : user ? '立即购买' : '开始使用'}
+                    {purchasing === index ? '授权中...' : user ? '立即购买' : '开启艺术之旅'}
                   </button>
                 </div>
               </div>
@@ -227,34 +227,34 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
 
         {/* 对比表格 */}
         <FadeIn delay={0.5}>
-          <GlassCard className="overflow-x-auto mb-16">
-            <div className="p-6">
-              <h2 className="mb-4 text-2xl font-medium font-display text-navy">功能对比</h2>
+          <div className="overflow-x-auto mb-24 border border-stone/10 rounded-sm bg-alabaster shadow-xl">
+            <div className="p-10">
+              <h2 className="mb-8 text-3xl font-medium font-display text-obsidian text-center uppercase tracking-widest">参数解析</h2>
               <table className="min-w-full text-sm text-left">
                 <thead>
-                  <tr>
-                    <th className="py-3 pr-4 text-stone">功能</th>
+                  <tr className="border-b border-stone/10">
+                    <th className="py-5 pr-4 text-stone uppercase tracking-widest text-xs font-medium">权益</th>
                     {plans.map((p, i) => (
-                      <th key={i} className="px-4 py-3 font-medium text-navy">{p.name}</th>
+                      <th key={i} className="px-6 py-5 font-medium text-obsidian uppercase tracking-wider">{p.name}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone/10">
+                <tbody className="divide-y divide-stone/5">
                   {[
-                    { k: '模板数量', v: ['5种', '全部', '无限'] },
-                    { k: '下载质量', v: ['HD', '4K', '8K'] },
-                    { k: '编辑工具', v: ['基础', '高级', '专业'] },
-                    { k: '支持优先级', v: ['标准', '优先', 'VIP 7x24'] },
-                    { k: '有效期', v: ['30天', '90天', '终身'] },
-                    { k: '商业使用', v: ['-', '可选', '包含'] },
-                    { k: 'API/白牌', v: ['-', '可选', '包含'] },
+                    { k: '风格模版库', v: ['限 5 种', '解锁全部', '未来无限更新'] },
+                    { k: '母带级分辨率', v: ['HD 高清', '4K 蓝光级', '8K 影院级'] },
+                    { k: '后期编辑', v: ['简易微调', '深度参数', '专业渲染台'] },
+                    { k: '首席技术响应', v: ['常规队列', '优先受理', 'VIP 瞬时直达'] },
+                    { k: '协议期限', v: ['30 日', '一季度', '永久授权'] },
+                    { k: '商业发布', v: ['-', '企业版可选', '全域许可'] },
+                    { k: '原生底层接入', v: ['-', '企业版可选', '完整 API'] },
                   ].map((row, rIdx) => (
-                    <tr key={rIdx}>
-                      <td className="py-3 pr-4 whitespace-nowrap text-stone">{row.k}</td>
+                    <tr key={rIdx} className="hover:bg-stone/5 transition-colors duration-300">
+                      <td className="py-5 pr-4 whitespace-nowrap text-stone font-light text-sm">{row.k}</td>
                       {row.v.map((vv, cIdx) => (
-                        <td key={cIdx} className="px-4 py-3 whitespace-nowrap text-navy">
+                        <td key={cIdx} className="px-6 py-5 whitespace-nowrap text-obsidian font-light">
                           {vv === '-' ? (
-                            <span className="text-stone">—</span>
+                            <span className="text-stone/30">—</span>
                           ) : (
                             vv
                           )}
@@ -265,45 +265,43 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                 </tbody>
               </table>
             </div>
-          </GlassCard>
+          </div>
         </FadeIn>
 
         {/* FAQ Section */}
         <FadeIn delay={0.6}>
-          <GlassCard className="mx-auto max-w-4xl">
-            <div className="p-8 md:p-12">
-              <div className="mb-8 text-center">
-                <h2 className="mb-4 text-3xl font-medium font-display text-navy">常见问题</h2>
-                <p className="text-stone">了解更多关于我们的定价和服务</p>
-              </div>
-
-              <div className="space-y-6">
-                {[
-                  {
-                    q: '积分如何运作？',
-                    a: '每个模板生成根据复杂度需要 10-20 积分。一积分 = 一次AI生成尝试。'
-                  },
-                  {
-                    q: '可以退款吗？',
-                    a: '可以！如果您对结果不满意，我们提供30天退款保证。'
-                  },
-                  {
-                    q: '积分会过期吗？',
-                    a: '积分在您的计划期限内有效（30天、90天或终身）。'
-                  },
-                  {
-                    q: '可以升级计划吗？',
-                    a: '当然！随时升级，您现有的积分将被保留。'
-                  }
-                ].map((faq, i) => (
-                  <div key={i} className="p-6 rounded-lg border backdrop-blur-sm transition-colors bg-ivory/50 border-stone/10 hover:border-rose-gold/20">
-                    <h3 className="mb-2 font-medium font-display text-navy">{faq.q}</h3>
-                    <p className="leading-relaxed text-stone">{faq.a}</p>
-                  </div>
-                ))}
-              </div>
+          <div className="mx-auto max-w-4xl pt-10">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-3xl font-medium font-display text-obsidian tracking-wider">策展人问答</h2>
+              <p className="text-stone font-light">全方位解读您的艺术权益</p>
             </div>
-          </GlassCard>
+
+            <div className="space-y-6">
+              {[
+                {
+                  q: '算力定额如何核算？',
+                  a: '单次母带级生成将消耗约 10-20 单位算力。每消耗 1 算力，即代表底层的另一次深度卷积尝试。'
+                },
+                {
+                  q: '是否支持保障政策？',
+                  a: '绝对支持。如未能达到您期望的艺术水准，开卡 30 天内支持无条件退档。'
+                },
+                {
+                  q: '数字权益有时间边界吗？',
+                  a: '取决于您选择的阶层。基础系列将在 30-90 天内更迭，而最高阶层享受时间线上的永恒授权。'
+                },
+                {
+                  q: '未来可以跨越阶层吗？',
+                  a: '当然，您的任何升阶申请都将被优先受理，现存算力无损结转。'
+                }
+              ].map((faq, i) => (
+                <div key={i} className="p-8 rounded-sm border border-stone/10 bg-alabaster hover:shadow-lg transition-all duration-500">
+                  <h3 className="mb-4 font-medium font-display text-obsidian tracking-wide text-lg">{faq.q}</h3>
+                  <p className="leading-relaxed text-stone font-light text-sm">{faq.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </FadeIn>
       </div>
 

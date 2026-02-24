@@ -20,44 +20,44 @@ export function GenerationSettings({
   onSettingsChange,
 }: GenerationSettingsProps) {
   return (
-    <div className="p-6 mb-8 rounded-xl border shadow-sm bg-ivory border-stone/10">
-      <h2 className="mb-4 text-xl font-medium font-display text-navy">生成设置</h2>
+    <div className="p-8 mb-8 rounded-sm border shadow-sm bg-stone/5 border-stone/10">
+      <h2 className="mb-6 text-xl font-medium font-display text-obsidian uppercase tracking-widest">高级构筑选项</h2>
 
-      <div className="mb-6">
-        <label className="block flex gap-2 items-center mb-2 text-sm font-medium text-navy">
-          自定义提示词（英文，可选）
+      <div className="mb-8">
+        <label className="block flex gap-3 items-center mb-3 text-xs font-medium text-obsidian uppercase tracking-widest">
+          定制光影提示词
           {!selectedTemplate && (
-            <span className="text-xs font-normal text-stone">未选择模板时可用</span>
+            <span className="text-xs font-light text-stone tracking-wide normal-case">（未选择影像风格时可用）</span>
           )}
         </label>
         <textarea
           value={customPrompt}
           onChange={(e) => onCustomPromptChange(e.target.value)}
-          placeholder="例如: Generate a romantic wedding photo in a dreamy sunset beach with soft pink sky and ocean waves..."
-          className="w-full px-4 py-3 border border-stone/20 rounded-md focus:ring-2 focus:ring-dusty-rose/30 focus:border-dusty-rose transition-all resize-vertical min-h-[120px] disabled:bg-stone/5 disabled:cursor-not-allowed"
+          placeholder="构建你的视觉画面: Generate a cinematic portrait in a dreamy sunset beach with soft pink sky..."
+          className="w-full px-5 py-4 border border-stone/20 rounded-sm focus:ring-1 focus:ring-gold focus:border-gold transition-all resize-vertical min-h-[140px] disabled:bg-stone/5 disabled:cursor-not-allowed bg-alabaster text-obsidian font-light tracking-wide outline-none text-sm leading-relaxed"
           disabled={!!selectedTemplate}
         />
         {selectedTemplate ? (
-          <div className="flex gap-2 items-start p-3 mt-2 rounded-md border bg-rose-gold/5 border-rose-gold/20">
-            <Sparkles className="w-4 h-4 text-rose-gold flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-navy">
-              已选择模板 <span className="font-medium">{selectedTemplate.name}</span>
+          <div className="flex gap-3 items-center p-4 mt-4 rounded-sm border bg-stone/5 border-gold/20 shadow-sm">
+            <Sparkles className="w-5 h-5 text-gold flex-shrink-0" />
+            <p className="text-xs text-obsidian tracking-wide font-light">
+              当前选用影像风格: <span className="font-medium uppercase tracking-widest ml-2">{selectedTemplate.name}</span>
               {selectedTemplate.prompt_list && selectedTemplate.prompt_list.length > 0 && (
-                <span> - 风格 {selectedPromptIndex + 1}</span>
+                <span className="ml-2">— 光影方案 {selectedPromptIndex + 1}</span>
               )}
             </p>
           </div>
         ) : (
-          <p className="mt-2 text-xs text-stone/70">
-            提示：可以选择上方的模板，或在此输入自定义提示词
+          <p className="mt-3 text-xs font-light tracking-wide text-stone/70">
+            * 选择上方的预设选项，或在此构建您的数字影像
           </p>
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
-          <label className="block mb-2 text-sm font-medium text-navy">
-            五官保持强度
+          <label className="block mb-3 text-xs font-medium text-obsidian uppercase tracking-widest">
+            特征重塑强度
           </label>
           <select
             value={settings.facePreservation}
@@ -65,17 +65,17 @@ export function GenerationSettings({
               ...settings,
               facePreservation: e.target.value as ImageGenerationSettings['facePreservation']
             })}
-            className="px-4 py-3 w-full rounded-md border transition-all border-stone/20 focus:ring-2 focus:ring-dusty-rose/30 focus:border-dusty-rose"
+            className="px-5 py-4 w-full rounded-sm border transition-all border-stone/20 focus:ring-1 focus:ring-gold focus:border-gold bg-alabaster text-obsidian font-light outline-none cursor-pointer tracking-wider text-sm"
           >
-            <option value="high">高（推荐）</option>
-            <option value="medium">中</option>
-            <option value="low">低</option>
+            <option value="high">强保留（推荐）</option>
+            <option value="medium">特征平滑</option>
+            <option value="low">自然重塑</option>
           </select>
         </div>
 
         <div>
-          <label className="block mb-2 text-sm font-medium text-navy">
-            创意程度
+          <label className="block mb-3 text-xs font-medium text-obsidian uppercase tracking-widest">
+            光影演化程度
           </label>
           <select
             value={settings.creativityLevel}
@@ -83,11 +83,11 @@ export function GenerationSettings({
               ...settings,
               creativityLevel: e.target.value as ImageGenerationSettings['creativityLevel']
             })}
-            className="px-4 py-3 w-full rounded-md border transition-all border-stone/20 focus:ring-2 focus:ring-dusty-rose/30 focus:border-dusty-rose"
+            className="px-5 py-4 w-full rounded-sm border transition-all border-stone/20 focus:ring-1 focus:ring-gold focus:border-gold bg-alabaster text-obsidian font-light outline-none cursor-pointer tracking-wider text-sm"
           >
-            <option value="conservative">保守（推荐）</option>
-            <option value="balanced">平衡</option>
-            <option value="creative">创意</option>
+            <option value="conservative">控制构筑（推荐）</option>
+            <option value="balanced">均衡演化</option>
+            <option value="creative">自由释放</option>
           </select>
         </div>
       </div>
