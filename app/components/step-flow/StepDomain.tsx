@@ -30,19 +30,19 @@ interface StepDomainProps {
 
 export function StepDomain({ onSelect }: StepDomainProps) {
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 py-16">
+    <div className="min-h-[calc(100vh-4rem)] lg:min-h-0 flex flex-col items-center justify-center px-4 py-8 lg:py-6">
       <FadeIn>
-        <div className="text-center mb-16 space-y-4">
+        <div className="text-center mb-8 lg:mb-6 space-y-4">
           <h2 className="text-xs font-medium tracking-[0.3em] text-pearl/50 uppercase">
             Step 01
           </h2>
-          <p className="text-4xl md:text-5xl font-display text-alabaster tracking-tight">
+          <p className="text-4xl lg:text-3xl font-display text-alabaster tracking-tight">
             选择您的创作领域
           </p>
         </div>
       </FadeIn>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 max-w-6xl w-full">
+      <div className="grid grid-cols-2 gap-4 lg:gap-5 w-full">
         {GENERATION_DOMAINS.map((domainId, index) => {
           const domain = DOMAIN_CONFIG[domainId];
           const Icon = domain.icon;

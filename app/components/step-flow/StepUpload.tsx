@@ -125,37 +125,37 @@ export function StepUpload({
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col bg-alabaster">
-      <div className="flex-1 px-4 py-8 max-w-3xl mx-auto w-full">
-        <div className="flex items-center gap-4 mb-10">
+    <div className="min-h-[calc(100vh-4rem)] lg:min-h-0 flex flex-col relative w-full bg-obsidian">
+      <div className="flex-1 px-4 py-8 lg:py-6 w-full">
+        <div className="flex items-center gap-4 mb-8 lg:mb-6">
           <button
             type="button"
             onClick={onBack}
-            className="p-2 rounded-full border border-stone/20 text-stone/60 hover:text-obsidian hover:border-stone/40 transition-colors"
+            className="p-2 rounded-full border border-white/10 text-pearl/60 hover:text-pearl hover:border-white/20 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h2 className="text-xs font-medium tracking-[0.3em] text-stone/50 uppercase mb-1">
+            <h2 className="text-xs font-medium tracking-[0.3em] text-pearl/50 uppercase mb-1">
               Step 03 &middot; {template.name}
             </h2>
-            <p className="text-2xl md:text-3xl font-display text-obsidian tracking-tight">
+            <p className="text-2xl lg:text-xl font-display text-alabaster tracking-tight">
               上传您的照片
             </p>
           </div>
         </div>
 
         <div
-          className="border-2 border-dashed border-stone/20 rounded-xl p-12 text-center cursor-pointer hover:border-gold/40 hover:bg-gold/5 transition-colors mb-6"
+          className="border-2 border-dashed border-white/20 rounded-xl p-12 text-center cursor-pointer hover:border-gold/60 hover:bg-gold/5 transition-colors mb-6"
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
         >
-          <Upload className="w-10 h-10 text-stone/30 mx-auto mb-4" />
-          <p className="text-sm text-stone/60 mb-1">
+          <Upload className="w-10 h-10 text-pearl/40 mx-auto mb-4" />
+          <p className="text-sm text-pearl/80 mb-1">
             拖拽照片到此处，或点击上传
           </p>
-          <p className="text-xs text-stone/40">
+          <p className="text-xs text-pearl/40">
             支持 JPG / PNG，最多 {MAX_PHOTOS} 张
           </p>
           <input
@@ -173,7 +173,7 @@ export function StepUpload({
             {photos.map((photo) => (
               <div
                 key={photo.id}
-                className="relative aspect-square rounded-lg overflow-hidden bg-stone/5"
+                className="relative aspect-square rounded-lg overflow-hidden bg-white/5"
               >
                 <img
                   src={photo.dataUrl}
@@ -184,10 +184,10 @@ export function StepUpload({
                 {(photo.uploadStatus === 'uploading' ||
                   photo.identifyStatus === 'pending' ||
                   photo.identifyStatus === 'identifying') && (
-                  <div className="absolute inset-0 bg-obsidian/40 flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 text-white animate-spin" />
-                  </div>
-                )}
+                    <div className="absolute inset-0 bg-obsidian/40 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    </div>
+                  )}
 
                 {photo.identifyStatus === 'valid' &&
                   photo.uploadStatus === 'uploaded' && (
@@ -231,9 +231,9 @@ export function StepUpload({
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-t border-stone/10">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="text-sm text-stone/60">
+      <div className="fixed lg:absolute bottom-0 left-0 right-0 z-40 bg-obsidian/90 backdrop-blur-md border-t border-white/5 w-full">
+        <div className="w-full px-6 py-4 flex items-center justify-between">
+          <span className="text-sm text-pearl/60">
             {validPhotos.length} 张照片就绪
             {isProcessing && (
               <span className="ml-2 text-amber-600">
