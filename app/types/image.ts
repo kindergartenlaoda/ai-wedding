@@ -26,6 +26,8 @@ export interface StreamImageResult {
     base64: string;
     dataUrl: string;
   };
+  /** 当 AI 返回 URL 而非 base64 时，存放提取到的图片 URL */
+  imageUrl?: string;
 }
 
 // 浏览器侧 dataURL 压缩

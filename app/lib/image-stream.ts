@@ -130,21 +130,23 @@ export async function generateImageStream(
   onStatus?.('parsing');
 
   // 解析图片数据
-  const imageData = parseImageFromContent(content);
+  const { imageData, imageUrl } = parseImageFromContent(content);
 
   onStatus?.('completed');
 
   return {
     content,
     imageData,
+    imageUrl,
   };
 }
 
 /**
- * 从返回内容中提取图片数据
+ * 从返回内容中提取图片数据（支持 base64 和 URL 两种格式）
+ * 导出供 generation-service 和 StepGenerate 复用
  */
-function parseImageFromContent(content: string): StreamImageResult['imageData'] {
-  // 匹配 Markdown 格式的 base64 图片
+export function parseImageFromContent(content: string): Pick<StreamImageResult, 'imageData' | 'imageUrl'> {
+  // 1. 匹配 Markdown 格式的 base64 图片
   const base64ImageMatch = content.match(
     /!\[image\]\(data:\s*image\/([^;]+);\s*base64,\s*\n?([^)]+)\)/i
   );
@@ -155,11 +157,22 @@ function parseImageFromContent(content: string): StreamImageResult['imageData'] 
     const dataUrl = `data:image/${imageType};base64,${base64String}`;
 
     return {
-      type: imageType,
-      base64: base64String,
-      dataUrl,
+      imageData: {
+        type: imageType,
+        base64: base64String,
+        dataUrl,
+      },
     };
   }
 
-  return undefined;
+  // 2. 匹配 Markdown 格式的 URL 图片: ![image](https://...)
+  const urlImageMatch = content.match(
+    /!\[(?:image|[^\]]*)\]\((https?:\/\/[^)]+)\)/i
+  );
+
+  if (urlImageMatch) {
+    return { imageUrl: urlImageMatch[1] };
+  }
+
+  return {};
 }

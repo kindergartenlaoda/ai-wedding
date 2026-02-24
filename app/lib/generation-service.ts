@@ -8,6 +8,7 @@
  */
 
 import { mockGenerateImages } from '@/lib/mock-generator';
+import { parseImageFromContent } from '@/lib/image-stream';
 import type { GenerationInput, GenerationProgress, GenerationResult } from '@/types/generation';
 import type { Template } from '@/types/database';
 
@@ -163,41 +164,42 @@ export async function generateAsAuthenticated(
 
         onProgress({ stage: 'generating', progress: 70 });
 
-        const base64ImageMatch = content.match(
-          /!\[image\]\(data:\s*image\/([^;]+);\s*base64,\s*\n?([^)]+)\)/i
-        );
+        const { imageData, imageUrl: parsedUrl } = parseImageFromContent(content);
 
         let imageUrl = '';
-        if (!base64ImageMatch) {
+        if (imageData) {
+          imageUrl = imageData.dataUrl;
+        } else if (parsedUrl) {
+          imageUrl = parsedUrl;
+        } else {
           console.warn(`第 ${i + 1} 条提示词：未在AI响应中找到图片，使用上传的照片作为占位`);
           imageUrl = input.photos[0];
-        } else {
-          const imageType = base64ImageMatch[1];
-          const base64String = base64ImageMatch[2].replace(/\s+/g, '');
-          imageUrl = `data:image/${imageType};base64,${base64String}`;
         }
 
         onProgress({ stage: 'generating', progress: 80 });
 
         let storedUrl = imageUrl;
-        try {
-          const uploadRes = await fetch('/api/upload-image', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              image: imageUrl,
-              folder: `generations/${generationId}/previews`,
-            }),
-          });
-          if (uploadRes.ok) {
-            const payload = await uploadRes.json();
-            storedUrl = payload.presignedUrl || payload.url || imageUrl;
-          } else {
-            console.warn(`第 ${i + 1} 条提示词上传失败，使用 dataURL 回退:`, await uploadRes.text());
+        // 远程 URL 直接使用，仅对 dataURL 进行上传
+        if (imageUrl.startsWith('data:')) {
+          try {
+            const uploadRes = await fetch('/api/upload-image', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                image: imageUrl,
+                folder: `generations/${generationId}/previews`,
+              }),
+            });
+            if (uploadRes.ok) {
+              const payload = await uploadRes.json();
+              storedUrl = payload.presignedUrl || payload.url || imageUrl;
+            } else {
+              console.warn(`第 ${i + 1} 条提示词上传失败，使用 dataURL 回退:`, await uploadRes.text());
+            }
+          } catch (e) {
+            console.warn(`第 ${i + 1} 条提示词调用上传接口异常，使用 dataURL 回退:`, e);
           }
-        } catch (e) {
-          console.warn(`第 ${i + 1} 条提示词调用上传接口异常，使用 dataURL 回退:`, e);
         }
 
         storedUrls.push(storedUrl);
@@ -234,16 +236,19 @@ export async function generateAsAuthenticated(
 
     return { images: storedUrls, generationId };
   } catch (error) {
-    await fetch('/api/credits/refund', {
+    await fetch('/api/credits/unfreeze', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        credits: input.template.price_credits,
-        generation_id: generationId,
-        error_message: error instanceof Error ? error.message : '生成失败',
+        amount: input.template.price_credits,
       }),
-    });
+    }).catch(() => {});
+
+    await markGenerationFailed(
+      generationId,
+      error instanceof Error ? error.message : '生成失败'
+    );
     throw error;
   }
 }
