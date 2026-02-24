@@ -57,6 +57,8 @@ export const GenerateImageSchema = z.object({
   // 可选：创意程度参数
   temperature: z.number().min(0).max(2).default(0.2).optional(),
   top_p: z.number().min(0).max(1).default(0.7).optional(),
+  // 可选：领域（wedding, children, id_photo 等），默认 wedding
+  domain: z.string().optional(),
 });
 
 /**

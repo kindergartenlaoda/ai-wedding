@@ -1,30 +1,37 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      return NextResponse.json(
-        { error: 'Server misconfigured' },
-        { status: 500 }
-      );
-    }
+    const { searchParams } = request.nextUrl;
+    const domain = searchParams.get('domain');
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const where: { isActive: boolean; domain?: string } = { isActive: true };
+    if (domain) where.domain = domain;
 
-    const { data, error } = await supabase
-      .from('templates')
-      .select('*')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true });
+    const data = await prisma.template.findMany({
+      where,
+      orderBy: { sortOrder: 'asc' },
+    });
 
-    if (error) throw error;
+    // Map to snake_case for API compatibility
+    const formatted = data.map((t) => ({
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      category: t.category,
+      domain: t.domain,
+      preview_image_url: t.previewImageUrl,
+      prompt_config: t.promptConfig,
+      prompt_list: t.promptList,
+      price_credits: t.priceCredits,
+      is_active: t.isActive,
+      sort_order: t.sortOrder,
+      created_at: t.createdAt.toISOString(),
+    }));
 
     return NextResponse.json(
-      { data },
+      { data: formatted },
       {
         headers: {
           // 公共缓存1小时，客户端缓存5分钟
