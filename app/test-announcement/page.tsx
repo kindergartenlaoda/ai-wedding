@@ -176,7 +176,7 @@ export default function TestAnnouncementPage() {
             <div className="border-l-4 border-blue-500 pl-4">
               <p className="font-semibold text-sm">步骤 1: 检查数据库</p>
               <p className="text-sm text-gray-600 mt-1">
-                在 Supabase SQL Editor 执行：
+                在 PostgreSQL 客户端或 Prisma Studio 中执行：
               </p>
               <pre className="bg-gray-50 p-2 rounded text-xs mt-2 overflow-x-auto">
                 SELECT * FROM system_announcements WHERE is_active = true;
@@ -184,25 +184,20 @@ export default function TestAnnouncementPage() {
             </div>
 
             <div className="border-l-4 border-green-500 pl-4">
-              <p className="font-semibold text-sm">步骤 2: 检查 RLS 策略</p>
+              <p className="font-semibold text-sm">步骤 2: 应用数据库迁移</p>
               <p className="text-sm text-gray-600 mt-1">
-                确保有 "Public can view active announcements" 策略，并且 roles 包含 {'{anon,authenticated}'}
+                确保 DATABASE_URL 正确配置，并执行：
               </p>
               <pre className="bg-gray-50 p-2 rounded text-xs mt-2 overflow-x-auto">
-{`SELECT policyname, roles::text 
-FROM pg_policies 
-WHERE tablename = 'system_announcements';`}
+                pnpm prisma migrate deploy
               </pre>
             </div>
 
             <div className="border-l-4 border-orange-500 pl-4">
-              <p className="font-semibold text-sm">步骤 3: 执行修复脚本</p>
+              <p className="font-semibold text-sm">步骤 3: 使用 Prisma Studio 检查</p>
               <p className="text-sm text-gray-600 mt-1">
-                在 Supabase SQL Editor 执行：
+                运行 <code className="text-xs bg-gray-50 px-2 py-1 rounded">pnpm prisma studio</code> 查看 system_announcements 表数据
               </p>
-              <code className="text-xs bg-gray-50 px-2 py-1 rounded">
-                database-migrations/fix-and-test-announcements.sql
-              </code>
             </div>
 
             <div className="border-l-4 border-purple-500 pl-4">
