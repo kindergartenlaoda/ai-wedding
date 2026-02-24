@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { SystemAnnouncement } from '@/types/database';
 
 const STORAGE_KEY = 'announcement_dismissed';
@@ -12,9 +12,13 @@ export function useAnnouncement() {
   const [announcement, setAnnouncement] = useState<SystemAnnouncement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
-    fetchAnnouncement();
+    if (!fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchAnnouncement();
+    }
   }, []);
 
   const fetchAnnouncement = async () => {

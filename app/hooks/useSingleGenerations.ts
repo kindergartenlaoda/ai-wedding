@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { SingleGeneration } from '@/types/database';
 
@@ -15,6 +15,7 @@ export function useSingleGenerations(options: UseSingleGenerationsOptions = {}) 
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
+  const fetchedRef = useRef(false);
 
   const fetchGenerations = useCallback(async (pageNum: number = 0, append: boolean = false) => {
     if (!user) {
@@ -50,7 +51,8 @@ export function useSingleGenerations(options: UseSingleGenerationsOptions = {}) 
   }, [user, pageSize]);
 
   useEffect(() => {
-    if (initialLoad) {
+    if (initialLoad && !fetchedRef.current) {
+      fetchedRef.current = true;
       fetchGenerations(0, false);
     }
   }, [fetchGenerations, initialLoad]);

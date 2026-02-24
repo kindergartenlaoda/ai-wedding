@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
 
 /** Profile shape compatible with database.Profile for component compatibility */
@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const profileFetchedRef = useRef(false);
   const loading = status === 'loading';
 
   const user: AuthUser | null = session?.user
@@ -104,8 +105,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (session?.user?.id) {
-      loadProfile();
+      if (!profileFetchedRef.current) {
+        profileFetchedRef.current = true;
+        loadProfile();
+      }
     } else {
+      profileFetchedRef.current = false;
       setProfile(null);
     }
   }, [session?.user?.id, loadProfile]);

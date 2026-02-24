@@ -28,9 +28,9 @@ export default function Page({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-champagne to-ivory">
-        <div className="flex items-center gap-3 text-stone">
-          <span className="w-3 h-3 rounded-full bg-dusty-rose animate-pulse" />
+      <div className="min-h-screen flex items-center justify-center bg-obsidian">
+        <div className="flex items-center gap-3 text-stone-400">
+          <span className="w-3 h-3 rounded-full bg-gold animate-pulse" />
           <span>正在加载账户信息...</span>
         </div>
       </div>
@@ -39,25 +39,25 @@ export default function Page({ params }: { params: { id: string } }) {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-champagne to-ivory flex items-center">
+      <div className="min-h-screen bg-gradient-to-b from-obsidian to-charcoal flex items-center">
         <div className="max-w-3xl mx-auto px-6 w-full">
-          <div className="bg-ivory border border-stone/10 rounded-2xl shadow-sm p-10 text-center">
-            <div className="mx-auto mb-6 w-16 h-16 rounded-full bg-champagne flex items-center justify-center">
-              <Lock className="w-8 h-8 text-dusty-rose" />
+          <div className="bg-charcoal/50 border border-white/10 rounded-2xl shadow-sm p-10 text-center">
+            <div className="mx-auto mb-6 w-16 h-16 rounded-full bg-charcoal flex items-center justify-center border border-white/5">
+              <Lock className="w-8 h-8 text-gold" />
             </div>
-            <h1 className="text-2xl font-display font-medium text-navy mb-2">需要登录才能查看生成结果</h1>
-            <p className="text-stone mb-8">请登录或创建账号后继续查看与管理您的作品。</p>
+            <h1 className="text-2xl font-display font-medium text-alabaster mb-2">需要登录才能查看生成结果</h1>
+            <p className="text-stone-400 mb-8">请登录或创建账号后继续查看与管理您的作品。</p>
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={() => setShowAuth(true)}
-                className="px-6 py-3 bg-navy text-ivory rounded-md hover:bg-navy/90 transition-all duration-200 shadow-sm hover:shadow-md font-medium inline-flex items-center gap-2"
+                className="px-6 py-3 bg-gold text-obsidian rounded-md hover:bg-gold/90 transition-all duration-200 shadow-sm hover:shadow-glow font-medium inline-flex items-center gap-2"
               >
                 <LogIn className="w-4 h-4" />
                 登录 / 注册
               </button>
               <button
                 onClick={() => router.push('/templates')}
-                className="px-6 py-3 bg-champagne text-navy rounded-md border border-stone/20 hover:bg-ivory transition-all duration-200 font-medium"
+                className="px-6 py-3 bg-charcoal text-alabaster rounded-md border border-white/10 hover:bg-white/5 transition-all duration-200 font-medium"
               >
                 浏览模板
               </button>

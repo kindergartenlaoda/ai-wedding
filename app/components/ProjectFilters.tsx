@@ -27,7 +27,7 @@ export function ProjectFilters({ filters, onFiltersChange, templateNames }: Proj
     onFiltersChange({ ...filters, templateName });
   };
 
-  const hasActiveFilters = 
+  const hasActiveFilters =
     filters.searchQuery !== '' ||
     filters.status !== 'all' ||
     filters.dateRange !== 'all' ||
@@ -44,7 +44,7 @@ export function ProjectFilters({ filters, onFiltersChange, templateNames }: Proj
   };
 
   return (
-    <div className="bg-ivory rounded-md shadow-sm border border-stone/10 p-4 mb-6">
+    <div className="bg-stone/5 rounded-sm shadow-sm border border-stone/10 p-6 mb-8">
       <div className="flex flex-col gap-4">
         {/* 搜索栏 */}
         <div className="flex items-center gap-3">
@@ -55,17 +55,16 @@ export function ProjectFilters({ filters, onFiltersChange, templateNames }: Proj
               placeholder="搜索项目名称或模板..."
               value={filters.searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-stone/20 bg-champagne rounded-md focus:outline-none focus:ring-2 focus:ring-dusty-rose/30 focus:border-dusty-rose transition-all"
+              className="w-full pl-10 pr-4 py-3 border border-stone/20 bg-alabaster rounded-sm focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold transition-all text-obsidian placeholder-stone/50 font-light"
             />
           </div>
 
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className={`px-4 py-2.5 rounded-md font-medium flex items-center gap-2 transition-all duration-300 ${
-              showAdvanced || hasActiveFilters
-                ? 'bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory shadow-md'
-                : 'bg-champagne text-navy hover:bg-ivory'
-            }`}
+            className={`px-6 py-3 rounded-sm font-medium flex items-center gap-2 transition-all duration-500 uppercase tracking-widest text-xs border ${showAdvanced || hasActiveFilters
+                ? 'bg-obsidian text-gold border-obsidian shadow-md'
+                : 'bg-transparent text-obsidian border-stone/20 hover:bg-stone/5'
+              }`}
           >
             <Filter className="w-5 h-5" />
             高级筛选
@@ -74,7 +73,7 @@ export function ProjectFilters({ filters, onFiltersChange, templateNames }: Proj
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="px-4 py-2.5 bg-destructive/10 text-destructive rounded-md font-medium flex items-center gap-2 hover:bg-destructive/20 transition-all duration-300"
+              className="px-6 py-3 bg-red-900/10 text-red-900 rounded-sm font-medium flex items-center gap-2 hover:bg-red-900/20 transition-all duration-500 uppercase tracking-widest text-xs border border-transparent"
             >
               <X className="w-5 h-5" />
               清除
@@ -87,11 +86,11 @@ export function ProjectFilters({ filters, onFiltersChange, templateNames }: Proj
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-stone/10">
             {/* 状态筛选 */}
             <div>
-              <label className="block text-sm font-medium text-navy mb-2">项目状态</label>
+              <label className="block text-xs font-medium text-obsidian uppercase tracking-widest mb-2">项目状态</label>
               <select
                 value={filters.status}
                 onChange={(e) => handleStatusChange(e.target.value as FilterState['status'])}
-                className="w-full px-3 py-2 border border-stone/20 bg-champagne rounded-md focus:outline-none focus:ring-2 focus:ring-dusty-rose/30 focus:border-dusty-rose transition-all text-navy"
+                className="w-full px-4 py-3 border border-stone/20 bg-alabaster rounded-sm focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold transition-all text-obsidian font-light text-sm"
               >
                 <option value="all">全部状态</option>
                 <option value="completed">已完成</option>
@@ -101,14 +100,14 @@ export function ProjectFilters({ filters, onFiltersChange, templateNames }: Proj
 
             {/* 日期范围 */}
             <div>
-              <label className="block text-sm font-medium text-navy mb-2 flex items-center gap-2">
+              <label className="block text-xs font-medium text-obsidian uppercase tracking-widest mb-2 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 创建时间
               </label>
               <select
                 value={filters.dateRange}
                 onChange={(e) => handleDateRangeChange(e.target.value as FilterState['dateRange'])}
-                className="w-full px-3 py-2 border border-stone/20 bg-champagne rounded-md focus:outline-none focus:ring-2 focus:ring-dusty-rose/30 focus:border-dusty-rose transition-all text-navy"
+                className="w-full px-4 py-3 border border-stone/20 bg-alabaster rounded-sm focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold transition-all text-obsidian font-light text-sm"
               >
                 <option value="all">全部时间</option>
                 <option value="today">今天</option>
@@ -119,11 +118,11 @@ export function ProjectFilters({ filters, onFiltersChange, templateNames }: Proj
 
             {/* 模板筛选 */}
             <div>
-              <label className="block text-sm font-medium text-navy mb-2">使用模板</label>
+              <label className="block text-xs font-medium text-obsidian uppercase tracking-widest mb-2">使用模板</label>
               <select
                 value={filters.templateName}
                 onChange={(e) => handleTemplateChange(e.target.value)}
-                className="w-full px-3 py-2 border border-stone/20 bg-champagne rounded-md focus:outline-none focus:ring-2 focus:ring-dusty-rose/30 focus:border-dusty-rose transition-all text-navy"
+                className="w-full px-4 py-3 border border-stone/20 bg-alabaster rounded-sm focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold transition-all text-obsidian font-light text-sm"
               >
                 <option value="">全部模板</option>
                 {templateNames.map((name) => (

@@ -29,8 +29,8 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
     });
 
     return [
-      { name: '已完成', value: stats.completed, color: '#10b981' },
-      { name: '失败', value: stats.failed, color: '#ef4444' },
+      { name: '已完成', value: stats.completed, color: '#C8A064' }, // Gold
+      { name: '失败', value: stats.failed, color: '#8B8A88' }, // Stone
     ].filter(item => item.value > 0);
   }, [projects]);
 
@@ -52,7 +52,7 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
     projects.forEach(project => {
       const created = new Date(project.created_at);
       const diffDays = Math.floor((today.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays < days) {
         const dateStr = `${created.getMonth() + 1}月${created.getDate()}日`;
         if (stats[dateStr] !== undefined) {
@@ -71,7 +71,7 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
 
   if (totalProjects === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
+      <div className="text-center py-12 text-stone font-light tracking-wide text-sm">
         暂无数据可显示
       </div>
     );
@@ -80,8 +80,8 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* 状态分布饼图 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">项目状态分布</h3>
+      <div className="bg-stone/5 rounded-sm shadow-sm border border-stone/10 p-8">
+        <h3 className="text-lg font-medium font-display text-obsidian uppercase tracking-widest mb-6">项目状态分布</h3>
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
@@ -101,16 +101,16 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
             <Tooltip formatter={(value: number) => [`${value} 个`, '数量']} />
           </PieChart>
         </ResponsiveContainer>
-        
+
         {/* 图例 */}
         <div className="mt-4 grid grid-cols-2 gap-2">
           {statusStats.map((item) => (
             <div key={item.name} className="flex items-center gap-2">
-              <div 
-                className="w-3 h-3 rounded-full" 
+              <div
+                className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-sm text-gray-600">
+              <span className="text-sm font-light text-stone tracking-wide">
                 {item.name}: {item.value}
               </span>
             </div>
@@ -119,13 +119,13 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
       </div>
 
       {/* 最近7天创建趋势 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">最近7天创建趋势</h3>
+      <div className="bg-stone/5 rounded-sm shadow-sm border border-stone/10 p-8">
+        <h3 className="text-lg font-medium font-display text-obsidian uppercase tracking-widest mb-6">最近7天创建趋势</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={dateStats}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="date" 
+            <XAxis
+              dataKey="date"
               tick={{ fontSize: 12 }}
               angle={-15}
               textAnchor="end"
@@ -134,16 +134,16 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar 
-              dataKey="count" 
-              name="项目数" 
-              fill="#3b82f6"
-              radius={[8, 8, 0, 0]}
+            <Bar
+              dataKey="count"
+              name="项目数"
+              fill="#1A1A1A"
+              radius={[2, 2, 0, 0]}
             />
           </BarChart>
         </ResponsiveContainer>
-        
-        <div className="mt-4 text-sm text-gray-600">
+
+        <div className="mt-6 text-sm font-light text-stone tracking-wide text-center">
           总计：{totalProjects} 个项目
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import type { ProjectWithTemplate } from '@/types/database';
 
@@ -15,6 +15,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
+  const fetchedRef = useRef(false);
 
   const fetchProjects = useCallback(async (pageNum: number = 0, append: boolean = false) => {
     if (!user) {
@@ -48,7 +49,8 @@ export function useProjects(options: UseProjectsOptions = {}) {
   }, [user, pageSize]);
 
   useEffect(() => {
-    if (initialLoad) {
+    if (initialLoad && !fetchedRef.current) {
+      fetchedRef.current = true;
       fetchProjects(0, false);
     }
   }, [fetchProjects, initialLoad]);

@@ -65,6 +65,7 @@ model Profile {
   id            String   @id @default(cuid())
   userId        String   @unique @map("user_id")
   credits       Int      @default(50)
+  frozenCredits Int      @default(0) @map("frozen_credits")
   inviteCode    String?  @unique @map("invite_code")
   invitedBy     String?  @map("invited_by")
   inviteCount   Int      @default(0) @map("invite_count")

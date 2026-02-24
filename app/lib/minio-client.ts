@@ -141,15 +141,19 @@ export async function uploadBase64Image(
   base64Data: string,
   options?: Omit<UploadImageOptions, 'buffer'>
 ): Promise<UploadImageResult> {
-  // 解析 base64 数据
-  const matches = base64Data.match(/^data:image\/([a-zA-Z0-9.+-]+);base64,(.+)$/);
-  
-  if (!matches) {
+  const commaIdx = base64Data.indexOf(',');
+  if (commaIdx === -1 || !base64Data.startsWith('data:image/')) {
     throw new Error('无效的 base64 图片数据');
   }
 
-  const imageType = matches[1];
-  const base64String = matches[2];
+  const header = base64Data.slice(0, commaIdx);
+  const typeMatch = header.match(/^data:image\/([a-zA-Z0-9.+-]+);base64$/);
+  if (!typeMatch) {
+    throw new Error('无效的 base64 图片数据');
+  }
+
+  const imageType = typeMatch[1];
+  const base64String = base64Data.slice(commaIdx + 1);
   const buffer = Buffer.from(base64String, 'base64');
 
   return uploadImage({

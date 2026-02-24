@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { CheckCircle, AlertCircle, Sparkles, Camera, Loader2, ArrowRight } from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, Sparkles, Camera, Loader2, ArrowRight } from 'lucide-react';
 import { getStatusLabel, getStatusVisual } from '@/lib/status';
 import { getTimeAgo } from '@/lib/time';
 import { ProjectActionsMenu } from '../ProjectActionsMenu';
@@ -38,18 +38,12 @@ export function ProjectCard({
     'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=400';
 
   const renderStatus = (status: string) => {
-    const allowed = ['completed', 'failed'] as const;
-    type AllowedStatus = typeof allowed[number];
-    const safeStatus: AllowedStatus = (allowed as readonly string[]).includes(status)
-      ? (status as AllowedStatus)
-      : 'completed';
-
-    const { icon, colorClass } = getStatusVisual(safeStatus);
-    const label = getStatusLabel(safeStatus);
-    const Icon = icon === 'check' ? CheckCircle : AlertCircle;
+    const { icon, colorClass } = getStatusVisual(status as Parameters<typeof getStatusVisual>[0]);
+    const label = getStatusLabel(status as Parameters<typeof getStatusLabel>[0]);
+    const Icon = icon === 'check' ? CheckCircle : icon === 'clock' ? Clock : AlertCircle;
     return (
       <>
-        <Icon className={`w-5 h-5 ${colorClass}`} />
+        <Icon className={`w-5 h-5 ${colorClass} ${icon === 'clock' ? 'animate-spin' : ''}`} />
         <span className="text-sm font-medium text-obsidian tracking-wide uppercase">{label}</span>
       </>
     );
