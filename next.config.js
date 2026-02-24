@@ -40,6 +40,11 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'files.closeai.fans',
+        pathname: '/**',
+      },
     ],
     domains: ['localhost'],
   },
