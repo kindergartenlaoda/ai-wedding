@@ -34,7 +34,11 @@
       "Bash(node test-prompt-optimization.js)",
       "Bash(node test-face-preservation.js)",
       "Bash(curl:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(pnpm tsx:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(git status:*)"
     ],
     "deny": [],
     "ask": []

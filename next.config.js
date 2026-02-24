@@ -35,6 +35,11 @@ const nextConfig = {
         hostname: 'file.302.ai',
         pathname: '/gpt/imgs/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
     ],
     domains: ['localhost'],
   },

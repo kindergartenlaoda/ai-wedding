@@ -22,17 +22,17 @@ module.exports = {
         full: "9999px"
       },
       colors: {
-        // Romantic Neutrals
-        ivory: "hsl(var(--ivory))",
-        champagne: "hsl(var(--champagne))",
-        blush: "hsl(var(--blush))",
-        sage: "hsl(var(--sage))",
+        // Cinematic & Editorial Neutrals
+        alabaster: "hsl(var(--alabaster))",
+        pearl: "hsl(var(--pearl))",
+        obsidian: "hsl(var(--obsidian))",
+        charcoal: "hsl(var(--charcoal))",
         stone: "hsl(var(--stone))",
 
-        // Refined Elegance
-        "rose-gold": "hsl(var(--rose-gold))",
-        "dusty-rose": "hsl(var(--dusty-rose))",
-        terracotta: "hsl(var(--terracotta))",
+        // Refined Accents
+        gold: "hsl(var(--gold))",
+        champagne: "hsl(var(--champagne))",
+        blush: "hsl(var(--blush))",
         navy: "hsl(var(--navy))",
         forest: "hsl(var(--forest))",
 
@@ -84,6 +84,7 @@ module.exports = {
         '400': '400ms',
         '600': '600ms',
         '700': '700ms',
+        '1000': '1000ms',
       },
       scale: {
         '98': '0.98',
