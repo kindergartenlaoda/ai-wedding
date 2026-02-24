@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "verify-db": "tsx scripts/verify-db-permissions.ts",
+    "grant-db-permissions": "tsx scripts/grant-db-permissions.ts",
     "fix-minio": "bash scripts/fix-minio-403.sh",
     "fix-minio:policy": "tsx scripts/fix-minio-bucket-policy.ts",
     "fix-minio:urls": "tsx scripts/refresh-image-urls.ts",
