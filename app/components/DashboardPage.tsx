@@ -1,10 +1,11 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, RefreshCw, Sparkles } from 'lucide-react';
-import { Template, ProjectWithTemplate, SingleGeneration } from '@/types/database';
+import { Template } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjects } from '@/hooks/useProjects';
 import { useSingleGenerations } from '@/hooks/useSingleGenerations';
-import { useEngagementStats } from '@/hooks/useEngagementStats';
+import { useDashboardActions } from '@/hooks/useDashboardActions';
+import { useDashboardModals } from '@/hooks/useDashboardModals';
 import { ProjectFilters } from './ProjectFilters';
 import type { FilterState } from '@/types/filters';
 import { ProjectStatsChart } from './ProjectStatsChart';
@@ -27,41 +28,32 @@ interface DashboardPageProps {
 
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const { profile, user } = useAuth();
-  const { projects, loading, refreshProjects } = useProjects();
+  const { projects, loading, hasMore: projectsHasMore, loadMore: loadMoreProjects, refreshProjects } = useProjects();
   const {
     generations,
     loading: singleLoading,
+    hasMore: generationsHasMore,
+    loadMore: loadMoreGenerations,
     refreshGenerations,
     deleteGeneration,
   } = useSingleGenerations();
   const [activeTab, setActiveTab] = useState<'all' | 'completed' | 'single'>('all');
-  const { likes, downloads } = useEngagementStats();
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: '',
     status: 'all',
     dateRange: 'all',
     templateName: '',
   });
-  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(
-    null
-  );
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(
-    null
-  );
-  const [selectedProject, setSelectedProject] = useState<ProjectWithTemplate | null>(null);
-  const [editingProject, setEditingProject] = useState<ProjectWithTemplate | null>(null);
-  const [selectedSingleGeneration, setSelectedSingleGeneration] =
-    useState<SingleGeneration | null>(null);
 
-  // 手动刷新项目列表
-  const handleManualRefresh = async () => {
-    if (activeTab === 'single') {
-      await refreshGenerations();
-    } else {
-      await refreshProjects();
-    }
-    setToast({ message: '列表已刷新', type: 'success' });
-  };
+  const modals = useDashboardModals();
+  const actions = useDashboardActions({
+    refreshProjects,
+    refreshGenerations,
+    deleteGeneration,
+    user,
+    activeTab,
+    setDeleteConfirm: modals.setDeleteConfirm,
+  });
 
   // 项目标签页配置
   const tabs = useMemo(
@@ -115,170 +107,11 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     });
   }, [projects, activeTab, filters]);
 
-  const getTimeAgo = useCallback((dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    if (seconds < 60) return '刚刚';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟前`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时前`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}天前`;
-    return `${Math.floor(seconds / 604800)}周前`;
-  }, []);
-
-  const handleDeleteProject = async (projectId: string) => {
-    try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('删除失败');
-      setToast({ message: '项目已删除', type: 'success' });
-      await refreshProjects();
-    } catch (error) {
-      console.error('删除项目失败:', error);
-      setToast({ message: '删除失败，请重试', type: 'error' });
-    } finally {
-      setDeleteConfirm(null);
-    }
-  };
-
-  const handleUpdateProject = async (
-    projectId: string,
-    updatedData: Partial<ProjectWithTemplate>
-  ) => {
-    try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: updatedData.name }),
-      });
-      if (!res.ok) throw new Error('更新失败');
-      setToast({ message: '项目更新成功', type: 'success' });
-      await refreshProjects();
-    } catch (error) {
-      console.error('更新项目失败:', error);
-      throw new Error(error instanceof Error ? error.message : '更新失败');
-    }
-  };
-
-  const handleDeleteSingleGeneration = async (id: string) => {
-    try {
-      await deleteGeneration(id);
-      setToast({ message: '记录已删除', type: 'success' });
-    } catch (error) {
-      console.error('删除单张生成记录失败:', error);
-      setToast({ message: '删除失败，请重试', type: 'error' });
-    }
-  };
-
-  const handleBatchDownload = async (project: ProjectWithTemplate) => {
-    if (
-      !project.generation?.preview_images ||
-      project.generation.preview_images.length === 0
-    ) {
-      setToast({ message: '该项目暂无可下载的图片', type: 'error' });
-      return;
-    }
-
-    try {
-      setToast({ message: '开始准备下载...', type: 'success' });
-      const images = project.generation.preview_images;
-      const projectName = project.name || '项目';
-
-      const downloadPromises = images.map(async (imageUrl, index) => {
-        try {
-          if (imageUrl.startsWith('data:')) {
-            const response = await fetch(imageUrl);
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${projectName}_${index + 1}.jpg`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-            return true;
-          } else {
-            const a = document.createElement('a');
-            a.href = imageUrl;
-            a.target = '_blank';
-            a.rel = 'noopener';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            return true;
-          }
-        } catch (error) {
-          console.error(`下载第 ${index + 1} 张图片失败:`, error);
-          return false;
-        }
-      });
-
-      const results = await Promise.all(downloadPromises);
-      const successCount = results.filter(Boolean).length;
-      const totalCount = images.length;
-
-      if (successCount === totalCount) {
-        setToast({ message: `成功下载 ${successCount} 张图片`, type: 'success' });
-      } else {
-        setToast({
-          message: `下载完成：${successCount}/${totalCount} 张图片成功`,
-          type: 'error',
-        });
-      }
-    } catch (error) {
-      console.error('批量下载失败:', error);
-      setToast({ message: '批量下载失败，请重试', type: 'error' });
-    }
-  };
-
-  const handleToggleGalleryShare = async (generationId: string, isShared: boolean) => {
-    if (!user) {
-      setToast({ message: '请先登录', type: 'error' });
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/generations/${generationId}/share`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isShared }),
-      });
-
-      if (response.status === 401) {
-        setToast({ message: '认证失败，请重新登录', type: 'error' });
-        return;
-      }
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '更新分享状态失败');
-      }
-
-      const result = await response.json();
-      setToast({ message: result.message, type: 'success' });
-      await refreshProjects();
-    } catch (error) {
-      console.error('切换分享状态失败:', error);
-      setToast({
-        message: error instanceof Error ? error.message : '操作失败，请重试',
-        type: 'error',
-      });
-    }
-  };
-
   return (
-    <div className="py-12 min-h-screen bg-gradient-to-b from-champagne to-ivory">
+    <div className="py-12 min-h-screen bg-alabaster">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <DashboardHeader
           profile={profile}
-          projects={projects}
-          likes={likes}
-          downloads={downloads}
           onNavigateToPricing={() => onNavigate('pricing')}
         />
 
@@ -286,12 +119,12 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           <div className="flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center">
             <div>
               <div className="flex gap-3 items-center">
-                <h2 className="text-2xl font-medium font-display text-navy">我的项目</h2>
+                <h2 className="text-2xl font-medium font-display text-obsidian uppercase tracking-widest">我的项目</h2>
               </div>
-              <p className="mt-1 text-stone">
+              <p className="mt-2 text-stone font-light tracking-wide text-sm">
                 {projects.length} 个项目总计
                 {filteredProjects.length < projects.length && (
-                  <span className="text-dusty-rose">
+                  <span className="text-gold">
                     {' '}
                     • {filteredProjects.length} 个匹配筛选条件
                   </span>
@@ -301,20 +134,20 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
 
             <div className="flex gap-3 items-center">
               <button
-                onClick={handleManualRefresh}
+                onClick={actions.handleManualRefresh}
                 disabled={loading}
-                className="flex gap-2 items-center px-4 py-3 font-medium rounded-md border transition-all duration-300 bg-champagne text-navy hover:bg-ivory border-stone/20 disabled:opacity-50"
+                className="flex gap-2 items-center px-4 py-3 text-xs tracking-[0.2em] font-medium rounded-sm border transition-all duration-300 bg-transparent text-obsidian hover:bg-stone/5 border-stone/20 disabled:opacity-50 uppercase"
                 title="刷新项目列表"
               >
-                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 刷新
               </button>
               <button
                 onClick={() => onNavigate('templates')}
-                className="flex gap-2 items-center px-6 py-3 font-medium bg-gradient-to-r rounded-md shadow-md transition-all duration-300 from-rose-gold to-dusty-rose text-ivory hover:shadow-glow"
+                className="flex gap-2 items-center px-6 py-3 text-xs tracking-[0.2em] font-medium bg-obsidian rounded-sm transition-all duration-500 text-alabaster hover:bg-gold hover:text-obsidian uppercase"
               >
-                <Plus className="w-5 h-5" />
-                创建新项目
+                <Plus className="w-4 h-4" />
+                创建作品
               </button>
             </div>
           </div>
@@ -340,8 +173,10 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
               <SingleGenerationList
                 generations={generations}
                 loading={singleLoading}
-                onDelete={handleDeleteSingleGeneration}
-                onView={setSelectedSingleGeneration}
+                hasMore={generationsHasMore}
+                onLoadMore={loadMoreGenerations}
+                onDelete={actions.handleDeleteSingleGeneration}
+                onView={modals.setSelectedSingleGeneration}
                 onNavigateToGenerateSingle={() => onNavigate('generate-single')}
               />
             ) : (
@@ -349,15 +184,17 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
               <ProjectList
                 projects={filteredProjects}
                 loading={loading}
-                onProjectClick={setSelectedProject}
+                hasMore={projectsHasMore}
+                onLoadMore={loadMoreProjects}
+                onProjectClick={modals.setSelectedProject}
                 onView={project => {
                   if (project.generation?.id) {
                     onNavigate('results', undefined, project.generation.id);
                   }
                 }}
-                onEdit={setEditingProject}
+                onEdit={modals.setEditingProject}
                 onDelete={project =>
-                  setDeleteConfirm({ id: project.id, name: project.name })
+                  modals.setDeleteConfirm({ id: project.id, name: project.name })
                 }
                 onShare={project => {
                   if (project.generation?.id) {
@@ -365,47 +202,45 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                     navigator.clipboard
                       .writeText(url)
                       .then(() => {
-                        setToast({ message: '分享链接已复制到剪贴板', type: 'success' });
+                        actions.setToast({ message: '分享链接已复制到剪贴板', type: 'success' });
                       })
                       .catch(() => {
-                        setToast({ message: '复制失败，请重试', type: 'error' });
+                        actions.setToast({ message: '复制失败，请重试', type: 'error' });
                       });
                   }
                 }}
-                onDownload={handleBatchDownload}
-                onToggleGalleryShare={handleToggleGalleryShare}
+                onDownload={actions.handleBatchDownload}
+                onToggleGalleryShare={actions.handleToggleGalleryShare}
                 onNavigateToTemplates={() => onNavigate('templates')}
-                getTimeAgo={getTimeAgo}
               />
             )}
 
             {/* 统计图表 */}
             {projects.length > 0 && activeTab !== 'single' && (
-              <div className="px-6 pb-6 mt-12">
-                <h3 className="mb-6 text-xl font-medium font-display text-navy">数据统计</h3>
+              <div className="px-8 pb-8 mt-16">
+                <h3 className="mb-8 text-xl font-medium font-display text-obsidian uppercase tracking-wider text-center">数据统计</h3>
                 <ProjectStatsChart projects={projects} />
               </div>
             )}
 
-            <div className="p-8 m-6 bg-gradient-to-br rounded-md border from-champagne to-blush border-rose-gold/20">
-              <div className="flex flex-col gap-6 items-center md:flex-row">
-                <div className="flex flex-shrink-0 justify-center items-center w-16 h-16 bg-gradient-to-br rounded-md shadow-sm from-rose-gold to-dusty-rose">
-                  <Sparkles className="w-8 h-8 text-ivory" />
+            <div className="p-10 m-8 bg-stone/5 rounded-sm border border-stone/10 shadow-sm">
+              <div className="flex flex-col gap-8 items-center md:flex-row">
+                <div className="flex flex-shrink-0 justify-center items-center w-16 h-16 bg-obsidian rounded-sm border border-stone/20 overflow-hidden shadow-lg">
+                  <Sparkles className="w-6 h-6 text-gold" />
                 </div>
                 <div className="flex-1 text-center md:text-left">
-                  <h3 className="mb-2 text-xl font-medium font-display text-navy">
-                    需要更多积分？
+                  <h3 className="mb-3 text-xl font-medium font-display text-obsidian uppercase tracking-widest">
+                    需要更多额度？
                   </h3>
-                  <p className="text-stone">
-                    Get more generations with our affordable credit packages. Perfect for
-                    creating unlimited variations.
+                  <p className="text-stone font-light text-sm tracking-wide">
+                    补充艺术创作所需的数字积分，即可无限制突破视觉边界，探索极致光影可能。
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('pricing')}
-                  className="px-6 py-3 font-medium whitespace-nowrap bg-gradient-to-r rounded-md shadow-md transition-all duration-300 from-rose-gold to-dusty-rose text-ivory hover:shadow-glow"
+                  className="px-8 py-4 font-medium whitespace-nowrap bg-transparent border border-obsidian rounded-sm shadow-sm transition-all duration-500 text-obsidian hover:bg-obsidian hover:text-alabaster uppercase tracking-[0.2em] text-xs"
                 >
-                  查看价格
+                  探索方案
                 </button>
               </div>
             </div>
@@ -414,76 +249,82 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       </div>
 
       {/* 删除确认对话框 */}
-      {deleteConfirm && (
+      {modals.deleteConfirm && (
         <ConfirmDialog
           isOpen={true}
           title="删除项目"
-          message={`确定要删除项目"${deleteConfirm.name}"吗？此操作不可撤销，将同时删除所有相关的生成记录。`}
+          message={`确定要删除项目"${modals.deleteConfirm.name}"吗？此操作不可撤销，将同时删除所有相关的生成记录。`}
           confirmText="删除"
           cancelText="取消"
           variant="danger"
-          onConfirm={() => handleDeleteProject(deleteConfirm.id)}
-          onCancel={() => setDeleteConfirm(null)}
+          onConfirm={() => actions.handleDeleteProject(modals.deleteConfirm!.id)}
+          onCancel={() => modals.setDeleteConfirm(null)}
         />
       )}
 
       {/* 项目详情模态框 */}
-      {selectedProject && (
+      {modals.selectedProject && (
         <ProjectDetailModal
-          project={selectedProject}
-          isOpen={!!selectedProject}
-          onClose={() => setSelectedProject(null)}
+          project={modals.selectedProject}
+          isOpen={!!modals.selectedProject}
+          onClose={() => modals.setSelectedProject(null)}
           onView={() => {
-            if (selectedProject.generation?.id) {
-              onNavigate('results', undefined, selectedProject.generation.id);
-              setSelectedProject(null);
+            if (modals.selectedProject?.generation?.id) {
+              onNavigate('results', undefined, modals.selectedProject.generation.id);
+              modals.setSelectedProject(null);
             }
           }}
           onEdit={() => {
-            setEditingProject(selectedProject);
-            setSelectedProject(null);
+            if (modals.selectedProject) {
+              modals.setEditingProject(modals.selectedProject);
+              modals.setSelectedProject(null);
+            }
           }}
           onShare={() => {
-            if (selectedProject.generation?.id) {
-              const url = `${window.location.origin}/results/${selectedProject.generation.id}`;
+            if (modals.selectedProject?.generation?.id) {
+              const url = `${window.location.origin}/results/${modals.selectedProject.generation.id}`;
               navigator.clipboard.writeText(url).then(() => {
-                setToast({ message: '分享链接已复制到剪贴板', type: 'success' });
+                actions.setToast({ message: '分享链接已复制到剪贴板', type: 'success' });
               });
             }
-            setSelectedProject(null);
+            modals.setSelectedProject(null);
           }}
           onDownload={() => {
-            handleBatchDownload(selectedProject);
-            setSelectedProject(null);
+            if (modals.selectedProject) {
+              actions.handleBatchDownload(modals.selectedProject);
+              modals.setSelectedProject(null);
+            }
           }}
         />
       )}
 
       {/* 项目编辑模态框 */}
-      {editingProject && (
+      {modals.editingProject && (
         <ProjectEditModal
-          project={editingProject}
-          isOpen={!!editingProject}
-          onClose={() => setEditingProject(null)}
+          project={modals.editingProject}
+          isOpen={!!modals.editingProject}
+          onClose={() => modals.setEditingProject(null)}
           onSave={async updatedData => {
-            await handleUpdateProject(editingProject.id, updatedData);
-            setEditingProject(null);
+            if (modals.editingProject) {
+              await actions.handleUpdateProject(modals.editingProject.id, updatedData);
+              modals.setEditingProject(null);
+            }
           }}
         />
       )}
 
       {/* 单张生成详情模态框 */}
-      {selectedSingleGeneration && (
+      {modals.selectedSingleGeneration && (
         <SingleGenerationDetailModal
-          generation={selectedSingleGeneration}
-          isOpen={!!selectedSingleGeneration}
-          onClose={() => setSelectedSingleGeneration(null)}
+          generation={modals.selectedSingleGeneration}
+          isOpen={!!modals.selectedSingleGeneration}
+          onClose={() => modals.setSelectedSingleGeneration(null)}
         />
       )}
 
       {/* Toast 通知 */}
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      {actions.toast && (
+        <Toast message={actions.toast.message} type={actions.toast.type} onClose={() => actions.setToast(null)} />
       )}
     </div>
   );
