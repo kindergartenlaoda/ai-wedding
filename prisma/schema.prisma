@@ -340,3 +340,25 @@ model SystemAnnouncement {
   @@index([publishedAt])
   @@map("system_announcements")
 }
+
+// ---------------------------------------------------------------------------
+// Domains (Generation Categories)
+// ---------------------------------------------------------------------------
+
+model Domain {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String   @default("")
+  icon        String   @default("Camera")
+  color       String   @default("from-pink-500 to-rose-500")
+  coverImage  String?  @map("cover_image")
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("domains")
+}

@@ -7,8 +7,40 @@ import {
   Wand2,
   Mountain,
   ShoppingBag,
+  Globe,
+  Star,
+  Heart,
+  Zap,
+  Image as ImageIcon,
+  Music,
+  Film,
+  Book,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+
+/** Icon name string (from DB) → LucideIcon component. Used by HomePage and admin. */
+export const DOMAIN_ICON_MAP: Record<string, LucideIcon> = {
+  Camera,
+  Baby,
+  CreditCard,
+  Palette,
+  User,
+  Wand2,
+  Mountain,
+  ShoppingBag,
+  Globe,
+  Star,
+  Heart,
+  Zap,
+  Image: ImageIcon,
+  Music,
+  Film,
+  Book,
+};
+
+export function getDomainIcon(iconName: string): LucideIcon {
+  return DOMAIN_ICON_MAP[iconName] ?? Camera;
+}
 
 export const GENERATION_DOMAINS = [
   'wedding',

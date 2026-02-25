@@ -4,13 +4,18 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { FileImage, ArrowLeft, Megaphone, Settings } from 'lucide-react';
+import { FileImage, ArrowLeft, Megaphone, Settings, Globe } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
 const NAV_ITEMS = [
+  {
+    href: '/admin/domains',
+    label: '域管理',
+    icon: Globe,
+  },
   {
     href: '/admin/templates',
     label: '模板管理',

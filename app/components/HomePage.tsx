@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Sparkles,
   ArrowRight,
@@ -11,9 +13,21 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { FadeIn } from '@/components/react-bits';
-import { DOMAIN_CONFIG, GENERATION_DOMAINS } from '@/types/domain';
+import { getDomainIcon } from '@/types/domain';
 import dynamic from 'next/dynamic';
+
+interface DomainFromApi {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  cover_image: string | null;
+  sort_order: number;
+}
 
 const HeroProcessAnimation = dynamic(
   () => import('./HeroProcessAnimation').then((mod) => mod.HeroProcessAnimation),
@@ -35,8 +49,21 @@ const DOMAIN_IMAGES: Record<string, string> = {
   product: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop',
 };
 
+const DEFAULT_COVER =
+  'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=800&auto=format&fit=crop';
+
 export function HomePage({ onNavigate }: HomePageProps) {
   const router = useRouter();
+  const [domains, setDomains] = useState<DomainFromApi[]>([]);
+  const [domainsLoading, setDomainsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/domains', { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => setDomains(data.data ?? []))
+      .catch(() => setDomains([]))
+      .finally(() => setDomainsLoading(false));
+  }, []);
 
   const navigate = (page: string) => {
     if (onNavigate) {
@@ -123,36 +150,40 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
           {/* Horizontal scroll on mobile, Grid on desktop */}
           <div className="flex overflow-x-auto sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 pb-10 sm:pb-0 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-4 px-4 sm:mx-0 sm:px-0">
-            {GENERATION_DOMAINS.map((domainId, index) => {
-              const domain = DOMAIN_CONFIG[domainId];
-              const Icon = domain.icon;
-              return (
-                <FadeIn key={domain.id} delay={0.1 * index} className="min-w-[80vw] sm:min-w-0 snap-center">
-                  <Link href={`/create?domain=${domain.id}`} className="group block relative aspect-[3/4] overflow-hidden rounded-sm bg-obsidian shadow-2xl border border-white/5">
-                    <Image
-                      src={DOMAIN_IMAGES[domainId] || DOMAIN_IMAGES.wedding}
-                      alt={domain.name}
-                      fill
-                      className="object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105"
-                      sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 25vw"
-                    />
-                    {/* Darker base gradient for text readability, with a subtle glow on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-obsidian/95 via-obsidian/40 to-transparent opacity-80 transition-opacity duration-1000 group-hover:opacity-100" />
+            {domainsLoading ? (
+              <div className="col-span-full py-16 text-center text-pearl/60">加载风格中...</div>
+            ) : (
+              domains.map((domain, index) => {
+                const Icon = getDomainIcon(domain.icon);
+                const coverSrc = domain.cover_image || DOMAIN_IMAGES[domain.slug] || DEFAULT_COVER;
+                return (
+                  <FadeIn key={domain.id} delay={0.1 * index} className="min-w-[80vw] sm:min-w-0 snap-center">
+                    <Link href={`/create?domain=${domain.slug}`} className="group block relative aspect-[3/4] overflow-hidden rounded-sm bg-obsidian shadow-2xl border border-white/5">
+                      <Image
+                        src={coverSrc}
+                        alt={domain.name}
+                        fill
+                        className="object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105"
+                        sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 25vw"
+                      />
+                      {/* Darker base gradient for text readability, with a subtle glow on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-obsidian/95 via-obsidian/40 to-transparent opacity-80 transition-opacity duration-1000 group-hover:opacity-100" />
 
-                    {/* Subtle border glow effect on hover */}
-                    <div className="absolute inset-0 border border-transparent transition-colors duration-1000 group-hover:border-gold/20 rounded-sm z-20 pointer-events-none" />
+                      {/* Subtle border glow effect on hover */}
+                      <div className="absolute inset-0 border border-transparent transition-colors duration-1000 group-hover:border-gold/20 rounded-sm z-20 pointer-events-none" />
 
-                    <div className="absolute bottom-0 left-0 p-8 w-full z-10 transform transition-transform duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] translate-y-0 sm:translate-y-4 sm:group-hover:translate-y-0">
-                      <Icon className="h-6 w-6 mb-6 text-gold opacity-90 drop-shadow-[0_0_10px_rgba(200,160,100,0.5)]" />
-                      <h3 className="text-2xl font-display text-alabaster mb-3 tracking-wide">{domain.name}</h3>
-                      <p className="text-sm text-pearl/70 font-light opacity-100 sm:opacity-0 transition-opacity duration-[1.2s] ease-[cubic-bezier(0.25,1,0.5,1)] delay-100 sm:group-hover:opacity-100 line-clamp-2">
-                        {domain.description}
-                      </p>
-                    </div>
-                  </Link>
-                </FadeIn>
-              );
-            })}
+                      <div className="absolute bottom-0 left-0 p-8 w-full z-10 transform transition-transform duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] translate-y-0 sm:translate-y-4 sm:group-hover:translate-y-0">
+                        <Icon className="h-6 w-6 mb-6 text-gold opacity-90 drop-shadow-[0_0_10px_rgba(200,160,100,0.5)]" />
+                        <h3 className="text-2xl font-display text-alabaster mb-3 tracking-wide">{domain.name}</h3>
+                        <p className="text-sm text-pearl/70 font-light opacity-100 sm:opacity-0 transition-opacity duration-[1.2s] ease-[cubic-bezier(0.25,1,0.5,1)] delay-100 sm:group-hover:opacity-100 line-clamp-2">
+                          {domain.description}
+                        </p>
+                      </div>
+                    </Link>
+                  </FadeIn>
+                );
+              })
+            )}
           </div>
         </div>
       </section>
