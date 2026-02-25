@@ -67,7 +67,9 @@
       "Bash(sort -k2 -rn)",
       "Bash(pnpm exec:*)",
       "Bash(pnpm eslint:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(pnpm prisma:*)",
+      "Bash(perl:*)"
     ],
     "deny": [],
     "ask": []

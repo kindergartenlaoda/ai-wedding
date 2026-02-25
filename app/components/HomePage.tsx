@@ -74,6 +74,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
   };
 
   const handleGetStarted = () => {
+    try { localStorage.removeItem('step-flow-draft'); } catch {}
     router.push('/create');
   };
 

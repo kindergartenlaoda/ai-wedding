@@ -25,7 +25,7 @@ export function stepFlowReducer(
       const domain =
         state.step === 'style' && state.domain
           ? state.domain
-          : ((action.template.domain ?? 'wedding') as GenerationDomain);
+          : (action.template.domain as GenerationDomain);
       return {
         step: 'upload',
         domain,
@@ -191,7 +191,7 @@ function getInitialState(
   if (templateId) {
     const template = templates.find((t) => t.id === templateId);
     if (template) {
-      const domain = (template.domain ?? 'wedding') as GenerationDomain;
+      const domain = (template.domain ?? domainParam) as GenerationDomain;
       return { step: 'upload', domain, template, photos: [] };
     }
   }
@@ -206,7 +206,7 @@ function getInitialState(
     if (draft.templateId && templates.length > 0) {
       const template = templates.find((t) => t.id === draft.templateId);
       if (template) {
-        const domain = (template.domain ?? draft.domain ?? 'wedding') as GenerationDomain;
+        const domain = (template.domain ?? draft.domain) as GenerationDomain;
         return { step: 'upload', domain, template, photos: [] };
       }
     }
