@@ -6,12 +6,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const domain = searchParams.get('domain');
 
-    const where: { isActive: boolean; domain?: string } = { isActive: true };
+    const where: { is_active: boolean; domain?: string } = { is_active: true };
     if (domain) where.domain = domain;
 
-    const data = await prisma.template.findMany({
+    const data = await prisma.templates.findMany({
       where,
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { sort_order: 'asc' },
     });
 
     // Map to snake_case for API compatibility
@@ -21,13 +21,13 @@ export async function GET(request: NextRequest) {
       description: t.description,
       category: t.category,
       domain: t.domain,
-      preview_image_url: t.previewImageUrl,
-      prompt_config: t.promptConfig,
-      prompt_list: t.promptList,
-      price_credits: t.priceCredits,
-      is_active: t.isActive,
-      sort_order: t.sortOrder,
-      created_at: t.createdAt.toISOString(),
+      preview_image_url: t.preview_image_url,
+      prompt_config: t.prompt_config,
+      prompt_list: t.prompt_list,
+      price_credits: t.price_credits,
+      is_active: t.is_active,
+      sort_order: t.sort_order,
+      created_at: t.created_at.toISOString(),
     }));
 
     return NextResponse.json(

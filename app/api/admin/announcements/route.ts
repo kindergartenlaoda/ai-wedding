@@ -9,17 +9,17 @@ export async function GET(req: NextRequest) {
   const authResult = await requireAdmin(req);
   if (authResult instanceof Response) return authResult;
 
-  const announcements = await prisma.systemAnnouncement.findMany({
-    orderBy: { createdAt: 'desc' },
+  const announcements = await prisma.system_announcements.findMany({
+    orderBy: { created_at: 'desc' },
   });
 
   const formatted = announcements.map((a) => ({
     id: a.id,
     content: a.content,
-    is_active: a.isActive,
-    published_at: a.publishedAt.toISOString(),
-    created_at: a.createdAt.toISOString(),
-    updated_at: a.updatedAt.toISOString(),
+    is_active: a.is_active,
+    published_at: a.published_at.toISOString(),
+    created_at: a.created_at.toISOString(),
+    updated_at: a.updated_at.toISOString(),
   }));
 
   return NextResponse.json({ announcements: formatted });
@@ -41,11 +41,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const announcement = await prisma.systemAnnouncement.create({
+  const announcement = await prisma.system_announcements.create({
     data: {
       content: body.content.trim(),
-      isActive: body.is_active !== undefined ? body.is_active : false,
-      publishedAt: body.published_at ? new Date(body.published_at) : new Date(),
+      is_active: body.is_active !== undefined ? body.is_active : false,
+      published_at: body.published_at ? new Date(body.published_at) : new Date(),
     },
   });
 
@@ -53,10 +53,10 @@ export async function POST(req: NextRequest) {
     announcement: {
       id: announcement.id,
       content: announcement.content,
-      is_active: announcement.isActive,
-      published_at: announcement.publishedAt.toISOString(),
-      created_at: announcement.createdAt.toISOString(),
-      updated_at: announcement.updatedAt.toISOString(),
+      is_active: announcement.is_active,
+      published_at: announcement.published_at.toISOString(),
+      created_at: announcement.created_at.toISOString(),
+      updated_at: announcement.updated_at.toISOString(),
     },
   }, { status: 201 });
 }
@@ -77,17 +77,17 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  const updateData: Parameters<typeof prisma.systemAnnouncement.update>[0]['data'] = {};
+  const updateData: Parameters<typeof prisma.system_announcements.update>[0]['data'] = {};
   if (body.content !== undefined) updateData.content = body.content.trim();
-  if (body.is_active !== undefined) updateData.isActive = body.is_active;
-  if (body.published_at !== undefined) updateData.publishedAt = new Date(body.published_at);
+  if (body.is_active !== undefined) updateData.is_active = body.is_active;
+  if (body.published_at !== undefined) updateData.published_at = new Date(body.published_at);
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
   }
 
   try {
-    const announcement = await prisma.systemAnnouncement.update({
+    const announcement = await prisma.system_announcements.update({
       where: { id: body.id },
       data: updateData,
     });
@@ -95,10 +95,10 @@ export async function PUT(req: NextRequest) {
       announcement: {
         id: announcement.id,
         content: announcement.content,
-        is_active: announcement.isActive,
-        published_at: announcement.publishedAt.toISOString(),
-        created_at: announcement.createdAt.toISOString(),
-        updated_at: announcement.updatedAt.toISOString(),
+        is_active: announcement.is_active,
+        published_at: announcement.published_at.toISOString(),
+        created_at: announcement.created_at.toISOString(),
+        updated_at: announcement.updated_at.toISOString(),
       },
     });
   } catch (e) {
@@ -127,7 +127,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    await prisma.systemAnnouncement.delete({ where: { id } });
+    await prisma.system_announcements.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as { code?: string })?.code === 'P2025') {

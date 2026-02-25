@@ -18,7 +18,7 @@ export async function GET() {
   if (authResult instanceof Response) return authResult;
 
   try {
-    const configs = await prisma.modelConfig.findMany({
+    const configs = await prisma.model_configs.findMany({
       where: { type: ModelConfigType.generate_image, status: 'active' },
       select: { source: true },
     });

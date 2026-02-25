@@ -9,8 +9,8 @@ export async function POST(req: NextRequest) {
     }
 
     // 查询邀请人（通过 invite_code）
-    const inviter = await prisma.profile.findFirst({
-      where: { inviteCode: ref_code },
+    const inviter = await prisma.profiles.findFirst({
+      where: { invite_code: ref_code },
     });
     if (!inviter) {
       return new Response(JSON.stringify({ error: 'Invalid referrer code' }), { status: 400 });
@@ -20,38 +20,38 @@ export async function POST(req: NextRequest) {
     const INVITEE_REWARD = 20;
 
     // 查询被邀请人 profile（invitee_id 为 user id）
-    const invitee = await prisma.profile.findUnique({
-      where: { userId: invitee_id },
+    const invitee = await prisma.profiles.findUnique({
+      where: { user_id: invitee_id },
     });
     if (!invitee) {
       return new Response(JSON.stringify({ error: 'Invitee profile not found' }), { status: 400 });
     }
-    if (invitee.invitedBy) {
+    if (invitee.invited_by) {
       return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200 });
     }
 
     await prisma.$transaction([
-      prisma.profile.update({
+      prisma.profiles.update({
         where: { id: inviter.id },
         data: {
           credits: inviter.credits + INVITER_REWARD,
-          inviteCount: inviter.inviteCount + 1,
-          rewardCredits: inviter.rewardCredits + INVITER_REWARD,
+          invite_count: inviter.invite_count + 1,
+          reward_credits: inviter.reward_credits + INVITER_REWARD,
         },
       }),
-      prisma.profile.update({
-        where: { userId: invitee_id },
+      prisma.profiles.update({
+        where: { user_id: invitee_id },
         data: {
           credits: invitee.credits + INVITEE_REWARD + 50, // 新用户基础 50 + 奖励
-          invitedBy: ref_code,
+          invited_by: ref_code,
         },
       }),
-      prisma.inviteEvent.create({
+      prisma.invite_events.create({
         data: {
-          inviterId: inviter.userId,
-          inviteeId: invitee_id,
-          inviterCode: ref_code,
-          rewardCredits: INVITER_REWARD,
+          inviter_id: inviter.user_id,
+          invitee_id: invitee_id,
+          inviter_code: ref_code,
+          reward_credits: INVITER_REWARD,
         },
       }),
     ]);

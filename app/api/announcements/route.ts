@@ -9,9 +9,9 @@ export const dynamic = 'force-dynamic';
  * 此接口无需身份验证，所有用户均可访问
  */
 export async function GET() {
-  const announcement = await prisma.systemAnnouncement.findFirst({
-    where: { isActive: true },
-    orderBy: { publishedAt: 'desc' },
+  const announcement = await prisma.system_announcements.findFirst({
+    where: { is_active: true },
+    orderBy: { published_at: 'desc' },
   });
 
   return NextResponse.json({ announcement: announcement || null });

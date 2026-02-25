@@ -11,36 +11,36 @@ import type { Generation, GeneratedImage, GenerationWithRelations, SingleGenerat
  */
 interface PrismaGenerationRow {
   id: string;
-  projectId: string | null;
-  userId: string;
-  templateId: string | null;
+  project_id: string | null;
+  user_id: string;
+  template_id: string | null;
   domain: string;
-  generationType: string | null;
+  generation_type: string | null;
   status: string;
   prompt: string | null;
-  originalImage: string | null;
+  original_image: string | null;
   settings: unknown;
-  previewImages: unknown;
-  highResImages: unknown;
-  errorMessage: string | null;
-  creditsUsed: number;
-  isSharedToGallery: boolean;
-  createdAt: Date;
-  completedAt: Date | null;
-  updatedAt: Date;
-  generatedImages?: PrismaGeneratedImageRow[];
-  project?: { name: string; uploadedPhotos: unknown } | null;
-  template?: { name: string } | null;
+  preview_images: unknown;
+  high_res_images: unknown;
+  error_message: string | null;
+  credits_used: number;
+  is_shared_to_gallery: boolean;
+  created_at: Date;
+  completed_at: Date | null;
+  updated_at: Date;
+  generated_images?: PrismaGeneratedImageRow[];
+  projects?: { name: string; uploaded_photos: unknown } | null;
+  templates?: { name: string } | null;
 }
 
 interface PrismaGeneratedImageRow {
   id: string;
-  generationId: string;
-  imageUrl: string;
-  imageType: string;
-  imageIndex: number;
+  generation_id: string;
+  image_url: string;
+  image_type: string;
+  image_index: number;
   metadata: unknown;
-  createdAt: Date;
+  created_at: Date;
 }
 
 /**
@@ -49,12 +49,12 @@ interface PrismaGeneratedImageRow {
 function mapGeneratedImage(img: PrismaGeneratedImageRow): GeneratedImage {
   return {
     id: img.id,
-    generation_id: img.generationId,
-    image_url: img.imageUrl,
-    image_type: img.imageType as 'preview' | 'high_res',
-    image_index: img.imageIndex,
+    generation_id: img.generation_id,
+    image_url: img.image_url,
+    image_type: img.image_type as 'preview' | 'high_res',
+    image_index: img.image_index,
     metadata: img.metadata as GeneratedImage['metadata'],
-    created_at: img.createdAt.toISOString(),
+    created_at: img.created_at.toISOString(),
   };
 }
 
@@ -62,21 +62,21 @@ function mapGeneratedImage(img: PrismaGeneratedImageRow): GeneratedImage {
  * 将 Prisma Generation 行映射为 API Generation 类型
  */
 export function mapGeneration(g: PrismaGenerationRow): Generation {
-  const genType = (g.generationType || 'batch') as 'batch' | 'single';
+  const genType = (g.generation_type || 'batch') as 'batch' | 'single';
   const base = {
     id: g.id,
-    user_id: g.userId,
+    user_id: g.user_id,
     domain: g.domain,
     status: g.status as Generation['status'],
-    preview_images: Array.isArray(g.previewImages) ? g.previewImages as string[] : [],
-    high_res_images: Array.isArray(g.highResImages) ? g.highResImages as string[] : [],
-    generated_images: g.generatedImages?.map(mapGeneratedImage) ?? [],
-    error_message: g.errorMessage || undefined,
-    credits_used: g.creditsUsed,
-    is_shared_to_gallery: g.isSharedToGallery,
-    created_at: g.createdAt.toISOString(),
-    completed_at: g.completedAt?.toISOString(),
-    updated_at: g.updatedAt.toISOString(),
+    preview_images: Array.isArray(g.preview_images) ? g.preview_images as string[] : [],
+    high_res_images: Array.isArray(g.high_res_images) ? g.high_res_images as string[] : [],
+    generated_images: g.generated_images?.map(mapGeneratedImage) ?? [],
+    error_message: g.error_message || undefined,
+    credits_used: g.credits_used,
+    is_shared_to_gallery: g.is_shared_to_gallery,
+    created_at: g.created_at.toISOString(),
+    completed_at: g.completed_at?.toISOString(),
+    updated_at: g.updated_at.toISOString(),
   };
 
   if (genType === 'single') {
@@ -84,9 +84,9 @@ export function mapGeneration(g: PrismaGenerationRow): Generation {
       ...base,
       generation_type: 'single' as const,
       project_id: null,
-      template_id: g.templateId,
+      template_id: g.template_id,
       prompt: g.prompt || '',
-      original_image: g.originalImage || '',
+      original_image: g.original_image || '',
       settings: g.settings as SingleGenerationRecord['settings'],
     };
   }
@@ -94,8 +94,8 @@ export function mapGeneration(g: PrismaGenerationRow): Generation {
   return {
     ...base,
     generation_type: 'batch' as const,
-    project_id: g.projectId || '',
-    template_id: g.templateId || '',
+    project_id: g.project_id || '',
+    template_id: g.template_id || '',
     prompt: null,
     original_image: null,
     settings: null,
@@ -106,27 +106,27 @@ export function mapGeneration(g: PrismaGenerationRow): Generation {
  * 将 Prisma Generation 行映射为 GenerationWithRelations 类型
  */
 export function mapGenerationWithRelations(g: PrismaGenerationRow): GenerationWithRelations {
-  const genType = (g.generationType || 'batch') as 'batch' | 'single';
+  const genType = (g.generation_type || 'batch') as 'batch' | 'single';
 
   return {
     id: g.id,
     generation_type: genType,
     status: g.status,
-    preview_images: Array.isArray(g.previewImages) ? g.previewImages as string[] : [],
-    high_res_images: Array.isArray(g.highResImages) ? g.highResImages as string[] : [],
-    generated_images: g.generatedImages?.map(mapGeneratedImage) ?? [],
-    error_message: g.errorMessage ?? undefined,
-    is_shared_to_gallery: g.isSharedToGallery,
-    completed_at: g.completedAt?.toISOString(),
-    project: g.project ? {
-      name: g.project.name,
-      uploaded_photos: Array.isArray(g.project.uploadedPhotos)
-        ? g.project.uploadedPhotos as string[]
+    preview_images: Array.isArray(g.preview_images) ? g.preview_images as string[] : [],
+    high_res_images: Array.isArray(g.high_res_images) ? g.high_res_images as string[] : [],
+    generated_images: g.generated_images?.map(mapGeneratedImage) ?? [],
+    error_message: g.error_message ?? undefined,
+    is_shared_to_gallery: g.is_shared_to_gallery,
+    completed_at: g.completed_at?.toISOString(),
+    project: g.projects ? {
+      name: g.projects.name,
+      uploaded_photos: Array.isArray(g.projects.uploaded_photos)
+        ? g.projects.uploaded_photos as string[]
         : undefined,
     } : null,
-    template: g.template ? { name: g.template.name } : null,
+    template: g.templates ? { name: g.templates.name } : null,
     prompt: g.prompt,
-    original_image: g.originalImage,
+    original_image: g.original_image,
     settings: g.settings as GenerationWithRelations['settings'],
   };
 }

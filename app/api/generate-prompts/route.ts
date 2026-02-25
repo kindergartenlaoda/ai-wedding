@@ -10,7 +10,7 @@ import { createRequestLogger, sanitize } from '@/lib/logger';
 
 async function getActivePromptsConfig(log: ReturnType<typeof createRequestLogger>): Promise<ModelConfig | null> {
   try {
-    const config = await prisma.modelConfig.findFirst({
+    const config = await prisma.model_configs.findFirst({
       where: { type: ModelConfigType.generate_prompts, status: 'active' },
     });
     if (!config) return null;
@@ -18,15 +18,15 @@ async function getActivePromptsConfig(log: ReturnType<typeof createRequestLogger
       id: config.id,
       type: config.type as ModelConfig['type'],
       name: config.name,
-      api_base_url: config.apiBaseUrl,
-      api_key: config.apiKey,
-      model_name: config.modelName,
+      api_base_url: config.api_base_url,
+      api_key: config.api_key,
+      model_name: config.model_name,
       status: config.status as ModelConfig['status'],
       source: config.source as ModelConfig['source'],
       description: config.description ?? undefined,
-      created_at: config.createdAt.toISOString(),
-      updated_at: config.updatedAt.toISOString(),
-      created_by: config.createdBy ?? undefined,
+      created_at: config.created_at.toISOString(),
+      updated_at: config.updated_at.toISOString(),
+      created_by: config.created_by ?? undefined,
     };
   } catch (err) {
     log.error({ error: err }, '获取激活提示词生成配置异常');
@@ -39,13 +39,13 @@ async function getActivePromptsConfig(log: ReturnType<typeof createRequestLogger
  */
 async function generatePromptsWithStrategy(
   imageBase64: string,
-  apiBaseUrl: string,
-  apiKey: string,
+  api_base_url: string,
+  api_key: string,
   model: string,
   analysisPrompt: string,
   log: ReturnType<typeof createRequestLogger>
 ): Promise<PromptItem[]> {
-  const endpoint = `${apiBaseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+  const endpoint = `${api_base_url.replace(/\/$/, '')}/v1/chat/completions`;
 
   // 确保 base64 格式正确
   const base64Data = imageBase64.includes('base64,')
@@ -90,7 +90,7 @@ async function generatePromptsWithStrategy(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${api_key}`,
     },
     body: JSON.stringify(requestData),
   });
@@ -187,7 +187,7 @@ export async function POST(req: NextRequest) {
     // 1) 认证校验
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
-    log.info({ userId: authResult.user.id }, '用户认证成功');
+    log.info({ user_id: authResult.user.id }, '用户认证成功');
 
     // 2) 获取提示词生成模型配置
     const dbConfig = await getActivePromptsConfig(log);

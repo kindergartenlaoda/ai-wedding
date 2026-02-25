@@ -13,33 +13,33 @@ export async function PATCH(
 ) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const { id } = await context.params;
   const body = await req.json();
 
-  const existing = await prisma.generation.findFirst({
-    where: { id, userId },
+  const existing = await prisma.generations.findFirst({
+    where: { id, user_id },
   });
   if (!existing) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const updateData: Parameters<typeof prisma.generation.update>[0]['data'] = {};
+  const updateData: Parameters<typeof prisma.generations.update>[0]['data'] = {};
   if (body.status !== undefined) updateData.status = body.status;
-  if (body.error_message !== undefined) updateData.errorMessage = body.error_message;
-  if (body.completed_at !== undefined) updateData.completedAt = new Date(body.completed_at);
+  if (body.error_message !== undefined) updateData.error_message = body.error_message;
+  if (body.completed_at !== undefined) updateData.completed_at = new Date(body.completed_at);
 
   // Handle image updates - support both old and new formats
   if (body.preview_images !== undefined) {
-    updateData.previewImages = body.preview_images;
+    updateData.preview_images = body.preview_images;
     if (Array.isArray(body.preview_images) && body.preview_images.length > 0) {
-      await prisma.generatedImage.createMany({
+      await prisma.generated_images.createMany({
         data: body.preview_images.map((url: string, index: number) => ({
-          generationId: id,
-          imageUrl: url,
-          imageType: 'preview',
-          imageIndex: index,
+          generation_id: id,
+          image_url: url,
+          image_type: 'preview',
+          image_index: index,
         })),
         skipDuplicates: true,
       });
@@ -47,14 +47,14 @@ export async function PATCH(
   }
 
   if (body.high_res_images !== undefined) {
-    updateData.highResImages = body.high_res_images;
+    updateData.high_res_images = body.high_res_images;
     if (Array.isArray(body.high_res_images) && body.high_res_images.length > 0) {
-      await prisma.generatedImage.createMany({
+      await prisma.generated_images.createMany({
         data: body.high_res_images.map((url: string, index: number) => ({
-          generationId: id,
-          imageUrl: url,
-          imageType: 'high_res',
-          imageIndex: index,
+          generation_id: id,
+          image_url: url,
+          image_type: 'high_res',
+          image_index: index,
         })),
         skipDuplicates: true,
       });
@@ -63,19 +63,19 @@ export async function PATCH(
 
   // Handle new format: generated_images array
   if (body.generated_images !== undefined && Array.isArray(body.generated_images)) {
-    await prisma.generatedImage.deleteMany({ where: { generationId: id } });
-    await prisma.generatedImage.createMany({
+    await prisma.generated_images.deleteMany({ where: { generation_id: id } });
+    await prisma.generated_images.createMany({
       data: body.generated_images.map((img: { image_url: string; image_type: string; image_index: number; metadata?: object }) => ({
-        generationId: id,
-        imageUrl: img.image_url,
-        imageType: img.image_type,
-        imageIndex: img.image_index,
+        generation_id: id,
+        image_url: img.image_url,
+        image_type: img.image_type,
+        image_index: img.image_index,
         metadata: img.metadata || null,
       })),
     });
   }
 
-  await prisma.generation.update({ where: { id }, data: updateData });
+  await prisma.generations.update({ where: { id }, data: updateData });
 
   return NextResponse.json({ success: true });
 }
@@ -90,16 +90,16 @@ export async function GET(
 ) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const { id } = await context.params;
 
-  const generation = await prisma.generation.findFirst({
-    where: { id, userId },
+  const generation = await prisma.generations.findFirst({
+    where: { id, user_id },
     include: {
-      project: { select: { name: true, uploadedPhotos: true } },
-      template: { select: { name: true } },
-      generatedImages: { orderBy: { imageIndex: 'asc' } },
+      projects: { select: { name: true, uploaded_photos: true } },
+      templates: { select: { name: true } },
+      generated_images: { orderBy: { image_index: 'asc' } },
     },
   });
 
@@ -120,18 +120,18 @@ export async function DELETE(
 ) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const { id } = await context.params;
 
-  const existing = await prisma.generation.findFirst({
-    where: { id, userId },
+  const existing = await prisma.generations.findFirst({
+    where: { id, user_id },
   });
 
   if (!existing) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  await prisma.generation.delete({ where: { id } });
+  await prisma.generations.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

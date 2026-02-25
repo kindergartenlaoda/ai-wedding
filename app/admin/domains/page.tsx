@@ -73,6 +73,7 @@ interface DomainItem {
     cover_image: string | null;
     is_active: boolean;
     sort_order: number;
+    require_face_detection: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -86,6 +87,7 @@ interface DomainFormData {
     cover_image: string;
     is_active: boolean;
     sort_order: number;
+    require_face_detection: boolean;
 }
 
 const EMPTY_FORM: DomainFormData = {
@@ -97,6 +99,7 @@ const EMPTY_FORM: DomainFormData = {
     cover_image: '',
     is_active: true,
     sort_order: 0,
+    require_face_detection: false,
 };
 
 // ------------------------------------------------------------------
@@ -206,6 +209,7 @@ export default function AdminDomainsPage() {
             cover_image: domain.cover_image || '',
             is_active: domain.is_active,
             sort_order: domain.sort_order,
+            require_face_detection: domain.require_face_detection,
         });
         setIsFormOpen(true);
     };
@@ -260,6 +264,7 @@ export default function AdminDomainsPage() {
                                     <th className="px-4 py-3 font-medium">描述</th>
                                     <th className="px-4 py-3 font-medium">图标</th>
                                     <th className="px-4 py-3 font-medium">状态</th>
+                                    <th className="px-4 py-3 font-medium">识别人物</th>
                                     <th className="px-4 py-3 font-medium text-right">操作</th>
                                 </tr>
                             </thead>
@@ -306,6 +311,12 @@ export default function AdminDomainsPage() {
                                                 <Switch
                                                     checked={domain.is_active}
                                                     onCheckedChange={() => handleToggle(domain)}
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <Switch
+                                                    checked={domain.require_face_detection}
+                                                    disabled
                                                 />
                                             </td>
                                             <td className="px-4 py-3">
@@ -463,6 +474,16 @@ export default function AdminDomainsPage() {
                                 onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
                             />
                             <Label htmlFor="is_active">启用</Label>
+                        </div>
+
+                        {/* Require Face Detection */}
+                        <div className="flex items-center gap-3">
+                            <Switch
+                                id="require_face_detection"
+                                checked={form.require_face_detection}
+                                onCheckedChange={(checked) => setForm({ ...form, require_face_detection: checked })}
+                            />
+                            <Label htmlFor="require_face_detection">需要识别人物</Label>
                         </div>
                     </div>
 

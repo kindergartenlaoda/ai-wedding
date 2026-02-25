@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (authResult instanceof Response) return authResult;
 
     const { id } = await params;
-    const domain = await prisma.domain.findUnique({ where: { id } });
+    const domain = await prisma.domains.findUnique({ where: { id } });
 
     if (!domain) {
         return NextResponse.json({ error: '域不存在' }, { status: 404 });
@@ -28,11 +28,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
             description: domain.description,
             icon: domain.icon,
             color: domain.color,
-            cover_image: domain.coverImage,
-            is_active: domain.isActive,
-            sort_order: domain.sortOrder,
-            created_at: domain.createdAt.toISOString(),
-            updated_at: domain.updatedAt.toISOString(),
+            cover_image: domain.cover_image,
+            is_active: domain.is_active,
+            sort_order: domain.sort_order,
+            require_face_detection: domain.require_face_detection,
+            created_at: domain.created_at.toISOString(),
+            updated_at: domain.updated_at.toISOString(),
         },
     });
 }
@@ -49,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     // Check slug uniqueness if slug is being updated
     if (body.slug) {
-        const existing = await prisma.domain.findUnique({ where: { slug: body.slug } });
+        const existing = await prisma.domains.findUnique({ where: { slug: body.slug } });
         if (existing && existing.id !== id) {
             return NextResponse.json(
                 { error: `slug "${body.slug}" 已被其他域使用` },
@@ -64,12 +65,13 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     if (body.description !== undefined) updateData.description = body.description;
     if (body.icon !== undefined) updateData.icon = body.icon;
     if (body.color !== undefined) updateData.color = body.color;
-    if (body.cover_image !== undefined) updateData.coverImage = body.cover_image;
-    if (body.is_active !== undefined) updateData.isActive = body.is_active;
-    if (body.sort_order !== undefined) updateData.sortOrder = body.sort_order;
+    if (body.cover_image !== undefined) updateData.cover_image = body.cover_image;
+    if (body.is_active !== undefined) updateData.is_active = body.is_active;
+    if (body.sort_order !== undefined) updateData.sort_order = body.sort_order;
+    if (body.require_face_detection !== undefined) updateData.require_face_detection = body.require_face_detection;
 
     try {
-        const domain = await prisma.domain.update({
+        const domain = await prisma.domains.update({
             where: { id },
             data: updateData,
         });
@@ -82,11 +84,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
                 description: domain.description,
                 icon: domain.icon,
                 color: domain.color,
-                cover_image: domain.coverImage,
-                is_active: domain.isActive,
-                sort_order: domain.sortOrder,
-                created_at: domain.createdAt.toISOString(),
-                updated_at: domain.updatedAt.toISOString(),
+                cover_image: domain.cover_image,
+                is_active: domain.is_active,
+                sort_order: domain.sort_order,
+                require_face_detection: domain.require_face_detection,
+                created_at: domain.created_at.toISOString(),
+                updated_at: domain.updated_at.toISOString(),
             },
         });
     } catch {
@@ -104,7 +107,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
 
     try {
-        await prisma.domain.delete({ where: { id } });
+        await prisma.domains.delete({ where: { id } });
         return NextResponse.json({ success: true });
     } catch {
         return NextResponse.json({ error: '域不存在' }, { status: 404 });

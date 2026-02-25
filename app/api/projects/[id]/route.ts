@@ -11,26 +11,26 @@ export async function PATCH(
 ) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const { id } = await context.params;
   const body = await req.json();
 
-  const existing = await prisma.project.findFirst({
-    where: { id, userId },
+  const existing = await prisma.projects.findFirst({
+    where: { id, user_id },
   });
   if (!existing) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const updateData: Parameters<typeof prisma.project.update>[0]['data'] = {};
+  const updateData: Parameters<typeof prisma.projects.update>[0]['data'] = {};
   if (body.name !== undefined) updateData.name = body.name;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
   }
 
-  await prisma.project.update({
+  await prisma.projects.update({
     where: { id },
     data: updateData,
   });
@@ -47,17 +47,17 @@ export async function DELETE(
 ) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const { id } = await context.params;
 
-  const existing = await prisma.project.findFirst({
-    where: { id, userId },
+  const existing = await prisma.projects.findFirst({
+    where: { id, user_id },
   });
   if (!existing) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  await prisma.project.delete({ where: { id } });
+  await prisma.projects.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

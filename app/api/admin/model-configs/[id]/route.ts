@@ -14,12 +14,11 @@ const TYPE_MAP: Record<string, (typeof ModelConfigType)[keyof typeof ModelConfig
 const SOURCE_MAP: Record<string, (typeof ModelConfigSource)[keyof typeof ModelConfigSource]> = {
   openRouter: 'openRouter',
   openAi: 'openAi',
-  '302': 'source_302',
 };
 
-function maskApiKey(apiKey: string): string {
-  if (!apiKey || apiKey.length < 10) return '***';
-  return `${apiKey.substring(0, 6)}...${apiKey.substring(apiKey.length - 3)}`;
+function maskApiKey(api_key: string): string {
+  if (!api_key || api_key.length < 10) return '***';
+  return `${api_key.substring(0, 6)}...${api_key.substring(api_key.length - 3)}`;
 }
 
 /**
@@ -31,7 +30,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 
   const { id } = await context.params;
 
-  const config = await prisma.modelConfig.findUnique({ where: { id } });
+  const config = await prisma.model_configs.findUnique({ where: { id } });
   if (!config) {
     return NextResponse.json({ error: '配置不存在' }, { status: 404 });
   }
@@ -41,15 +40,15 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       id: config.id,
       type: config.type,
       name: config.name,
-      api_base_url: config.apiBaseUrl,
-      api_key: config.apiKey,
-      model_name: config.modelName,
+      api_base_url: config.api_base_url,
+      api_key: config.api_key,
+      model_name: config.model_name,
       status: config.status,
       source: config.source,
       description: config.description,
-      created_at: config.createdAt.toISOString(),
-      updated_at: config.updatedAt.toISOString(),
-      created_by: config.createdBy,
+      created_at: config.created_at.toISOString(),
+      updated_at: config.updated_at.toISOString(),
+      created_by: config.created_by,
     },
   });
 }
@@ -64,12 +63,12 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   const { id } = await context.params;
   const body = (await req.json()) as UpdateModelConfigInput;
 
-  const updateData: Parameters<typeof prisma.modelConfig.update>[0]['data'] = {};
+  const updateData: Parameters<typeof prisma.model_configs.update>[0]['data'] = {};
   if (body.type !== undefined) updateData.type = TYPE_MAP[body.type] ?? ModelConfigType.other;
   if (body.name !== undefined) updateData.name = body.name;
-  if (body.api_base_url !== undefined) updateData.apiBaseUrl = body.api_base_url;
-  if (body.api_key !== undefined) updateData.apiKey = body.api_key;
-  if (body.model_name !== undefined) updateData.modelName = body.model_name;
+  if (body.api_base_url !== undefined) updateData.api_base_url = body.api_base_url;
+  if (body.api_key !== undefined) updateData.api_key = body.api_key;
+  if (body.model_name !== undefined) updateData.model_name = body.model_name;
   if (body.status !== undefined) updateData.status = body.status === 'active' ? ModelConfigStatus.active : ModelConfigStatus.inactive;
   if (body.source !== undefined) updateData.source = SOURCE_MAP[body.source] ?? ModelConfigSource.openAi;
   if (body.description !== undefined) updateData.description = body.description;
@@ -79,7 +78,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   }
 
   try {
-    const config = await prisma.modelConfig.update({
+    const config = await prisma.model_configs.update({
       where: { id },
       data: updateData,
     });
@@ -88,15 +87,15 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
         id: config.id,
         type: config.type,
         name: config.name,
-        api_base_url: config.apiBaseUrl,
-        api_key_masked: maskApiKey(config.apiKey),
-        model_name: config.modelName,
+        api_base_url: config.api_base_url,
+        api_key_masked: maskApiKey(config.api_key),
+        model_name: config.model_name,
         status: config.status,
         source: config.source,
         description: config.description,
-        created_at: config.createdAt.toISOString(),
-        updated_at: config.updatedAt.toISOString(),
-        created_by: config.createdBy,
+        created_at: config.created_at.toISOString(),
+        updated_at: config.updated_at.toISOString(),
+        created_by: config.created_by,
       },
     });
   } catch (e) {
@@ -117,7 +116,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
   const { id } = await context.params;
 
   try {
-    await prisma.modelConfig.delete({ where: { id } });
+    await prisma.model_configs.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as { code?: string })?.code === 'P2025') {

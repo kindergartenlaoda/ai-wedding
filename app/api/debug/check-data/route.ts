@@ -9,16 +9,16 @@ export async function GET() {
   try {
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
-    const userId = authResult.user.id;
+    const user_id = authResult.user.id;
 
     const [projects, generations] = await Promise.all([
-      prisma.project.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
+      prisma.projects.findMany({
+        where: { user_id },
+        orderBy: { created_at: 'desc' },
       }),
-      prisma.generation.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
+      prisma.generations.findMany({
+        where: { user_id },
+        orderBy: { created_at: 'desc' },
       }),
     ]);
 
@@ -26,14 +26,14 @@ export async function GET() {
       totalProjects: projects.length,
       totalGenerations: generations.length,
       completedGenerations: generations.filter((g) => g.status === 'completed').length,
-      sharedToGallery: generations.filter((g) => g.isSharedToGallery).length,
+      sharedToGallery: generations.filter((g) => g.is_shared_to_gallery).length,
       generationsWithImages: generations.filter(
-        (g) => Array.isArray(g.previewImages) && (g.previewImages as string[]).length > 0
+        (g) => Array.isArray(g.preview_images) && (g.preview_images as string[]).length > 0
       ).length,
     };
 
     return NextResponse.json({
-      userId,
+      user_id,
       stats,
       projects,
       generations,

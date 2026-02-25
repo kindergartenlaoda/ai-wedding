@@ -14,12 +14,11 @@ const TYPE_MAP: Record<string, (typeof ModelConfigType)[keyof typeof ModelConfig
 const SOURCE_MAP: Record<string, (typeof ModelConfigSource)[keyof typeof ModelConfigSource]> = {
   openRouter: 'openRouter',
   openAi: 'openAi',
-  '302': 'source_302',
 };
 
-function maskApiKey(apiKey: string): string {
-  if (!apiKey || apiKey.length < 10) return '***';
-  return `${apiKey.substring(0, 6)}...${apiKey.substring(apiKey.length - 3)}`;
+function maskApiKey(api_key: string): string {
+  if (!api_key || api_key.length < 10) return '***';
+  return `${api_key.substring(0, 6)}...${api_key.substring(api_key.length - 3)}`;
 }
 
 /**
@@ -29,23 +28,23 @@ export async function GET(req: NextRequest) {
   const authResult = await requireAdmin(req);
   if (authResult instanceof Response) return authResult;
 
-  const configs = await prisma.modelConfig.findMany({
-    orderBy: { createdAt: 'desc' },
+  const configs = await prisma.model_configs.findMany({
+    orderBy: { created_at: 'desc' },
   });
 
   const maskedData = configs.map((c) => ({
     id: c.id,
     type: c.type,
     name: c.name,
-    api_base_url: c.apiBaseUrl,
-    api_key_masked: maskApiKey(c.apiKey),
-    model_name: c.modelName,
+    api_base_url: c.api_base_url,
+    api_key_masked: maskApiKey(c.api_key),
+    model_name: c.model_name,
     status: c.status,
     source: c.source,
     description: c.description,
-    created_at: c.createdAt.toISOString(),
-    updated_at: c.updatedAt.toISOString(),
-    created_by: c.createdBy,
+    created_at: c.created_at.toISOString(),
+    updated_at: c.updated_at.toISOString(),
+    created_by: c.created_by,
   }));
 
   return NextResponse.json({ data: maskedData, total: maskedData.length });
@@ -70,17 +69,17 @@ export async function POST(req: NextRequest) {
   const prismaType = TYPE_MAP[body.type] ?? ModelConfigType.other;
   const prismaSource = (body.source && SOURCE_MAP[body.source]) || SOURCE_MAP['openAi'];
 
-  const config = await prisma.modelConfig.create({
+  const config = await prisma.model_configs.create({
     data: {
       type: prismaType,
       name: body.name,
-      apiBaseUrl: body.api_base_url,
-      apiKey: body.api_key,
-      modelName: body.model_name,
+      api_base_url: body.api_base_url,
+      api_key: body.api_key,
+      model_name: body.model_name,
       status: (body.status === 'active' ? ModelConfigStatus.active : ModelConfigStatus.inactive) as 'active' | 'inactive',
       source: prismaSource,
       description: body.description || null,
-      createdBy: authResult.profile.userId,
+      created_by: authResult.profile.user_id,
     },
   });
 
@@ -89,15 +88,15 @@ export async function POST(req: NextRequest) {
       id: config.id,
       type: config.type,
       name: config.name,
-      api_base_url: config.apiBaseUrl,
-      api_key_masked: maskApiKey(config.apiKey),
-      model_name: config.modelName,
+      api_base_url: config.api_base_url,
+      api_key_masked: maskApiKey(config.api_key),
+      model_name: config.model_name,
       status: config.status,
       source: config.source,
       description: config.description,
-      created_at: config.createdAt.toISOString(),
-      updated_at: config.updatedAt.toISOString(),
-      created_by: config.createdBy,
+      created_at: config.created_at.toISOString(),
+      updated_at: config.updated_at.toISOString(),
+      created_by: config.created_by,
     },
   }, { status: 201 });
 }

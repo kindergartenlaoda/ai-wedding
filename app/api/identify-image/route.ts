@@ -18,7 +18,7 @@ if (DISABLE_SSL_VERIFY) {
 
 async function getActiveIdentifyConfig(log: ReturnType<typeof createRequestLogger>): Promise<ModelConfig | null> {
   try {
-    const config = await prisma.modelConfig.findFirst({
+    const config = await prisma.model_configs.findFirst({
       where: { type: ModelConfigType.identify_image, status: 'active' },
     });
     if (!config) return null;
@@ -26,15 +26,15 @@ async function getActiveIdentifyConfig(log: ReturnType<typeof createRequestLogge
       id: config.id,
       type: config.type as ModelConfig['type'],
       name: config.name,
-      api_base_url: config.apiBaseUrl,
-      api_key: config.apiKey,
-      model_name: config.modelName,
+      api_base_url: config.api_base_url,
+      api_key: config.api_key,
+      model_name: config.model_name,
       status: config.status as ModelConfig['status'],
       source: config.source as ModelConfig['source'],
       description: config.description ?? undefined,
-      created_at: config.createdAt.toISOString(),
-      updated_at: config.updatedAt.toISOString(),
-      created_by: config.createdBy ?? undefined,
+      created_at: config.created_at.toISOString(),
+      updated_at: config.updated_at.toISOString(),
+      created_by: config.created_by ?? undefined,
     };
   } catch (err) {
     log.error({ error: err }, '获取激活识别配置异常');
@@ -46,13 +46,13 @@ async function getActiveIdentifyConfig(log: ReturnType<typeof createRequestLogge
  * 使用 OpenAI 兼容 API 识别图片是否包含人
  */
 async function identifyPerson(
-  imageUrl: string,
-  apiBaseUrl: string,
-  apiKey: string,
+  image_url: string,
+  api_base_url: string,
+  api_key: string,
   model: string,
   log: ReturnType<typeof createRequestLogger>
 ): Promise<{ hasPerson: boolean; confidence: number; description: string }> {
-  const endpoint = `${apiBaseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+  const endpoint = `${api_base_url.replace(/\/$/, '')}/v1/chat/completions`;
 
   const requestData = {
     model,
@@ -67,7 +67,7 @@ async function identifyPerson(
           {
             type: 'image_url',
             image_url: {
-              url: imageUrl,
+              url: image_url,
             },
           },
         ],
@@ -81,7 +81,7 @@ async function identifyPerson(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${api_key}`,
     },
     body: JSON.stringify(requestData),
   });
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     // 1) 认证校验
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
-    log.info({ userId: authResult.user.id }, '用户认证成功');
+    log.info({ user_id: authResult.user.id }, '用户认证成功');
 
     // 2) 获取识别模型配置
     const dbConfig = await getActiveIdentifyConfig(log);
@@ -161,11 +161,11 @@ export async function POST(req: NextRequest) {
 
     // 4) 识别每张图片
     const results = await Promise.all(
-      images.map(async (imageUrl, index) => {
+      images.map(async (image_url, index) => {
         try {
           log.debug({ index: index + 1, total: images.length }, '识别图片');
           const result = await identifyPerson(
-            imageUrl,
+            image_url,
             IDENTIFY_API_BASE_URL,
             IDENTIFY_API_KEY,
             IDENTIFY_MODEL,

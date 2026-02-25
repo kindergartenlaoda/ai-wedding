@@ -8,26 +8,26 @@ export async function GET() {
 
   const [allCount, sharedCount, completedCount, combinedCount, galleryData, noInnerData] =
     await Promise.all([
-      prisma.generation.count(),
-      prisma.generation.count({ where: { isSharedToGallery: true } }),
-      prisma.generation.count({ where: { status: 'completed' } }),
-      prisma.generation.count({
-        where: { isSharedToGallery: true, status: 'completed' },
+      prisma.generations.count(),
+      prisma.generations.count({ where: { is_shared_to_gallery: true } }),
+      prisma.generations.count({ where: { status: 'completed' } }),
+      prisma.generations.count({
+        where: { is_shared_to_gallery: true, status: 'completed' },
       }),
-      prisma.generation.findMany({
+      prisma.generations.findMany({
         where: {
-          isSharedToGallery: true,
+          is_shared_to_gallery: true,
           status: 'completed',
         },
         include: {
-          project: { select: { name: true } },
-          template: { select: { name: true } },
-          user: { select: { name: true } },
+          projects: { select: { name: true } },
+          templates: { select: { name: true } },
+          users: { select: { name: true } },
         },
         take: 5,
       }),
-      prisma.generation.findMany({
-        where: { isSharedToGallery: true, status: 'completed' },
+      prisma.generations.findMany({
+        where: { is_shared_to_gallery: true, status: 'completed' },
         take: 5,
       }),
     ]);

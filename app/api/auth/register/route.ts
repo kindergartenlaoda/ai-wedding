@@ -39,23 +39,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.users.findUnique({ where: { email } });
     if (existing) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const password_hash = await bcrypt.hash(password, 10);
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const user = await tx.user.create({
-        data: { email, passwordHash, name: name.trim() },
+      const user = await tx.users.create({
+        data: { email, password_hash, name: name.trim() },
       });
 
-      await tx.profile.create({
+      await tx.profiles.create({
         data: {
-          userId: user.id,
+          user_id: user.id,
           credits: 50,
-          inviteCode: generateInviteCode(),
+          invite_code: generateInviteCode(),
         },
       });
 

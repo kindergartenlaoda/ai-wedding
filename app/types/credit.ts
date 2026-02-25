@@ -49,13 +49,13 @@ export interface CreditTransaction {
  * 创建积分事务的输入参数
  */
 export interface CreateCreditTransactionInput {
-  userId: string;
+  user_id: string;
   type: CreditTransactionType;
   amount: number;
   description?: string;
-  generationId?: string;
-  orderId?: string;
-  inviteEventId?: string;
+  generation_id?: string;
+  order_id?: string;
+  invite_event_id?: string;
   metadata?: Record<string, unknown>;
-  createdBy?: string;
+  created_by?: string;
 }

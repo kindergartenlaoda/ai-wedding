@@ -6,15 +6,15 @@ import { prisma } from './prisma';
 /** Profile shape for admin verification */
 export interface AdminProfile {
   id: string;
-  userId: string;
+  user_id: string;
   credits: number;
   role: string;
-  inviteCode: string | null;
-  invitedBy: string | null;
-  inviteCount: number;
-  rewardCredits: number;
-  createdAt: Date;
-  updatedAt: Date;
+  invite_code: string | null;
+  invited_by: string | null;
+  invite_count: number;
+  reward_credits: number;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /**
@@ -28,8 +28,8 @@ export async function verifyAdmin(req: NextRequest): Promise<AdminProfile> {
     throw new Error('Missing authorization');
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { userId: session.user.id },
+  const profile = await prisma.profiles.findUnique({
+    where: { user_id: session.user.id },
   });
 
   if (!profile) {

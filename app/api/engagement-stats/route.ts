@@ -9,11 +9,11 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const [likesCount, downloadsCount] = await Promise.all([
-    prisma.imageLike.count({ where: { userId } }),
-    prisma.imageDownload.count({ where: { userId } }),
+    prisma.image_likes.count({ where: { user_id } }),
+    prisma.image_downloads.count({ where: { user_id } }),
   ]);
 
   return NextResponse.json({

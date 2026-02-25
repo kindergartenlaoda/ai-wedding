@@ -10,7 +10,7 @@ import { prisma } from '@/lib/prisma';
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const body = await req.json();
   const { amount } = body as { amount?: number };
@@ -19,16 +19,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { userId },
-    select: { credits: true, frozenCredits: true },
+  const profile = await prisma.profiles.findUnique({
+    where: { user_id },
+    select: { credits: true, frozen_credits: true },
   });
 
   if (!profile) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
   }
 
-  const available = profile.credits - profile.frozenCredits;
+  const available = profile.credits - profile.frozen_credits;
   if (available < amount) {
     return NextResponse.json(
       { error: 'Insufficient credits', available },
@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  await prisma.profile.update({
-    where: { userId },
-    data: { frozenCredits: profile.frozenCredits + amount },
+  await prisma.profiles.update({
+    where: { user_id },
+    data: { frozen_credits: profile.frozen_credits + amount },
   });
 
   return NextResponse.json({ success: true, frozen: amount });

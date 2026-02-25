@@ -10,7 +10,7 @@ import type { ProjectWithTemplate } from '@/types/database';
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const body = await req.json();
   const { name, uploaded_photos } = body as { name?: string; uploaded_photos?: string[] };
@@ -19,12 +19,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing name' }, { status: 400 });
   }
 
-  const project = await prisma.project.create({
+  const project = await prisma.projects.create({
     data: {
-      userId,
+      user_id,
       name,
       status: 'draft',
-      uploadedPhotos: (uploaded_photos || []) as string[],
+      uploaded_photos: (uploaded_photos || []) as string[],
     },
   });
 
@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
     id: project.id,
     name: project.name,
     status: project.status,
-    uploaded_photos: project.uploadedPhotos,
-    created_at: project.createdAt.toISOString(),
+    uploaded_photos: project.uploaded_photos,
+    created_at: project.created_at.toISOString(),
   }, { status: 201 });
 }
 
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get('page') || '0');
@@ -52,49 +52,49 @@ export async function GET(req: NextRequest) {
   const skip = page * pageSize;
 
   const [projects, total] = await Promise.all([
-    prisma.project.findMany({
-      where: { userId },
+    prisma.projects.findMany({
+      where: { user_id },
       include: {
         generations: {
           include: {
-            template: { select: { id: true, name: true, previewImageUrl: true } },
+            templates: { select: { id: true, name: true, preview_image_url: true } },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { created_at: 'desc' },
           take: 1,
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       skip,
       take: pageSize,
     }),
-    prisma.project.count({ where: { userId } }),
+    prisma.projects.count({ where: { user_id } }),
   ]);
 
   const formatted: ProjectWithTemplate[] = projects.map((p) => {
     const latestGen = p.generations[0];
-    const template = latestGen?.template;
+    const template = latestGen?.templates;
     return {
       id: p.id,
       name: p.name,
       status: p.status,
-      uploaded_photos: Array.isArray(p.uploadedPhotos) ? (p.uploadedPhotos as string[]) : [],
-      created_at: p.createdAt.toISOString(),
-      updated_at: p.updatedAt.toISOString(),
+      uploaded_photos: Array.isArray(p.uploaded_photos) ? (p.uploaded_photos as string[]) : [],
+      created_at: p.created_at.toISOString(),
+      updated_at: p.updated_at.toISOString(),
       template: template
         ? {
             id: template.id,
             name: template.name,
-            preview_image_url: template.previewImageUrl || '',
+            preview_image_url: template.preview_image_url || '',
           }
         : undefined,
       generation: latestGen
         ? {
             id: latestGen.id,
             status: latestGen.status,
-            preview_images: Array.isArray(latestGen.previewImages) ? (latestGen.previewImages as string[]) : [],
-            high_res_images: Array.isArray(latestGen.highResImages) ? (latestGen.highResImages as string[]) : [],
-            is_shared_to_gallery: latestGen.isSharedToGallery,
-            completed_at: latestGen.completedAt?.toISOString() || '',
+            preview_images: Array.isArray(latestGen.preview_images) ? (latestGen.preview_images as string[]) : [],
+            high_res_images: Array.isArray(latestGen.high_res_images) ? (latestGen.high_res_images as string[]) : [],
+            is_shared_to_gallery: latestGen.is_shared_to_gallery,
+            completed_at: latestGen.completed_at?.toISOString() || '',
           }
         : undefined,
     };

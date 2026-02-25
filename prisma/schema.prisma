@@ -9,7 +9,7 @@ datasource db {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model credit_transactions {
-  id              String                  @id
+  id              String                  @id @default(cuid())
   user_id         String
   type            CreditTransactionType
   status          CreditTransactionStatus @default(pending)
@@ -35,24 +35,25 @@ model credit_transactions {
 }
 
 model domains {
-  id          String   @id
+  id          String   @id @default(cuid())
   slug        String   @unique
   name        String
   description String   @default("")
   icon        String   @default("Camera")
   color       String   @default("from-pink-500 to-rose-500")
-  cover_image String?
-  is_active   Boolean  @default(true)
-  sort_order  Int      @default(0)
+  cover_image           String?
+  is_active             Boolean  @default(true)
+  sort_order            Int      @default(0)
+  require_face_detection Boolean @default(false)
   created_at  DateTime @default(now())
-  updated_at  DateTime
+  updated_at  DateTime @updatedAt
 
   @@index([is_active])
   @@index([sort_order])
 }
 
 model favorites {
-  id          String    @id
+  id          String    @id @default(cuid())
   user_id     String
   template_id String
   created_at  DateTime  @default(now())
@@ -66,7 +67,7 @@ model favorites {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model generated_images {
-  id            String      @id
+  id            String      @id @default(cuid())
   generation_id String
   image_url     String
   image_type    ImageType   @default(preview)
@@ -81,7 +82,7 @@ model generated_images {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model generations {
-  id                   String             @id
+  id                   String             @id @default(cuid())
   project_id           String?
   user_id              String
   template_id          String?
@@ -94,7 +95,7 @@ model generations {
   is_shared_to_gallery Boolean            @default(false)
   completed_at         DateTime?
   created_at           DateTime           @default(now())
-  updated_at           DateTime
+  updated_at           DateTime @updatedAt
   generation_type      GenerationType?    @default(batch)
   prompt               String?
   original_image       String?
@@ -117,7 +118,7 @@ model generations {
 }
 
 model image_downloads {
-  id            String      @id
+  id            String      @id @default(cuid())
   user_id       String
   generation_id String
   image_index   Int
@@ -134,7 +135,7 @@ model image_downloads {
 }
 
 model image_likes {
-  id            String      @id
+  id            String      @id @default(cuid())
   user_id       String
   generation_id String
   image_index   Int
@@ -149,7 +150,7 @@ model image_likes {
 }
 
 model invite_events {
-  id                                    String   @id
+  id                                    String   @id @default(cuid())
   inviter_id                            String?
   invitee_id                            String?
   inviter_code                          String?
@@ -164,7 +165,7 @@ model invite_events {
 }
 
 model model_configs {
-  id           String            @id
+  id           String            @id @default(cuid())
   type         ModelConfigType
   name         String
   api_base_url String
@@ -175,7 +176,7 @@ model model_configs {
   source       ModelConfigSource @default(openAi)
   created_by   String?
   created_at   DateTime          @default(now())
-  updated_at   DateTime
+  updated_at   DateTime @updatedAt
   users        users?            @relation(fields: [created_by], references: [id])
 
   @@index([status])
@@ -183,7 +184,7 @@ model model_configs {
 }
 
 model orders {
-  id                String            @id
+  id                String            @id @default(cuid())
   user_id           String
   generation_id     String?
   amount            Decimal           @db.Decimal(12, 2)
@@ -193,7 +194,7 @@ model orders {
   payment_intent_id String?
   purchased_images  Json              @default("[]")
   created_at        DateTime          @default(now())
-  updated_at        DateTime
+  updated_at        DateTime @updatedAt
   image_downloads   image_downloads[]
   generations       generations?      @relation(fields: [generation_id], references: [id])
   users             users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -205,7 +206,7 @@ model orders {
 }
 
 model profiles {
-  id             String   @id
+  id             String   @id @default(cuid())
   user_id        String   @unique
   credits        Int      @default(50)
   invite_code    String?  @unique
@@ -214,20 +215,20 @@ model profiles {
   reward_credits Int      @default(0)
   role           String   @default("user")
   created_at     DateTime @default(now())
-  updated_at     DateTime
+  updated_at     DateTime @updatedAt
   frozen_credits Int      @default(0)
   users          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model projects {
-  id              String        @id
+  id              String        @id @default(cuid())
   user_id         String
   name            String
   domain          String        @default("wedding")
   status          String        @default("draft")
   uploaded_photos Json          @default("[]")
   created_at      DateTime      @default(now())
-  updated_at      DateTime
+  updated_at      DateTime @updatedAt
   generations     generations[]
   users           users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -238,19 +239,19 @@ model projects {
 }
 
 model system_announcements {
-  id           String   @id
+  id           String   @id @default(cuid())
   content      String
   is_active    Boolean  @default(false)
   published_at DateTime @default(now())
   created_at   DateTime @default(now())
-  updated_at   DateTime
+  updated_at   DateTime @updatedAt
 
   @@index([is_active])
   @@index([published_at])
 }
 
 model templates {
-  id                String        @id
+  id                String        @id @default(cuid())
   name              String
   description       String?
   category          String
@@ -271,14 +272,14 @@ model templates {
 }
 
 model users {
-  id                                            String                @id
+  id                                            String                @id @default(cuid())
   email                                         String                @unique
   password_hash                                 String
   name                                          String?
   image                                         String?
   email_verified                                DateTime?
   created_at                                    DateTime              @default(now())
-  updated_at                                    DateTime
+  updated_at                                    DateTime @updatedAt
   credit_transactions                           credit_transactions[]
   favorites                                     favorites[]
   generations                                   generations[]

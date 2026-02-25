@@ -12,6 +12,7 @@ export interface Domain {
   color: string;
   cover_image: string | null;
   sort_order: number;
+  require_face_detection: boolean;
 }
 
 interface UseDomainsResult {

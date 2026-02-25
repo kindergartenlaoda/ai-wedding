@@ -11,11 +11,11 @@ export default async function TemplateDomainPage({ params }: TemplateDomainPageP
   const { domain } = await params;
 
   // Fetch domain info from database
-  const domainInfo = await prisma.domain.findUnique({
+  const domainInfo = await prisma.domains.findUnique({
     where: { slug: domain },
   });
 
-  if (!domainInfo || !domainInfo.isActive) {
+  if (!domainInfo || !domainInfo.is_active) {
     notFound();
   }
 

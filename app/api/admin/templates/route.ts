@@ -11,8 +11,8 @@ export async function GET(_req: NextRequest) {
   const authResult = await requireAdmin(_req);
   if (authResult instanceof Response) return authResult;
 
-  const templates = await prisma.template.findMany({
-    orderBy: { sortOrder: 'asc' },
+  const templates = await prisma.templates.findMany({
+    orderBy: { sort_order: 'asc' },
   });
 
   const formatted = templates.map((t) => ({
@@ -21,13 +21,13 @@ export async function GET(_req: NextRequest) {
     description: t.description,
     category: t.category,
     domain: t.domain,
-    preview_image_url: t.previewImageUrl,
-    prompt_config: t.promptConfig,
-    prompt_list: t.promptList,
-    price_credits: t.priceCredits,
-    is_active: t.isActive,
-    sort_order: t.sortOrder,
-    created_at: t.createdAt.toISOString(),
+    preview_image_url: t.preview_image_url,
+    prompt_config: t.prompt_config,
+    prompt_list: t.prompt_list,
+    price_credits: t.price_credits,
+    is_active: t.is_active,
+    sort_order: t.sort_order,
+    created_at: t.created_at.toISOString(),
   }));
 
   return NextResponse.json({ templates: formatted });
@@ -50,17 +50,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const template = await prisma.template.create({
+  const template = await prisma.templates.create({
     data: {
       name: body.name,
       description: body.description || '',
       category: body.category,
-      previewImageUrl: body.preview_image_url,
-      promptConfig: (body.prompt_config || {}) as object,
-      promptList: (body.prompt_list ?? []) as unknown as Parameters<typeof prisma.template.create>[0]['data']['promptList'],
-      priceCredits: body.price_credits || 10,
-      isActive: body.is_active !== undefined ? body.is_active : true,
-      sortOrder: body.sort_order || 0,
+      preview_image_url: body.preview_image_url,
+      prompt_config: (body.prompt_config || {}) as object,
+      prompt_list: (body.prompt_list ?? []) as unknown as Parameters<typeof prisma.templates.create>[0]['data']['prompt_list'],
+      price_credits: body.price_credits || 10,
+      is_active: body.is_active !== undefined ? body.is_active : true,
+      sort_order: body.sort_order || 0,
     },
   });
 
@@ -70,13 +70,13 @@ export async function POST(req: NextRequest) {
       name: template.name,
       description: template.description,
       category: template.category,
-      preview_image_url: template.previewImageUrl,
-      prompt_config: template.promptConfig,
-      prompt_list: template.promptList,
-      price_credits: template.priceCredits,
-      is_active: template.isActive,
-      sort_order: template.sortOrder,
-      created_at: template.createdAt.toISOString(),
+      preview_image_url: template.preview_image_url,
+      prompt_config: template.prompt_config,
+      prompt_list: template.prompt_list,
+      price_credits: template.price_credits,
+      is_active: template.is_active,
+      sort_order: template.sort_order,
+      created_at: template.created_at.toISOString(),
     },
   }, { status: 201 });
 }

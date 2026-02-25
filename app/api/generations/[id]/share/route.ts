@@ -13,11 +13,11 @@ export async function PATCH(
 
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
-    const userId = authResult.user.id;
+    const user_id = authResult.user.id;
 
-    const generation = await prisma.generation.findUnique({
+    const generation = await prisma.generations.findUnique({
       where: { id },
-      select: { userId: true, status: true },
+      select: { user_id: true, status: true },
     });
 
     if (!generation) {
@@ -27,7 +27,7 @@ export async function PATCH(
       );
     }
 
-    if (generation.userId !== userId) {
+    if (generation.user_id !== user_id) {
       return NextResponse.json(
         { error: '无权限操作此记录' },
         { status: 403 }
@@ -41,9 +41,9 @@ export async function PATCH(
       );
     }
 
-    await prisma.generation.update({
+    await prisma.generations.update({
       where: { id },
-      data: { isSharedToGallery: isShared },
+      data: { is_shared_to_gallery: isShared },
     });
 
     return NextResponse.json({

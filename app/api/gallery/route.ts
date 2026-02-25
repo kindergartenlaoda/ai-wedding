@@ -13,32 +13,32 @@ export async function GET(request: NextRequest) {
     const domain = searchParams.get('domain');
     const offset = (page - 1) * limit;
 
-    const where: { isSharedToGallery: boolean; domain?: string } = { isSharedToGallery: true };
+    const where: { is_shared_to_gallery: boolean; domain?: string } = { is_shared_to_gallery: true };
     if (domain) where.domain = domain;
 
     const [generations, total] = await Promise.all([
-      prisma.generation.findMany({
+      prisma.generations.findMany({
         where,
         include: {
-          project: { select: { name: true } },
-          template: { select: { name: true } },
-          user: { select: { name: true } },
+          projects: { select: { name: true } },
+          templates: { select: { name: true } },
+          users: { select: { name: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
         skip: offset,
         take: limit,
       }),
-      prisma.generation.count({ where }),
+      prisma.generations.count({ where }),
     ]);
 
     const galleryItems: GalleryItem[] = generations.map((gen) => ({
       id: gen.id,
       generation_id: gen.id,
-      preview_images: Array.isArray(gen.previewImages) ? (gen.previewImages as string[]) : [],
-      project_name: gen.project?.name || '未命名项目',
-      template_name: gen.template?.name || '未知模板',
-      user_name: gen.user?.name || '匿名用户',
-      created_at: gen.createdAt.toISOString(),
+      preview_images: Array.isArray(gen.preview_images) ? (gen.preview_images as string[]) : [],
+      project_name: gen.projects?.name || '未命名项目',
+      template_name: gen.templates?.name || '未知模板',
+      user_name: gen.users?.name || '匿名用户',
+      created_at: gen.created_at.toISOString(),
     }));
 
     return NextResponse.json({

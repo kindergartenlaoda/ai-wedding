@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   try {
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
-    const userId = authResult.user.id;
+    const user_id = authResult.user.id;
 
     const body = (await req.json()) as { plan: PlanKey };
     const planKey = body?.plan;
@@ -30,13 +30,13 @@ export async function POST(req: Request) {
     const currency = 'USD';
 
     // 创建订单（pending）
-    const order = await prisma.order.create({
+    const order = await prisma.orders.create({
       data: {
-        userId,
+        user_id,
         amount,
         currency,
         status: 'pending',
-        paymentMethod: PAYMENT_PROVIDER,
+        payment_method: PAYMENT_PROVIDER,
       },
     });
 
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         // TODO: 安装 stripe 依赖后启用真实支付
         // 暂时使用模拟支付
         return NextResponse.json({
-          orderId: order.id,
+          order_id: order.id,
           payment_intent_id: `mock_${order.id}`,
           message: 'Using mock payment - install stripe for real payments',
         });
@@ -81,12 +81,12 @@ export async function POST(req: Request) {
           metadata: { order_id: order.id },
         });
 
-        await prisma.order.update({
+        await prisma.orders.update({
           where: { id: order.id },
-          data: { paymentIntentId: session.id },
+          data: { payment_intent_id: session.id },
         });
 
-        return NextResponse.json({ orderId: order.id, payment_intent_id: session.id, checkout_url: session.url });
+        return NextResponse.json({ order_id: order.id, payment_intent_id: session.id, checkout_url: session.url });
         */
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'Stripe create session failed';
@@ -96,14 +96,14 @@ export async function POST(req: Request) {
 
     // Provider: mock（默认）
     const payment_intent_id = crypto.randomUUID();
-    await prisma.order.update({
+    await prisma.orders.update({
       where: { id: order.id },
-      data: { paymentIntentId: payment_intent_id },
+      data: { payment_intent_id: payment_intent_id },
     });
 
     // 返回一个占位的“结账链接”，用于前端判断是否需要跳转
     const checkout_url = null; // mock 流程无需跳转
-    return NextResponse.json({ orderId: order.id, payment_intent_id, checkout_url });
+    return NextResponse.json({ order_id: order.id, payment_intent_id, checkout_url });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unexpected error';
     return NextResponse.json({ error: message }, { status: 500 });

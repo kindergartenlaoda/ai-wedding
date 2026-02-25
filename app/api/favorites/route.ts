@@ -9,46 +9,46 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
-  const favorites = await prisma.favorite.findMany({
-    where: { userId },
-    select: { templateId: true },
+  const favorites = await prisma.favorites.findMany({
+    where: { user_id },
+    select: { template_id: true },
   });
 
   return NextResponse.json({
-    data: favorites.map((f) => f.templateId),
+    data: favorites.map((f) => f.template_id),
   });
 }
 
 /**
  * POST /api/favorites
- * Toggle favorite: body { templateId, action: 'add' | 'remove' }
+ * Toggle favorite: body { template_id, action: 'add' | 'remove' }
  */
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const body = await req.json();
-  const { templateId, action } = body as { templateId?: string; action?: 'add' | 'remove' };
+  const { template_id, action } = body as { template_id?: string; action?: 'add' | 'remove' };
 
-  if (!templateId) {
-    return NextResponse.json({ error: 'Missing templateId' }, { status: 400 });
+  if (!template_id) {
+    return NextResponse.json({ error: 'Missing template_id' }, { status: 400 });
   }
 
   if (action === 'remove') {
-    await prisma.favorite.deleteMany({
-      where: { userId, templateId },
+    await prisma.favorites.deleteMany({
+      where: { user_id, template_id },
     });
     return NextResponse.json({ success: true, favorited: false });
   }
 
-  await prisma.favorite.upsert({
+  await prisma.favorites.upsert({
     where: {
-      userId_templateId: { userId, templateId },
+      user_id_template_id: { user_id, template_id },
     },
-    create: { userId, templateId },
+    create: { user_id, template_id },
     update: {},
   });
   return NextResponse.json({ success: true, favorited: true });

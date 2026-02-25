@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: '无效的 type 参数' }, { status: 400 });
     }
 
-    const config = await prisma.modelConfig.findFirst({
+    const config = await prisma.model_configs.findFirst({
       where: { type: prismaType, status: 'active' },
     });
 
@@ -47,15 +47,15 @@ export async function GET(req: NextRequest) {
       id: config.id,
       type: config.type as ModelConfig['type'],
       name: config.name,
-      api_base_url: config.apiBaseUrl,
-      api_key: config.apiKey,
-      model_name: config.modelName,
+      api_base_url: config.api_base_url,
+      api_key: config.api_key,
+      model_name: config.model_name,
       status: config.status as ModelConfig['status'],
       source: config.source as ModelConfig['source'],
       description: config.description ?? undefined,
-      created_at: config.createdAt.toISOString(),
-      updated_at: config.updatedAt.toISOString(),
-      created_by: config.createdBy ?? undefined,
+      created_at: config.created_at.toISOString(),
+      updated_at: config.updated_at.toISOString(),
+      created_by: config.created_by ?? undefined,
     };
 
     return NextResponse.json({ data });

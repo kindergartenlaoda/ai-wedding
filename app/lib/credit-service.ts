@@ -20,21 +20,21 @@ import type { CreditTransactionType, CreateCreditTransactionInput } from '@/type
  */
 export async function createCreditTransaction(input: CreateCreditTransactionInput) {
   const {
-    userId,
+    user_id,
     type,
     amount,
     description,
-    generationId,
-    orderId,
-    inviteEventId,
+    generation_id,
+    order_id,
+    invite_event_id,
     metadata,
-    createdBy,
+    created_by,
   } = input;
 
   return await prisma.$transaction(async (tx) => {
     // 1. 获取当前用户积分
-    const profile = await tx.profile.findUnique({
-      where: { userId },
+    const profile = await tx.profiles.findUnique({
+      where: { user_id },
       select: { credits: true },
     });
 
@@ -42,37 +42,37 @@ export async function createCreditTransaction(input: CreateCreditTransactionInpu
       throw new Error('用户不存在');
     }
 
-    const balanceBefore = profile.credits;
-    const balanceAfter = balanceBefore + amount;
+    const balance_before = profile.credits;
+    const balance_after = balance_before + amount;
 
     // 2. 验证余额充足（如果是扣款）
-    if (amount < 0 && balanceAfter < 0) {
+    if (amount < 0 && balance_after < 0) {
       throw new Error('积分不足');
     }
 
     // 3. 创建事务记录
-    const transaction = await tx.creditTransaction.create({
+    const transaction = await tx.credit_transactions.create({
       data: {
-        userId,
+        user_id,
         type,
         status: 'completed',
         amount,
-        balanceBefore,
-        balanceAfter,
-        generationId,
-        orderId,
-        inviteEventId,
+        balance_before,
+        balance_after,
+        generation_id,
+        order_id,
+        invite_event_id,
         description,
         metadata: (metadata as Prisma.InputJsonValue) || undefined,
-        createdBy,
-        completedAt: new Date(),
+        created_by,
+        completed_at: new Date(),
       },
     });
 
     // 4. 更新用户积分
-    await tx.profile.update({
-      where: { userId },
-      data: { credits: balanceAfter },
+    await tx.profiles.update({
+      where: { user_id },
+      data: { credits: balance_after },
     });
 
     return transaction;
@@ -83,16 +83,16 @@ export async function createCreditTransaction(input: CreateCreditTransactionInpu
  * 消费积分（生成图片）
  */
 export async function deductCreditsForGeneration(
-  userId: string,
-  generationId: string,
+  user_id: string,
+  generation_id: string,
   amount: number,
   description?: string
 ) {
   return await createCreditTransaction({
-    userId,
+    user_id,
     type: 'generation',
     amount: -Math.abs(amount), // 确保是负数
-    generationId,
+    generation_id,
     description: description || `生成图片消费 ${amount} 积分`,
   });
 }
@@ -101,16 +101,16 @@ export async function deductCreditsForGeneration(
  * 退款积分（生成失败）
  */
 export async function refundCreditsForGeneration(
-  userId: string,
-  generationId: string,
+  user_id: string,
+  generation_id: string,
   amount: number,
   description?: string
 ) {
   return await createCreditTransaction({
-    userId,
+    user_id,
     type: 'refund',
     amount: Math.abs(amount), // 确保是正数
-    generationId,
+    generation_id,
     description: description || `生成失败退款 ${amount} 积分`,
   });
 }
@@ -119,16 +119,16 @@ export async function refundCreditsForGeneration(
  * 充值积分（购买）
  */
 export async function addCreditsForPurchase(
-  userId: string,
-  orderId: string,
+  user_id: string,
+  order_id: string,
   amount: number,
   description?: string
 ) {
   return await createCreditTransaction({
-    userId,
+    user_id,
     type: 'purchase',
     amount: Math.abs(amount), // 确保是正数
-    orderId,
+    order_id,
     description: description || `购买充值 ${amount} 积分`,
   });
 }
@@ -137,16 +137,16 @@ export async function addCreditsForPurchase(
  * 邀请奖励积分
  */
 export async function addCreditsForInviteReward(
-  userId: string,
-  inviteEventId: string,
+  user_id: string,
+  invite_event_id: string,
   amount: number,
   description?: string
 ) {
   return await createCreditTransaction({
-    userId,
+    user_id,
     type: 'invite_reward',
     amount: Math.abs(amount), // 确保是正数
-    inviteEventId,
+    invite_event_id,
     description: description || `邀请好友奖励 ${amount} 积分`,
   });
 }
@@ -155,13 +155,13 @@ export async function addCreditsForInviteReward(
  * 系统赠送积分
  */
 export async function grantCreditsFromSystem(
-  userId: string,
+  user_id: string,
   amount: number,
   description: string,
   metadata?: Record<string, unknown>
 ) {
   return await createCreditTransaction({
-    userId,
+    user_id,
     type: 'system_grant',
     amount: Math.abs(amount), // 确保是正数
     description,
@@ -173,19 +173,19 @@ export async function grantCreditsFromSystem(
  * 管理员调整积分
  */
 export async function adjustCreditsByAdmin(
-  userId: string,
+  user_id: string,
   adminId: string,
   amount: number,
   description: string,
   metadata?: Record<string, unknown>
 ) {
   return await createCreditTransaction({
-    userId,
+    user_id,
     type: 'admin_adjust',
     amount, // 可以是正数或负数
     description,
     metadata,
-    createdBy: adminId,
+    created_by: adminId,
   });
 }
 
@@ -193,7 +193,7 @@ export async function adjustCreditsByAdmin(
  * 获取用户积分流水
  */
 export async function getUserCreditTransactions(
-  userId: string,
+  user_id: string,
   options: {
     type?: CreditTransactionType;
     limit?: number;
@@ -203,22 +203,22 @@ export async function getUserCreditTransactions(
   const { type, limit = 20, offset = 0 } = options;
 
   const where: {
-    userId: string;
+    user_id: string;
     type?: CreditTransactionType;
-  } = { userId };
+  } = { user_id };
 
   if (type) {
     where.type = type;
   }
 
   const [transactions, total] = await Promise.all([
-    prisma.creditTransaction.findMany({
+    prisma.credit_transactions.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       take: limit,
       skip: offset,
     }),
-    prisma.creditTransaction.count({ where }),
+    prisma.credit_transactions.count({ where }),
   ]);
 
   return {
@@ -231,9 +231,9 @@ export async function getUserCreditTransactions(
 /**
  * 获取用户当前积分余额
  */
-export async function getUserCreditBalance(userId: string): Promise<number> {
-  const profile = await prisma.profile.findUnique({
-    where: { userId },
+export async function getUserCreditBalance(user_id: string): Promise<number> {
+  const profile = await prisma.profiles.findUnique({
+    where: { user_id },
     select: { credits: true },
   });
 
@@ -244,9 +244,9 @@ export async function getUserCreditBalance(userId: string): Promise<number> {
  * 验证用户积分是否充足
  */
 export async function hasEnoughCredits(
-  userId: string,
+  user_id: string,
   requiredAmount: number
 ): Promise<boolean> {
-  const balance = await getUserCreditBalance(userId);
+  const balance = await getUserCreditBalance(user_id);
   return balance >= requiredAmount;
 }

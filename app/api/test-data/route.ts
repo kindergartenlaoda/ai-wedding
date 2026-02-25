@@ -8,25 +8,25 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { action, userId } = (await request.json()) as { action?: string; userId?: string };
+    const { action, user_id } = (await request.json()) as { action?: string; user_id?: string };
 
     if (action === 'create_test_project') {
-      if (!userId) {
+      if (!user_id) {
         return NextResponse.json({ error: '需要用户ID' }, { status: 400 });
       }
 
-      const project = await prisma.project.create({
+      const project = await prisma.projects.create({
         data: {
-          userId,
+          user_id,
           name: '测试项目',
           status: 'completed',
-          uploadedPhotos: [
+          uploaded_photos: [
             'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=400',
           ],
         },
       });
 
-      const template = await prisma.template.findFirst({ where: { isActive: true } });
+      const template = await prisma.templates.findFirst({ where: { is_active: true } });
       if (!template) {
         throw new Error('没有可用的模板');
       }
@@ -36,17 +36,17 @@ export async function POST(request: NextRequest) {
         'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=',
       ];
 
-      const generation = await prisma.generation.create({
+      const generation = await prisma.generations.create({
         data: {
-          projectId: project.id,
-          userId,
-          templateId: template.id,
+          project_id: project.id,
+          user_id,
+          template_id: template.id,
           status: 'completed',
-          previewImages: testImages,
-          highResImages: testImages,
-          isSharedToGallery: false,
-          creditsUsed: 10,
-          completedAt: new Date(),
+          preview_images: testImages,
+          high_res_images: testImages,
+          is_shared_to_gallery: false,
+          credits_used: 10,
+          completed_at: new Date(),
         },
       });
 

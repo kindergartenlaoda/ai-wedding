@@ -33,12 +33,12 @@ interface RateLimitResult {
 /**
  * 检查用户速率限制
  */
-export function checkRateLimit(userId: string): RateLimitResult {
+export function checkRateLimit(user_id: string): RateLimitResult {
   const now = Date.now();
-  const rec = rateBucket.get(userId);
+  const rec = rateBucket.get(user_id);
 
   if (!rec || now - rec.windowStart >= RL_WINDOW_MS) {
-    rateBucket.set(userId, { windowStart: now, count: 1 });
+    rateBucket.set(user_id, { windowStart: now, count: 1 });
     return { allowed: true, count: 1 };
   }
 
@@ -51,7 +51,7 @@ export function checkRateLimit(userId: string): RateLimitResult {
   }
 
   rec.count += 1;
-  rateBucket.set(userId, rec);
+  rateBucket.set(user_id, rec);
   return { allowed: true, count: rec.count };
 }
 
@@ -75,10 +75,9 @@ export { RL_LIMIT };
 
 // ─── 模型配置 ───────────────────────────────────────────────
 
-const SOURCE_MAP: Record<string, 'openRouter' | 'openAi' | 'source_302'> = {
+const SOURCE_MAP: Record<string, 'openRouter' | 'openAi'> = {
   openRouter: 'openRouter',
   openAi: 'openAi',
-  '302': 'source_302',
 };
 
 /**
@@ -95,7 +94,7 @@ export async function getActiveModelConfig(
 ): Promise<ModelConfig | null> {
   try {
     const prismaSource = source ? SOURCE_MAP[source] : undefined;
-    const config = await prisma.modelConfig.findFirst({
+    const config = await prisma.model_configs.findFirst({
       where: {
         type,
         status: 'active',
@@ -107,15 +106,15 @@ export async function getActiveModelConfig(
       id: config.id,
       type: config.type as ModelConfig['type'],
       name: config.name,
-      api_base_url: config.apiBaseUrl,
-      api_key: config.apiKey,
-      model_name: config.modelName,
+      api_base_url: config.api_base_url,
+      api_key: config.api_key,
+      model_name: config.model_name,
       status: config.status as ModelConfig['status'],
       source: config.source as ModelConfig['source'],
       description: config.description ?? undefined,
-      created_at: config.createdAt.toISOString(),
-      updated_at: config.updatedAt.toISOString(),
-      created_by: config.createdBy ?? undefined,
+      created_at: config.created_at.toISOString(),
+      updated_at: config.updated_at.toISOString(),
+      created_by: config.created_by ?? undefined,
     };
   } catch (err) {
     log.error({ error: err }, '获取激活配置异常');

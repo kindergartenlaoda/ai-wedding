@@ -11,7 +11,7 @@ import { mapGeneration } from '@/lib/generation-mapper';
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const body = await req.json();
   const {
@@ -53,8 +53,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { userId },
+  const profile = await prisma.profiles.findUnique({
+    where: { user_id },
     select: { credits: true },
   });
   if (!profile || profile.credits < (credits_used || 0)) {
@@ -62,32 +62,32 @@ export async function POST(req: NextRequest) {
   }
 
   if (generation_type === 'batch' && project_id) {
-    const project = await prisma.project.findFirst({
-      where: { id: project_id, userId },
+    const project = await prisma.projects.findFirst({
+      where: { id: project_id, user_id },
     });
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
   }
 
-  const generation = await prisma.generation.create({
+  const generation = await prisma.generations.create({
     data: {
-      projectId: generation_type === 'batch' ? project_id : null,
-      userId,
-      templateId: template_id || null,
+      project_id: generation_type === 'batch' ? project_id : null,
+      user_id,
+      template_id: template_id || null,
       status: 'processing',
-      creditsUsed: credits_used || 0,
-      isSharedToGallery: is_shared_to_gallery ?? false,
+      credits_used: credits_used || 0,
+      is_shared_to_gallery: is_shared_to_gallery ?? false,
       domain: domain || 'wedding',
-      generationType: generation_type,
+      generation_type: generation_type,
       prompt: generation_type === 'single' ? prompt : null,
-      originalImage: generation_type === 'single' ? original_image : null,
+      original_image: generation_type === 'single' ? original_image : null,
       settings: generation_type === 'single' ? ((settings || {}) as object) : undefined,
     },
   });
 
   await deductCreditsForGeneration(
-    userId,
+    user_id,
     generation.id,
     credits_used || 0,
     `${generation_type === 'batch' ? '批量' : '单图'}生成消费积分`
@@ -96,8 +96,8 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     id: generation.id,
     status: generation.status,
-    generation_type: generation.generationType,
-    credits_used: generation.creditsUsed,
+    generation_type: generation.generation_type,
+    credits_used: generation.credits_used,
   }, { status: 201 });
 }
 
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type') as 'batch' | 'single' | null;
@@ -116,22 +116,22 @@ export async function GET(req: NextRequest) {
   const pageSize = parseInt(searchParams.get('pageSize') || '20');
   const skip = page * pageSize;
 
-  const where: { userId: string; generationType?: 'batch' | 'single' } = { userId };
-  if (type) where.generationType = type;
+  const where: { user_id: string; generation_type?: 'batch' | 'single' } = { user_id };
+  if (type) where.generation_type = type;
 
   const [generations, total] = await Promise.all([
-    prisma.generation.findMany({
+    prisma.generations.findMany({
       where,
       include: {
-        generatedImages: { orderBy: { imageIndex: 'asc' } },
-        project: { select: { name: true, uploadedPhotos: true } },
-        template: { select: { name: true } },
+        generated_images: { orderBy: { image_index: 'asc' } },
+        projects: { select: { name: true, uploaded_photos: true } },
+        templates: { select: { name: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       skip,
       take: pageSize,
     }),
-    prisma.generation.count({ where }),
+    prisma.generations.count({ where }),
   ]);
 
   return NextResponse.json({

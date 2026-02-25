@@ -9,8 +9,8 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { userId: session.user.id },
+  const profile = await prisma.profiles.findUnique({
+    where: { user_id: session.user.id },
   });
 
   if (!profile) {
@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   // Update user name in the users table
-  await prisma.user.update({
+  await prisma.users.update({
     where: { id: session.user.id },
     data: { name: full_name },
   });

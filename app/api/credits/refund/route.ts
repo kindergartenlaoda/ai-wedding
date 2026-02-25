@@ -10,7 +10,7 @@ import { prisma } from '@/lib/prisma';
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
-  const userId = authResult.user.id;
+  const user_id = authResult.user.id;
 
   const body = await req.json();
   const { credits, generation_id, error_message } = body as {
@@ -23,29 +23,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid credits' }, { status: 400 });
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { userId },
+  const profile = await prisma.profiles.findUnique({
+    where: { user_id },
     select: { credits: true },
   });
   if (!profile) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
   }
 
-  await prisma.profile.update({
-    where: { userId },
+  await prisma.profiles.update({
+    where: { user_id },
     data: { credits: profile.credits + credits },
   });
 
   if (generation_id) {
-    const gen = await prisma.generation.findFirst({
-      where: { id: generation_id, userId },
+    const gen = await prisma.generations.findFirst({
+      where: { id: generation_id, user_id },
     });
     if (gen) {
-      await prisma.generation.update({
+      await prisma.generations.update({
         where: { id: generation_id },
         data: {
           status: 'failed',
-          errorMessage: error_message || '生成失败',
+          error_message: error_message || '生成失败',
         },
       });
     }

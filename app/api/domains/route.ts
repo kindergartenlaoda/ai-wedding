@@ -6,9 +6,9 @@ import { prisma } from '@/lib/prisma';
  * Public API: fetch all active domains, sorted by sort_order
  */
 export async function GET() {
-    const domains = await prisma.domain.findMany({
-        where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
+    const domains = await prisma.domains.findMany({
+        where: { is_active: true },
+        orderBy: { sort_order: 'asc' },
     });
 
     const formatted = domains.map((d) => ({
@@ -18,8 +18,9 @@ export async function GET() {
         description: d.description,
         icon: d.icon,
         color: d.color,
-        cover_image: d.coverImage,
-        sort_order: d.sortOrder,
+        cover_image: d.cover_image,
+        sort_order: d.sort_order,
+        require_face_detection: d.require_face_detection,
     }));
 
     return NextResponse.json({ data: formatted });

@@ -67,30 +67,30 @@ export async function POST(req: Request) {
     const obj = event?.data?.object;
 
     // 仅处理成功支付相关事件（示例）
-    let paymentIntentId: string | undefined;
+    let payment_intent_id: string | undefined;
     if (type === 'payment_intent.succeeded') {
-      paymentIntentId = obj?.id;
+      payment_intent_id = obj?.id;
     } else if (type === 'checkout.session.completed') {
-      paymentIntentId = obj?.payment_intent || obj?.id;
+      payment_intent_id = obj?.payment_intent || obj?.id;
     } else {
       // 忽略其他事件
       return NextResponse.json({ ok: true });
     }
 
     // 依据 payment_intent_id 定位订单；若为空或未命中，可尝试使用 metadata.order_id
-    let order = await prisma.order.findFirst({
-      where: { paymentIntentId: paymentIntentId || '' },
+    let order = await prisma.orders.findFirst({
+      where: { payment_intent_id: payment_intent_id || '' },
     });
 
     if (!order && obj?.metadata?.order_id) {
-      order = await prisma.order.findUnique({
+      order = await prisma.orders.findUnique({
         where: { id: obj.metadata.order_id },
       });
       // 若找到但尚未写入 payment_intent_id，则补充写入
-      if (order && !order.paymentIntentId && paymentIntentId) {
-        await prisma.order.update({
+      if (order && !order.payment_intent_id && payment_intent_id) {
+        await prisma.orders.update({
           where: { id: order.id },
-          data: { paymentIntentId },
+          data: { payment_intent_id },
         });
       }
     }
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     }
 
     // 更新订单状态
-    await prisma.order.update({
+    await prisma.orders.update({
       where: { id: order.id },
       data: { status: 'completed' },
     });
@@ -113,19 +113,19 @@ export async function POST(req: Request) {
     // 发放积分（基于订单金额映射）
     const creditsToAdd = CREDITS_BY_AMOUNT[String(order.amount)] || 0;
     if (creditsToAdd > 0) {
-      const profile = await prisma.profile.findUnique({
-        where: { userId: order.userId },
+      const profile = await prisma.profiles.findUnique({
+        where: { user_id: order.user_id },
       });
       if (profile) {
         const newCredits = profile.credits + creditsToAdd;
-        await prisma.profile.update({
-          where: { userId: order.userId },
+        await prisma.profiles.update({
+          where: { user_id: order.user_id },
           data: { credits: newCredits },
         });
       }
     }
 
-    return NextResponse.json({ ok: true, orderId: order.id, creditsAdded: creditsToAdd });
+    return NextResponse.json({ ok: true, order_id: order.id, creditsAdded: creditsToAdd });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unexpected error';
     return NextResponse.json({ error: message }, { status: 500 });
