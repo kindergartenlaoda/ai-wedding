@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Coins } from 'lucide-react';
 import type { GenerationDomain } from '@/types/domain';
 import { DOMAIN_CONFIG } from '@/types/domain';
@@ -22,6 +23,7 @@ export function StepStyle({
   onSelect,
   onBack,
 }: StepStyleProps) {
+  const router = useRouter();
   const { profile } = useAuth();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const domainConfig = DOMAIN_CONFIG[domain];
@@ -35,34 +37,19 @@ export function StepStyle({
 
   const handleNext = () => {
     if (selectedTemplate) {
-      onSelect(selectedTemplate);
+      if (userCredits < selectedTemplate.price_credits) {
+        router.push('/pricing');
+      } else {
+        onSelect(selectedTemplate);
+      }
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] lg:min-h-0 flex flex-col relative w-full">
-      <div className="flex-1 px-4 py-8 lg:py-6 w-full">
-        <FadeIn>
-          <div className="flex items-center gap-4 mb-8 lg:mb-6">
-            <button
-              type="button"
-              onClick={onBack}
-              className="p-2 rounded-full border border-white/10 text-pearl/60 hover:text-pearl hover:border-white/20 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <div>
-              <h2 className="text-xs font-medium tracking-[0.3em] text-pearl/50 uppercase mb-1">
-                Step 02 &middot; {domainConfig.name}
-              </h2>
-              <p className="text-2xl lg:text-xl font-display text-alabaster tracking-tight">
-                选择创作风格
-              </p>
-            </div>
-          </div>
-        </FadeIn>
+    <div className="w-full flex flex-col">
+      <div className="flex-1 w-full">
 
-        <div className="grid grid-cols-2 gap-4 lg:gap-5 pb-28">
+        <div className="grid grid-cols-2 gap-3 pb-8">
           {templates.map((template, index) => {
             const isSelected = template.id === selectedId;
             const insufficientCredits =
@@ -73,11 +60,10 @@ export function StepStyle({
                 <button
                   type="button"
                   onClick={() => handleSelect(template)}
-                  disabled={insufficientCredits}
                   className={`group relative w-full aspect-[3/4] overflow-hidden rounded-sm outline-none transition-all duration-300 ${isSelected
-                      ? 'ring-2 ring-gold shadow-[0_0_30px_rgba(200,160,100,0.2)] scale-[1.02]'
-                      : 'hover:scale-[1.01] shadow-lg'
-                    } ${insufficientCredits ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? 'ring-2 ring-gold shadow-[0_0_30px_rgba(200,160,100,0.2)] scale-[1.02]'
+                    : 'hover:scale-[1.01] shadow-lg'
+                    }`}
                 >
                   {template.preview_image_url ? (
                     <Image
@@ -94,8 +80,8 @@ export function StepStyle({
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian/80 via-transparent to-transparent" />
 
                   {insufficientCredits && (
-                    <div className="absolute inset-0 bg-obsidian/60 flex items-center justify-center z-10">
-                      <span className="text-xs text-pearl/60 bg-obsidian/80 px-3 py-1.5 rounded-full border border-white/10">
+                    <div className="absolute top-3 left-3 z-20">
+                      <span className="text-[10px] text-pearl/80 bg-red-500/80 px-2 py-1 rounded-sm border border-red-500/20 backdrop-blur-md shadow-lg">
                         积分不足
                       </span>
                     </div>
@@ -126,8 +112,8 @@ export function StepStyle({
       </div>
 
       {selectedTemplate && (
-        <div className="fixed lg:absolute bottom-0 left-0 right-0 z-40 bg-obsidian/90 backdrop-blur-md border-t border-white/5 w-full">
-          <div className="w-full px-6 py-4 flex items-center justify-between">
+        <FadeIn>
+          <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-sm overflow-hidden relative">
                 {selectedTemplate.preview_image_url && (
@@ -141,7 +127,7 @@ export function StepStyle({
                 )}
               </div>
               <div>
-                <p className="text-sm text-alabaster font-medium">
+                <p className="text-sm text-alabaster font-medium truncate max-w-[120px]">
                   {selectedTemplate.name}
                 </p>
                 <p className="text-xs text-pearl/50 flex items-center gap-1">
@@ -153,12 +139,15 @@ export function StepStyle({
             <button
               type="button"
               onClick={handleNext}
-              className="px-6 py-2.5 bg-gold text-obsidian text-sm font-medium rounded-sm hover:bg-gold/90 transition-colors tracking-wide"
+              className={`px-5 py-2.5 text-xs font-medium rounded-sm transition-colors tracking-wide shrink-0 ${userCredits < selectedTemplate.price_credits
+                ? 'bg-white/10 text-pearl hover:bg-white/20'
+                : 'bg-gold text-obsidian hover:bg-gold/90'
+                }`}
             >
-              下一步
+              {userCredits < selectedTemplate.price_credits ? '去充值' : '继续'}
             </button>
           </div>
-        </div>
+        </FadeIn>
       )}
     </div>
   );

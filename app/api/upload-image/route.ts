@@ -37,17 +37,19 @@ export async function POST(req: Request) {
 
       // 上传到 MinIO
       const result = await uploadDataUrlImage(image, folder || 'uploads');
-      
+
       console.log(`[${requestId}] ✅ 图片上传成功: ${result.url}`);
       console.log(`[${requestId}] ========== 请求处理完成 ==========`);
 
       return NextResponse.json({
         success: true,
-        url: result.url, // 预签名 URL（推荐使用）
-        publicUrl: result.publicUrl, // 公共 URL（可能不可用）
-        presignedUrl: result.presignedUrl, // 预签名 URL
+        url: result.url,
+        publicUrl: result.publicUrl,
+        presignedUrl: result.presignedUrl,
         objectName: result.objectName,
         bucket: result.bucket,
+        thumbnailUrl: result.thumbnailUrl,
+        mediumUrl: result.mediumUrl,
       });
 
     } else if (contentType.includes('multipart/form-data')) {
@@ -83,11 +85,13 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         success: true,
-        url: result.url, // 预签名 URL（推荐使用）
-        publicUrl: result.publicUrl, // 公共 URL（可能不可用）
-        presignedUrl: result.presignedUrl, // 预签名 URL
+        url: result.url,
+        publicUrl: result.publicUrl,
+        presignedUrl: result.presignedUrl,
         objectName: result.objectName,
         bucket: result.bucket,
+        thumbnailUrl: result.thumbnailUrl,
+        mediumUrl: result.mediumUrl,
       });
 
     } else {

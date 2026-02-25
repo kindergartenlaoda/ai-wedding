@@ -73,18 +73,6 @@ export function GenerationResults({
               </div>
             </div>
 
-            <div className="p-4 mb-8 bg-white/5 rounded-sm border border-white/10 shadow-sm hover:bg-white/10 transition-colors">
-              <div className="flex gap-4 items-start">
-                <AlertCircle className="w-5 h-5 text-pearl/50 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-alabaster">
-                  <p className="mb-1 font-medium tracking-wide">预览模式</p>
-                  <p className="text-pearl/60 font-light leading-relaxed">
-                    这些是带水印的预览图。如需下载无水印的高清版本，请前往结果页面购买。
-                  </p>
-                </div>
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {images.map((url, index) => (
                 <div

@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Download, Heart, Share2, ArrowLeft, Sparkles, Lock, Check, X, Repeat, TrendingUp, AlertCircle } from 'lucide-react';
+import { Download, Heart, Share2, ArrowLeft, Sparkles, Lock, Check, X, Repeat, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImageLikes } from '@/hooks/useImageLikes';
 import { ImageCompareSlider } from './ImageCompareSlider';
-import { recommendPackage, getBestValue, calculateSavings } from '@/lib/pricing-recommender';
 import { rateImages } from '@/lib/image-rating';
 import { FadeIn, GlassCard } from '@/components/react-bits';
 import { ShareModal } from './ShareModal';
@@ -75,8 +74,6 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
   const resultsHigh = generation?.high_res_images || [];
   const currentImages = tab === 'preview' ? resultsPreview : resultsHigh;
 
-  const recommendedPackages = recommendPackage(selectedImages.size, currentImages.length);
-  const bestValue = getBestValue(selectedImages.size, currentImages.length);
   const imageRatings = rateImages(currentImages);
 
   const toggleImageSelection = (index: number) => {
@@ -320,13 +317,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-white/5 border border-white/10 rounded-sm p-4 flex items-start gap-4 shadow-sm hover:bg-white/10 transition-colors">
-                  <Lock className="w-5 h-5 text-pearl/50 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-alabaster">
-                    <p className="font-medium mb-1 tracking-wide">预览模式</p>
-                    <p className="text-pearl/60 font-light leading-relaxed">这些是带水印的预览图。购买后可下载无水印的高清版本。</p>
-                  </div>
-                </div>
+
                 <div className="bg-gold/5 border border-gold/20 rounded-sm p-4 flex items-start gap-4 shadow-sm hover:bg-gold/10 transition-colors">
                   <Sparkles className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-alabaster">
@@ -469,67 +460,6 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                           )}
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </GlassCard>
-        </FadeIn>
-
-        <FadeIn delay={0.4}>
-          <GlassCard className="bg-obsidian border-white/10 shadow-2xl overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-transparent pointer-events-none" />
-            <div className="p-10 relative z-10">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-display font-medium text-2xl text-alabaster tracking-wider">价格选项</h3>
-                {selectedImages.size > 0 && bestValue && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-gold/10 text-gold rounded-sm border border-gold/20 text-xs tracking-widest uppercase font-medium shadow-[0_0_15px_rgba(200,160,100,0.1)]">
-                    <TrendingUp className="w-4 h-4 text-gold" />
-                    为您推荐：{bestValue.name}
-                  </div>
-                )}
-              </div>
-              {selectedImages.size > 0 && (
-                <p className="text-sm text-pearl/60 font-light tracking-wide mb-8">
-                  已选择 <span className="text-gold font-medium">{selectedImages.size}</span> 张图片 • 根据您的选择智能推荐最优惠套餐
-                </p>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {recommendedPackages.slice(0, 3).map((pkg) => {
-                  const isRecommended = pkg.recommended;
-                  const savings = selectedImages.size > 0 ? calculateSavings(selectedImages.size, pkg.price) : 0;
-
-                  return (
-                    <div
-                      key={pkg.id}
-                      className={`relative rounded-sm p-8 border transition-all duration-500 cursor-pointer overflow-hidden ${isRecommended
-                        ? 'bg-obsidian border-gold shadow-[0_0_20px_rgba(200,160,100,0.15)] transform hover:-translate-y-1'
-                        : 'bg-white/5 border-white/10 hover:border-white/30 hover:bg-white/10'
-                        }`}
-                    >
-                      {isRecommended && (
-                        <div className="absolute top-0 right-0 bg-gold text-obsidian px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-bl-sm">
-                          推荐
-                        </div>
-                      )}
-                      <div className={`text-4xl font-display font-medium mb-3 ${isRecommended ? 'text-gold' : 'text-alabaster'}`}>${pkg.price}</div>
-                      <div className={`mb-6 text-sm tracking-widest uppercase ${isRecommended ? 'text-alabaster' : 'text-pearl/60'}`}>
-                        {pkg.name}
-                      </div>
-                      {savings > 0 && (
-                        <div className={`text-xs font-medium mb-4 px-3 py-1 rounded-sm inline-block ${isRecommended ? 'bg-gold/10 text-gold border border-gold/20' : 'bg-white/5 text-alabaster border border-white/10'}`}>
-                          节省 ${savings}
-                        </div>
-                      )}
-                      <ul className={`space-y-3 text-sm font-light ${isRecommended ? 'text-pearl' : 'text-pearl/60'}`}>
-                        {pkg.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <Check className={`w-4 h-4 flex-shrink-0 ${isRecommended ? 'text-gold' : 'text-pearl/40'}`} />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                   );
                 })}

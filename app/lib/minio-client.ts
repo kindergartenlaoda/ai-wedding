@@ -1,5 +1,6 @@
 import * as Minio from 'minio';
 import { randomUUID } from 'crypto';
+import sharp from 'sharp';
 import type { MinioConfig, UploadImageOptions, UploadImageResult } from '@/types/storage';
 
 // 从环境变量获取 MinIO 配置
@@ -31,7 +32,7 @@ let minioClientInstance: Minio.Client | null = null;
 export function getMinioClient(): Minio.Client {
   if (!minioClientInstance) {
     const config = getMinioConfig();
-    
+
     minioClientInstance = new Minio.Client({
       endPoint: config.endpoint,
       port: config.port,
@@ -55,7 +56,7 @@ export async function ensureBucketExists(): Promise<void> {
     if (!exists) {
       await client.makeBucket(bucketName, 'us-east-1');
       console.log(`✅ Bucket "${bucketName}" 创建成功`);
-      
+
       // 设置公共读策略
       const policy = {
         Version: '2012-10-17',
@@ -77,7 +78,80 @@ export async function ensureBucketExists(): Promise<void> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// 缩略图生成
+// ---------------------------------------------------------------------------
+
+interface ThumbnailSize {
+  suffix: string;
+  width: number;
+}
+
+const THUMBNAIL_SIZES: ThumbnailSize[] = [
+  { suffix: '_thumb', width: 400 },
+  { suffix: '_medium', width: 800 },
+];
+
+/**
+ * 为上传的图片生成缩略图（WebP 格式）。
+ * 返回 { _thumb: url, _medium: url } 的映射。
+ * 失败时静默返回空对象，不阻塞主上传流程。
+ */
+async function generateThumbnails(
+  buffer: Buffer,
+  objectName: string,
+  client: Minio.Client,
+  bucketName: string,
+  config: MinioConfig,
+): Promise<{ thumbnailUrl?: string; mediumUrl?: string }> {
+  const result: { thumbnailUrl?: string; mediumUrl?: string } = {};
+
+  // 提取不带扩展名的基础名称
+  const lastDot = objectName.lastIndexOf('.');
+  const baseName = lastDot >= 0 ? objectName.substring(0, lastDot) : objectName;
+
+  const protocol = config.useSSL ? 'https' : 'http';
+  const port = config.port === 80 || config.port === 443 ? '' : `:${config.port}`;
+
+  for (const size of THUMBNAIL_SIZES) {
+    try {
+      const resizedBuffer = await sharp(buffer)
+        .resize(size.width, undefined, { fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer();
+
+      const thumbObjectName = `${baseName}${size.suffix}.webp`;
+
+      await client.putObject(
+        bucketName,
+        thumbObjectName,
+        resizedBuffer,
+        resizedBuffer.length,
+        { 'Content-Type': 'image/webp' },
+      );
+
+      const url = `${protocol}://${config.endpoint}${port}/${bucketName}/${thumbObjectName}`;
+
+      if (size.suffix === '_thumb') {
+        result.thumbnailUrl = url;
+      } else {
+        result.mediumUrl = url;
+      }
+
+      console.log(
+        `✅ 缩略图生成完成: ${thumbObjectName} (${size.width}px, ${(resizedBuffer.length / 1024).toFixed(1)}KB)`,
+      );
+    } catch (err) {
+      console.warn(`⚠️ 生成 ${size.suffix} 缩略图失败（不影响主流程）:`, err);
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // 上传图片到 MinIO
+// ---------------------------------------------------------------------------
 export async function uploadImage(options: UploadImageOptions): Promise<UploadImageResult> {
   const client = getMinioClient();
   const config = getMinioConfig();
@@ -87,10 +161,10 @@ export async function uploadImage(options: UploadImageOptions): Promise<UploadIm
   await ensureBucketExists();
 
   // 生成唯一的对象名称
-  const ext = options.originalName 
-    ? options.originalName.split('.').pop() 
+  const ext = options.originalName
+    ? options.originalName.split('.').pop()
     : (options.contentType?.split('/')[1] || 'png');
-  
+
   const timestamp = Date.now();
   const uuid = randomUUID();
   const folder = options.folder ? `${options.folder}/` : '';
@@ -100,7 +174,7 @@ export async function uploadImage(options: UploadImageOptions): Promise<UploadIm
   const contentType = options.contentType || 'image/png';
 
   try {
-    // 上传到 MinIO
+    // 上传原图到 MinIO
     await client.putObject(
       bucketName,
       objectName,
@@ -111,9 +185,9 @@ export async function uploadImage(options: UploadImageOptions): Promise<UploadIm
       }
     );
 
-    console.log(`✅ 图片上传成功: ${objectName}`);
+    console.log(`✅ 图片上传成功: ${objectName} (${(options.buffer.length / 1024).toFixed(1)}KB)`);
 
-    // 生成公共访问 URL（可能不可用）
+    // 生成公共访问 URL
     const protocol = config.useSSL ? 'https' : 'http';
     const port = config.port === 80 || config.port === 443 ? '' : `:${config.port}`;
     const publicUrl = `${protocol}://${config.endpoint}${port}/${bucketName}/${objectName}`;
@@ -123,17 +197,28 @@ export async function uploadImage(options: UploadImageOptions): Promise<UploadIm
 
     console.log(`✅ 预签名 URL 生成成功: ${presignedUrl.substring(0, 100)}...`);
 
+    // 异步生成缩略图（不阻塞主流程返回）
+    const thumbnails = await generateThumbnails(buffer_copy(options.buffer), objectName, client, bucketName, config);
+
     return {
-      url: publicUrl, // 默认返回公共 URL（需要 bucket 设置为公共读）
+      url: publicUrl,
       publicUrl,
       presignedUrl,
       objectName,
       bucket: bucketName,
+      ...thumbnails,
     };
   } catch (error) {
     console.error('❌ 上传图片到 MinIO 失败:', error);
     throw error;
   }
+}
+
+/** 复制 Buffer 以避免 sharp 和上传共用同一 Buffer 引发问题 */
+function buffer_copy(buf: Buffer): Buffer {
+  const copy = Buffer.allocUnsafe(buf.length);
+  buf.copy(copy);
+  return copy;
 }
 
 // 从 base64 字符串上传图片

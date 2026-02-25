@@ -15,7 +15,7 @@ import { StepGenerate } from './StepGenerate';
 
 gsap.registerPlugin(useGSAP);
 
-function RightPanePreview({ state }: { state: any }) {
+function MainCanvas({ state, isFullScreenStep, dispatch }: { state: any, isFullScreenStep: boolean, dispatch: any }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
@@ -68,25 +68,45 @@ function RightPanePreview({ state }: { state: any }) {
 
   if (state.step === 'upload') {
     return (
-      <div ref={containerRef} className="absolute inset-0 flex items-center justify-center bg-obsidian">
+      <div ref={containerRef} className="absolute inset-0">
+        <Image
+          src={state.template?.preview_image_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2000&auto=format&fit=crop"}
+          alt="Template Preview"
+          fill
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-obsidian/40 backdrop-blur-md" />
+
         {state.photos && state.photos.length > 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 p-12 w-full max-w-5xl opacity-40">
-            {state.photos.map((p: any) => (
-              <div key={p.id} className="relative aspect-[3/4] rounded-sm overflow-hidden shadow-2xl">
-                <img src={p.dataUrl} className="w-full h-full object-cover filter grayscale sepia-[0.3]" alt="Photo Uploaded" />
-              </div>
-            ))}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex flex-wrap items-center justify-center gap-4 max-w-xl p-8">
+              {state.photos.map((p: any) => (
+                <div key={p.id} className="relative w-24 h-24 lg:w-32 lg:h-32 rounded-full overflow-hidden border-[3px] border-gold/40 shadow-[0_0_30px_rgba(200,160,100,0.15)] bg-obsidian/50">
+                  <img src={p.dataUrl} className="w-full h-full object-cover" alt="Photo Uploaded" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="text-center">
-            <div className="w-32 h-32 rounded-full border border-white/5 flex items-center justify-center mx-auto mb-8 shadow-[0_0_50px_rgba(255,255,255,0.02)]">
-              <span className="text-gold opacity-30 text-5xl font-light hover:scale-110 transition-transform duration-700">+</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="w-24 h-24 rounded-full border border-white/10 flex items-center justify-center mb-6 shadow-[0_0_50px_rgba(255,255,255,0.05)] bg-obsidian/20 backdrop-blur-sm">
+              <span className="text-gold flex items-center justify-center w-full h-full opacity-60 text-4xl font-light hover:scale-110 transition-transform duration-700">+</span>
             </div>
-            <p className="text-pearl/40 tracking-[0.3em] uppercase text-xs">Waiting for subjects</p>
+            <p className="text-pearl/80 tracking-[0.2em] font-medium text-sm drop-shadow-md">期待您的面容加入杰作</p>
           </div>
         )}
       </div>
     );
+  }
+
+  if (isFullScreenStep) {
+    if (state.step === 'generate' || state.step === 'result' || state.step === 'error') {
+      return (
+        <div ref={containerRef} className="absolute inset-0">
+          <StepGenerate state={state as any} dispatch={dispatch} />
+        </div>
+      );
+    }
   }
 
   return null;
@@ -100,10 +120,21 @@ function StepFlowInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-obsidian flex items-center justify-center">
-        <div className="flex items-center gap-3 text-pearl/60">
-          <span className="w-3 h-3 rounded-full bg-gold animate-pulse" />
-          <span className="text-sm tracking-widest uppercase">加载中...</span>
+      <div className="h-screen w-full bg-obsidian flex font-sans overflow-hidden">
+        {/* LEFT PANE: MAIN CANVAS */}
+        <div className="flex-1 relative bg-stone/5">
+          <div className="absolute inset-0 bg-white/5 animate-pulse" />
+        </div>
+
+        {/* RIGHT PANE: CONTROL PANEL */}
+        <div className="w-[400px] xl:w-[450px] h-screen bg-obsidian/95 border-l border-white/5 shadow-2xl p-8 flex flex-col z-20">
+          <div className="w-32 h-4 bg-white/5 rounded-full mb-12 animate-pulse mt-8" />
+          <div className="w-48 h-8 bg-white/5 rounded-md mb-12 animate-pulse" />
+          <div className="grid grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="aspect-[3/4] bg-white/5 rounded-sm animate-pulse" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -112,60 +143,60 @@ function StepFlowInner() {
   const isFullScreenStep = state.step === 'generate' || state.step === 'result' || state.step === 'error';
 
   return (
-    <div className="min-h-screen bg-obsidian flex flex-col lg:flex-row w-full font-sans">
+    <div className="h-screen w-full bg-obsidian flex font-sans overflow-hidden">
 
-      {/* LEFT PANE / FULLSCREEN */}
-      <div className={`w-full transition-all duration-700 ease-in-out z-20 flex flex-col ${isFullScreenStep
-        ? 'lg:w-full lg:h-screen'
-        : 'lg:w-[450px] xl:w-[500px] lg:h-screen lg:fixed lg:left-0 lg:top-0 lg:border-r border-white/5 bg-obsidian/95 backdrop-blur-2xl shadow-2xl'
-        }`}>
-
-        {!isFullScreenStep && (
-          <div className="sticky lg:relative top-0 z-50 bg-obsidian/80 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none border-b lg:border-none border-white/5 pt-16 lg:pt-8 w-full">
-            <StepProgress
-              currentStep={stepIndex}
-              totalSteps={totalSteps}
-              stepName={state.step}
-              onStepClick={stepIndex > 0 ? () => goBack() : undefined}
-            />
-          </div>
-        )}
-
-        <div className={`flex-1 w-full ${isFullScreenStep ? '' : 'overflow-y-auto no-scrollbar pb-32 lg:pb-0'}`}>
-          {state.step === 'domain' && (
-            <StepDomain
-              onSelect={(domain) => dispatch({ type: 'SELECT_DOMAIN', domain })}
-            />
-          )}
-
-          {state.step === 'style' && (
-            <StepStyle
-              domain={state.domain}
-              templates={templates.filter((t) => t.domain === state.domain)}
-              onSelect={(template) => dispatch({ type: 'SELECT_TEMPLATE', template })}
-              onBack={goBack}
-            />
-          )}
-
-          {state.step === 'upload' && (
-            <StepUpload
-              template={state.template!}
-              photos={state.photos}
-              dispatch={dispatch}
-              onBack={goBack}
-            />
-          )}
-
-          {isFullScreenStep && (
-            <StepGenerate state={state as any} dispatch={dispatch} />
-          )}
-        </div>
+      {/* LEFT PANE: MAIN CANVAS */}
+      <div className={`flex-1 relative transition-all duration-700 ease-in-out bg-stone/5 ${isFullScreenStep ? 'w-full' : ''}`}>
+        <MainCanvas state={state} isFullScreenStep={isFullScreenStep} dispatch={dispatch} />
       </div>
 
-      {/* RIGHT PANE */}
+      {/* RIGHT PANE: CONTROL PANEL */}
       {!isFullScreenStep && (
-        <div className="hidden lg:block lg:fixed lg:left-[450px] xl:left-[500px] lg:right-0 lg:top-0 lg:bottom-0 bg-stone/5 overflow-hidden">
-          <RightPanePreview state={state} />
+        <div className="w-[400px] xl:w-[450px] h-screen flex flex-col bg-obsidian/95 backdrop-blur-2xl border-l border-white/5 z-20 shadow-[-20px_0_50px_rgba(0,0,0,0.5)]">
+
+          <div className="flex-1 overflow-y-auto no-scrollbar relative">
+            <div className="sticky top-0 z-50 bg-obsidian/90 backdrop-blur-md pt-8 pb-4 px-6 border-b border-white/5 w-full flex justify-between items-center">
+              <h2 className="text-sm font-medium tracking-widest text-pearl/50 uppercase">
+                {state.step === 'domain' && '1. 选择领域'}
+                {state.step === 'style' && '2. 创作风格'}
+                {state.step === 'upload' && '3. 上传照片'}
+              </h2>
+              {stepIndex > 0 && (
+                <button onClick={goBack} className="text-xs text-pearl/40 hover:text-alabaster transition-colors">
+                  &larr; 返回
+                </button>
+              )}
+            </div>
+
+            <div className="px-6 py-6 pb-32">
+              {state.step === 'domain' && (
+                <StepDomain
+                  onSelect={(domain) => dispatch({ type: 'SELECT_DOMAIN', domain })}
+                />
+              )}
+
+              {state.step === 'style' && (
+                <StepStyle
+                  domain={state.domain}
+                  templates={templates.filter((t) => t.domain === state.domain)}
+                  onSelect={(template) => dispatch({ type: 'SELECT_TEMPLATE', template })}
+                  onBack={goBack}
+                />
+              )}
+
+              {state.step === 'upload' && (
+                <StepUpload
+                  template={state.template!}
+                  photos={state.photos}
+                  dispatch={dispatch}
+                  onBack={goBack}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* FUTURE ACTION BAR GOES HERE */}
+
         </div>
       )}
     </div>

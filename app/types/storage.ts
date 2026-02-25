@@ -22,5 +22,7 @@ export interface UploadImageResult {
   presignedUrl: string;
   objectName: string;
   bucket: string;
+  thumbnailUrl?: string;  // 400px 缩略图 (WebP)
+  mediumUrl?: string;     // 800px 中等尺寸 (WebP)
 }
 

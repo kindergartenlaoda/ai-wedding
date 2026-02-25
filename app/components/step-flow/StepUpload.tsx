@@ -125,28 +125,10 @@ export function StepUpload({
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] lg:min-h-0 flex flex-col relative w-full bg-obsidian">
-      <div className="flex-1 px-4 py-8 lg:py-6 w-full">
-        <div className="flex items-center gap-4 mb-8 lg:mb-6">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2 rounded-full border border-white/10 text-pearl/60 hover:text-pearl hover:border-white/20 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <h2 className="text-xs font-medium tracking-[0.3em] text-pearl/50 uppercase mb-1">
-              Step 03 &middot; {template.name}
-            </h2>
-            <p className="text-2xl lg:text-xl font-display text-alabaster tracking-tight">
-              上传您的照片
-            </p>
-          </div>
-        </div>
-
+    <div className="w-full flex flex-col">
+      <div className="flex flex-col gap-6 mb-8">
         <div
-          className="border-2 border-dashed border-white/20 rounded-xl p-12 text-center cursor-pointer hover:border-gold/60 hover:bg-gold/5 transition-colors mb-6"
+          className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center flex flex-col items-center justify-center cursor-pointer hover:border-gold/60 hover:bg-gold/5 transition-colors"
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
@@ -168,76 +150,100 @@ export function StepUpload({
           />
         </div>
 
-        {photos.length > 0 && (
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            {photos.map((photo) => (
-              <div
-                key={photo.id}
-                className="relative aspect-square rounded-lg overflow-hidden bg-white/5"
-              >
-                <img
-                  src={photo.dataUrl}
-                  alt="uploaded"
-                  className="w-full h-full object-cover"
-                />
-
-                {(photo.uploadStatus === 'uploading' ||
-                  photo.identifyStatus === 'pending' ||
-                  photo.identifyStatus === 'identifying') && (
-                    <div className="absolute inset-0 bg-obsidian/40 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 text-white animate-spin" />
-                    </div>
-                  )}
-
-                {photo.identifyStatus === 'valid' &&
-                  photo.uploadStatus === 'uploaded' && (
-                    <div className="absolute top-2 left-2">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 drop-shadow" />
-                    </div>
-                  )}
-
-                {photo.identifyStatus === 'invalid' && (
-                  <div className="absolute inset-0 bg-red-900/50 flex flex-col items-center justify-center p-2">
-                    <AlertCircle className="w-5 h-5 text-red-300 mb-1" />
-                    <span className="text-[10px] text-red-200 text-center leading-tight">
-                      {photo.identifyDescription || '未检测到人物'}
-                    </span>
-                  </div>
-                )}
-
-                {photo.identifyStatus === 'error' && (
-                  <div className="absolute top-2 left-2">
-                    <AlertTriangle className="w-5 h-5 text-amber-400 drop-shadow" />
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => removePhoto(photo.id)}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-obsidian/60 text-white/80 hover:bg-obsidian/80 transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {errorMsg && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-            <span className="text-sm text-red-700">{errorMsg}</span>
-          </div>
-        )}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6 flex flex-col justify-center">
+          <h3 className="text-sm font-medium text-alabaster mb-4 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-emerald-400" /> 为了获得最佳效果，请确保：
+          </h3>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-2 text-xs text-pearl/70">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
+              <span><strong className="text-pearl/90">光线充足：</strong>面部清晰可见，无强烈阴影。</span>
+            </li>
+            <li className="flex items-start gap-2 text-xs text-pearl/70">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
+              <span><strong className="text-pearl/90">正面免冠：</strong>五官无遮挡，避免戴墨镜或口罩。</span>
+            </li>
+            <li className="flex items-start gap-2 text-xs text-pearl/70">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
+              <span><strong className="text-pearl/90">单人近照：</strong>照片中只有您一个人，背景尽量干净。</span>
+            </li>
+            <li className="flex items-start gap-2 text-xs text-pearl/70">
+              <X className="w-3.5 h-3.5 text-red-400 mt-0.5 flex-shrink-0" />
+              <span><strong className="text-pearl/90">应当避免：</strong>过度美颜、模糊、多人大合照、侧脸角度过大。</span>
+            </li>
+          </ul>
+        </div>
       </div>
 
-      <div className="fixed lg:absolute bottom-0 left-0 right-0 z-40 bg-obsidian/90 backdrop-blur-md border-t border-white/5 w-full">
-        <div className="w-full px-6 py-4 flex items-center justify-between">
+      {photos.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {photos.map((photo) => (
+            <div
+              key={photo.id}
+              className="relative aspect-square rounded-lg overflow-hidden bg-white/5"
+            >
+              <img
+                src={photo.dataUrl}
+                alt="uploaded"
+                className="w-full h-full object-cover"
+              />
+
+              {(photo.uploadStatus === 'uploading' ||
+                photo.identifyStatus === 'pending' ||
+                photo.identifyStatus === 'identifying') && (
+                  <div className="absolute inset-0 bg-obsidian/40 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  </div>
+                )}
+
+              {photo.identifyStatus === 'valid' &&
+                photo.uploadStatus === 'uploaded' && (
+                  <div className="absolute top-2 left-2">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 drop-shadow" />
+                  </div>
+                )}
+
+              {photo.identifyStatus === 'invalid' && (
+                <div className="absolute inset-0 bg-red-900/50 flex flex-col items-center justify-center p-2">
+                  <AlertCircle className="w-5 h-5 text-red-300 mb-1" />
+                  <span className="text-[10px] text-red-200 text-center leading-tight">
+                    {photo.identifyDescription || '未检测到人物'}
+                  </span>
+                </div>
+              )}
+
+              {photo.identifyStatus === 'error' && (
+                <div className="absolute top-2 left-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-400 drop-shadow" />
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => removePhoto(photo.id)}
+                className="absolute top-2 right-2 p-1 rounded-full bg-obsidian/60 text-white/80 hover:bg-obsidian/80 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+          <span className="text-sm text-red-700">{errorMsg}</span>
+        </div>
+      )}
+
+      <div className="bg-obsidian/90 backdrop-blur-md pt-4 mt-6 border-t border-white/5 w-full">
+        <div className="w-full flex items-center justify-between">
           <span className="text-sm text-pearl/60">
-            {validPhotos.length} 张照片就绪
+            {validPhotos.length} 张就绪
             {isProcessing && (
               <span className="ml-2 text-amber-600">
-                ({processingPhotos.length} 张处理中)
+                ({processingPhotos.length} 处理中)
               </span>
             )}
           </span>
