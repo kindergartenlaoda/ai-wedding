@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { uploadDataUrlImage, uploadImage } from '@/lib/minio-client';
+import { uploadDataUrlImage, uploadImage } from '@/lib/oss-client';
 import { getSessionUser } from '@/lib/auth-api';
 
 export const runtime = 'nodejs';
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         );
       }
 
-      // 上传到 MinIO
+      // 上传到 OSS
       const result = await uploadDataUrlImage(image, folder || 'uploads');
 
       console.log(`[${requestId}] ✅ 图片上传成功: ${result.url}`);
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      // 上传到 MinIO
+      // 上传到 OSS
       const result = await uploadImage({
         buffer,
         originalName: file.name,

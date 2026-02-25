@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-admin';
-import { uploadImage } from '@/lib/minio-client';
+import { uploadImage } from '@/lib/oss-client';
 
 /**
  * POST /api/admin/upload-template-image
- * Upload template cover image to MinIO
+ * Upload template cover image to OSS
  */
 export async function POST(req: NextRequest) {
   const authResult = await requireAdmin(req);
