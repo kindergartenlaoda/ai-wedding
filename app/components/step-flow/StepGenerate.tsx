@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { RefreshCw, ArrowRight, Home, Lightbulb } from 'lucide-react';
-import type { StepFlowState, StepFlowAction, PROGRESS_TEXTS } from '@/types/step-flow';
+import type { StepFlowState, StepFlowAction } from '@/types/step-flow';
 import { ScanningLine, SuccessBadge } from '@/components/shared-animations';
 import { GenerationResults } from '@/components/GenerationResults';
-import { parseImageFromContent } from '@/lib/image-stream';
 import { useAuth } from '@/contexts/AuthContext';
+import { startGeneration } from '@/lib/generation-flow';
 
 gsap.registerPlugin(useGSAP);
 
@@ -21,13 +21,6 @@ interface StepGenerateProps {
   state: GenerateState | ResultState | ErrorState;
   dispatch: React.Dispatch<StepFlowAction>;
 }
-
-const PROGRESS_TEXT_LIST: readonly string[] = [
-  '正在雕琢光影...',
-  'AI 解析面部特征中...',
-  '构筑视觉叙事...',
-  '渲染最终画面...',
-] satisfies typeof PROGRESS_TEXTS;
 
 const GENERATION_TIPS: readonly string[] = [
   'AI 正在学习您的面部特征，这需要一些时间',
@@ -57,214 +50,40 @@ export function StepGenerate({ state, dispatch }: StepGenerateProps) {
     return () => clearInterval(interval);
   }, [state.step]);
 
+  // Start generation flow
   useEffect(() => {
     if (state.step !== 'generate' || hasStartedRef.current) return;
     hasStartedRef.current = true;
 
-    const runGeneration = async () => {
-      try {
-        // Freeze credits before generation to prevent concurrent overspend
-        const freezeRes = await fetch('/api/credits/freeze', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: state.template.price_credits }),
+    startGeneration(
+      {
+        domain: state.domain,
+        template: state.template,
+        photos: state.photos,
+      },
+      (progress) => {
+        dispatch({
+          type: 'UPDATE_PROGRESS',
+          progress: progress.progress,
+          progressText: progress.message,
         });
-
-        if (!freezeRes.ok) {
-          const freezeData: { error?: string } = await freezeRes.json().catch(() => ({}));
-          throw new Error(freezeData.error || '积分不足，无法开始生成');
-        }
-
-        const photoUrls = state.photos
-          .map((p) => p.minioUrl)
-          .filter(Boolean);
-
-        const promptConfig = state.template.prompt_config;
-        const prompts = state.template.prompt_list?.length
-          ? state.template.prompt_list
-          : [promptConfig.basePrompt];
-
-        let progressIdx = 0;
-        const progressInterval = setInterval(() => {
-          progressIdx = Math.min(progressIdx + 1, PROGRESS_TEXT_LIST.length - 1);
-          const progress = Math.min(
-            ((progressIdx + 1) / PROGRESS_TEXT_LIST.length) * 80,
-            80
-          );
-          dispatch({
-            type: 'UPDATE_PROGRESS',
-            progress,
-            progressText: PROGRESS_TEXT_LIST[progressIdx],
-          });
-        }, 3000);
-
-        const res = await fetch('/api/projects', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: `${state.template.name} - ${new Date().toLocaleDateString('zh-CN')}`,
-            domain: state.domain,
-            uploaded_photos: photoUrls,
-          }),
-        });
-
-        if (!res.ok) throw new Error('创建项目失败');
-        const project: { id: string } = await res.json();
-
-        const genRes = await fetch('/api/generations', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            project_id: project.id,
-            template_id: state.template.id,
-            domain: state.domain,
-            credits_used: state.template.price_credits,
-          }),
-        });
-
-        if (!genRes.ok) throw new Error('创建生成记录失败');
-        const generation: { id: string } = await genRes.json();
-
-        const allImages: string[] = [];
-        for (const prompt of prompts) {
-          const streamRes = await fetch('/api/generate-stream', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              prompt,
-              image_inputs: photoUrls,
-            }),
-          });
-
-          if (!streamRes.ok || !streamRes.body) {
-            continue;
-          }
-
-          const reader = streamRes.body.getReader();
-          const decoder = new TextDecoder();
-          let sseBuffer = '';
-          let content = '';
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-              if (sseBuffer.trim().length > 0) sseBuffer += '\n\n';
-            } else {
-              sseBuffer += decoder.decode(value, { stream: true });
-            }
-
-            const events = sseBuffer.split(/\n\n/);
-            sseBuffer = events.pop() || '';
-
-            for (const evt of events) {
-              const dataLines = evt
-                .split(/\n/)
-                .filter((l: string) => l.startsWith('data:'))
-                .map((l: string) => l.slice(5).trimStart());
-              if (dataLines.length === 0) continue;
-              const dataPayload = dataLines.join('\n').trim();
-              if (dataPayload === '[DONE]') continue;
-
-              try {
-                const parsed = JSON.parse(dataPayload) as {
-                  choices?: Array<{
-                    delta?: { content?: string };
-                    finish_reason?: string | null;
-                  }>;
-                };
-                if (parsed.choices?.[0]?.delta?.content) {
-                  content += parsed.choices[0].delta.content;
-                }
-              } catch {
-                // skip unparseable
-              }
-            }
-            if (done) break;
-          }
-
-          const { imageData, imageUrl: parsedUrl } = parseImageFromContent(content);
-
-          if (imageData) {
-            let imageUrl = imageData.dataUrl;
-
-            try {
-              const uploadRes = await fetch('/api/upload-image', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  image: imageUrl,
-                  folder: `generations/${generation.id}/previews`,
-                }),
-              });
-              if (uploadRes.ok) {
-                const payload: { presignedUrl?: string; url?: string } =
-                  await uploadRes.json();
-                imageUrl = payload.presignedUrl || payload.url || imageUrl;
-              }
-            } catch {
-              // fallback to dataUrl
-            }
-
-            allImages.push(imageUrl);
-          } else if (parsedUrl) {
-            // AI 返回了远程 URL，直接使用
-            allImages.push(parsedUrl);
-          }
-        }
-
-        clearInterval(progressInterval);
-
-        if (allImages.length === 0) {
-          throw new Error('未能生成任何图片');
-        }
-
-        await fetch(`/api/generations/${generation.id}`, {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: 'completed',
-            preview_images: allImages,
-          }),
-        });
-
-        await fetch('/api/credits/deduct', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: state.template.price_credits }),
-        });
-
+      }
+    )
+      .then(async (result) => {
         await refreshProfile();
-
         dispatch({
           type: 'COMPLETE',
-          images: allImages,
-          generationId: generation.id,
+          images: result.images,
+          generationId: result.generationId,
         });
-      } catch (err) {
-        await fetch('/api/credits/unfreeze', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: state.template.price_credits }),
-        }).catch(() => { });
-
+      })
+      .catch(async (err) => {
         await refreshProfile();
-
         dispatch({
           type: 'FAIL',
           error: err instanceof Error ? err.message : '生成失败',
         });
-      }
-    };
-
-    runGeneration();
+      });
   }, [state, dispatch, refreshProfile]);
 
   useGSAP(
