@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useTemplates } from '@/hooks/useTemplates';
+import { useDomains } from '@/hooks/useDomains';
+import type { Domain } from '@/hooks/useDomains';
 import type { StepFlowState, StepFlowAction, PhotoState } from '@/types/step-flow';
 import { useStepFlow } from '@/hooks/useStepFlow';
 import { StepDomain } from './StepDomain';
@@ -15,8 +17,12 @@ import { StepGenerate } from './StepGenerate';
 
 gsap.registerPlugin(useGSAP);
 
-function MainCanvas({ state, isFullScreenStep, dispatch }: { state: StepFlowState, isFullScreenStep: boolean, dispatch: React.Dispatch<StepFlowAction> }) {
+function MainCanvas({ state, isFullScreenStep, dispatch, domains }: { state: StepFlowState, isFullScreenStep: boolean, dispatch: React.Dispatch<StepFlowAction>, domains: Domain[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const currentDomain = domains.find((d) => d.slug === state.domain);
+  const domainCover = currentDomain?.cover_image || domains[0]?.cover_image;
+  const fallbackCover = domainCover || '/images/default-cover.jpg';
 
   useGSAP(() => {
     if (containerRef.current) {
@@ -32,7 +38,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch }: { state: StepFlowStat
     return (
       <div ref={containerRef} className="absolute inset-0">
         <Image
-          src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=2000&auto=format&fit=crop"
+          src={domains[0]?.cover_image || fallbackCover}
           alt="Domain Preview"
           fill
           className="object-cover opacity-30 mix-blend-luminosity"
@@ -56,7 +62,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch }: { state: StepFlowStat
     return (
       <div ref={containerRef} className="absolute inset-0">
         <Image
-          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2000&auto=format&fit=crop"
+          src={fallbackCover}
           alt="Style Preview"
           fill
           className="object-cover"
@@ -70,7 +76,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch }: { state: StepFlowStat
     return (
       <div ref={containerRef} className="absolute inset-0">
         <Image
-          src={state.template?.preview_image_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2000&auto=format&fit=crop"}
+          src={state.template?.preview_image_url || fallbackCover}
           alt="Template Preview"
           fill
           className="object-cover"
@@ -113,10 +119,13 @@ function MainCanvas({ state, isFullScreenStep, dispatch }: { state: StepFlowStat
 }
 
 function StepFlowInner() {
-  const { templates, loading } = useTemplates();
+  const { templates, loading: templatesLoading } = useTemplates();
+  const { domains, loading: domainsLoading } = useDomains();
   const { state, dispatch, goBack, stepIndex } = useStepFlow({
     templates,
   });
+
+  const loading = templatesLoading || domainsLoading;
 
   if (loading) {
     return (
@@ -147,7 +156,7 @@ function StepFlowInner() {
 
       {/* LEFT PANE: MAIN CANVAS */}
       <div className={`flex-1 relative transition-all duration-700 ease-in-out bg-stone/5 ${isFullScreenStep ? 'w-full' : ''}`}>
-        <MainCanvas state={state} isFullScreenStep={isFullScreenStep} dispatch={dispatch} />
+        <MainCanvas state={state} isFullScreenStep={isFullScreenStep} dispatch={dispatch} domains={domains} />
       </div>
 
       {/* RIGHT PANE: CONTROL PANEL */}
