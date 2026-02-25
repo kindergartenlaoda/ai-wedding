@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useTemplates } from '@/hooks/useTemplates';
+import type { StepFlowState, StepFlowAction, PhotoState } from '@/types/step-flow';
 import { useStepFlow } from '@/hooks/useStepFlow';
-import { StepProgress } from './StepProgress';
 import { StepDomain } from './StepDomain';
 import { StepStyle } from './StepStyle';
 import { StepUpload } from './StepUpload';
@@ -15,7 +15,7 @@ import { StepGenerate } from './StepGenerate';
 
 gsap.registerPlugin(useGSAP);
 
-function MainCanvas({ state, isFullScreenStep, dispatch }: { state: any, isFullScreenStep: boolean, dispatch: any }) {
+function MainCanvas({ state, isFullScreenStep, dispatch }: { state: StepFlowState, isFullScreenStep: boolean, dispatch: React.Dispatch<StepFlowAction> }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
@@ -26,7 +26,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch }: { state: any, isFullS
         { opacity: 1, scale: 1, duration: 0.8, ease: 'power2.out' }
       );
     }
-  }, { dependencies: [state.step, state.domain, state.template?.id], scope: containerRef });
+  }, { dependencies: [state.step, state.domain, 'template' in state ? state.template?.id : undefined], scope: containerRef });
 
   if (state.step === 'domain') {
     return (
@@ -56,7 +56,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch }: { state: any, isFullS
     return (
       <div ref={containerRef} className="absolute inset-0">
         <Image
-          src={state.template?.preview_image_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2000&auto=format&fit=crop"}
+          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2000&auto=format&fit=crop"
           alt="Style Preview"
           fill
           className="object-cover"
@@ -80,7 +80,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch }: { state: any, isFullS
         {state.photos && state.photos.length > 0 ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex flex-wrap items-center justify-center gap-4 max-w-xl p-8">
-              {state.photos.map((p: any) => (
+              {state.photos.map((p: PhotoState) => (
                 <div key={p.id} className="relative w-24 h-24 lg:w-32 lg:h-32 rounded-full overflow-hidden border-[3px] border-gold/40 shadow-[0_0_30px_rgba(200,160,100,0.15)] bg-obsidian/50">
                   <img src={p.dataUrl} className="w-full h-full object-cover" alt="Photo Uploaded" />
                 </div>
@@ -103,7 +103,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch }: { state: any, isFullS
     if (state.step === 'generate' || state.step === 'result' || state.step === 'error') {
       return (
         <div ref={containerRef} className="absolute inset-0">
-          <StepGenerate state={state as any} dispatch={dispatch} />
+          <StepGenerate state={state} dispatch={dispatch} />
         </div>
       );
     }
@@ -114,7 +114,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch }: { state: any, isFullS
 
 function StepFlowInner() {
   const { templates, loading } = useTemplates();
-  const { state, dispatch, goBack, stepIndex, totalSteps } = useStepFlow({
+  const { state, dispatch, goBack, stepIndex } = useStepFlow({
     templates,
   });
 
