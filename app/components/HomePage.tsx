@@ -163,7 +163,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                         src={coverSrc}
                         alt={domain.name}
                         fill
-                        className="object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105"
+                        className="object-cover transition-transform duration-1500 ease-smooth group-hover:scale-105"
                         sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 25vw"
                       />
                       {/* Darker base gradient for text readability, with a subtle glow on hover */}
@@ -172,10 +172,10 @@ export function HomePage({ onNavigate }: HomePageProps) {
                       {/* Subtle border glow effect on hover */}
                       <div className="absolute inset-0 border border-transparent transition-colors duration-1000 group-hover:border-gold/20 rounded-sm z-20 pointer-events-none" />
 
-                      <div className="absolute bottom-0 left-0 p-8 w-full z-10 transform transition-transform duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] translate-y-0 sm:translate-y-4 sm:group-hover:translate-y-0">
+                      <div className="absolute bottom-0 left-0 p-8 w-full z-10 transform transition-transform duration-1000 ease-smooth translate-y-0 sm:translate-y-4 sm:group-hover:translate-y-0">
                         <Icon className="h-6 w-6 mb-6 text-gold opacity-90 drop-shadow-[0_0_10px_rgba(200,160,100,0.5)]" />
                         <h3 className="text-2xl font-display text-alabaster mb-3 tracking-wide">{domain.name}</h3>
-                        <p className="text-sm text-pearl/70 font-light opacity-100 sm:opacity-0 transition-opacity duration-[1.2s] ease-[cubic-bezier(0.25,1,0.5,1)] delay-100 sm:group-hover:opacity-100 line-clamp-2">
+                        <p className="text-sm text-pearl/70 font-light opacity-100 sm:opacity-0 transition-opacity duration-1200 ease-smooth delay-100 sm:group-hover:opacity-100 line-clamp-2">
                           {domain.description}
                         </p>
                       </div>
@@ -243,7 +243,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1200&auto=format&fit=crop"
                   alt="极致的摄影匠心"
                   fill
-                  className="object-cover transition-transform duration-[2s] hover:scale-105 ease-out"
+                  className="object-cover transition-transform duration-2000 hover:scale-105 ease-out"
                   sizes="(max-width: 1024px) 100vw, 60vw"
                 />
                 {/* Vintage grain overlay */}
@@ -303,7 +303,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                     <div className="absolute inset-0 bg-gold/20 rounded-full blur-xl scale-0 group-hover:scale-150 transition-transform duration-1000 ease-out opacity-0 group-hover:opacity-100" />
 
                     {/* The circle */}
-                    <div className="relative w-24 h-24 bg-obsidian border border-white/10 group-hover:border-gold/50 rounded-full flex items-center justify-center z-10 text-alabaster shadow-2xl transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]">
+                    <div className="relative w-24 h-24 bg-obsidian border border-white/10 group-hover:border-gold/50 rounded-full flex items-center justify-center z-10 text-alabaster shadow-2xl transition-all duration-700 ease-smooth">
                       <step.icon className="w-8 h-8 text-pearl group-hover:text-gold transition-colors duration-500" />
 
                       {/* Huge background numbers watermark */}
@@ -355,7 +355,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
               className="group relative px-12 py-6 bg-transparent overflow-hidden text-alabaster border border-white/20 rounded-sm hover:border-gold/50 transition-colors duration-700 text-sm tracking-[0.2em] uppercase font-medium inline-flex items-center gap-4 hover:shadow-[0_0_40px_rgba(200,160,100,0.15)]"
             >
               {/* Button Hover Glow Background */}
-              <div className="absolute inset-0 bg-gold/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]" />
+              <div className="absolute inset-0 bg-gold/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-smooth" />
               <span className="relative z-10">立即免费试用</span>
               <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform duration-500" />
             </button>

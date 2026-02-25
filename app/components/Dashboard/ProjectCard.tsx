@@ -60,7 +60,7 @@ export function ProjectCard({
           src={displayImage}
           alt={project.name}
           fill
-          className="object-cover transition-transform duration-1000 group-hover:scale-105 ease-[cubic-bezier(0.25,1,0.5,1)]"
+          className="object-cover transition-transform duration-1000 group-hover:scale-105 ease-smooth"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
 

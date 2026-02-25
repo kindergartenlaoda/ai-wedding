@@ -85,6 +85,12 @@ module.exports = {
         '600': '600ms',
         '700': '700ms',
         '1000': '1000ms',
+        '1200': '1.2s',
+        '1500': '1.5s',
+        '2000': '2s',
+      },
+      transitionTimingFunction: {
+        'smooth': 'cubic-bezier(0.25,1,0.5,1)',
       },
       scale: {
         '98': '0.98',

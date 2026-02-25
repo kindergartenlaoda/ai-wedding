@@ -72,7 +72,7 @@ export function SingleGenerationCard({ generation, onView }: SingleGenerationCar
                 src={generation.original_image}
                 alt="原图"
                 fill
-                className="object-cover transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105"
+                className="object-cover transition-all duration-500 ease-smooth group-hover:scale-105"
                 sizes="(max-width: 768px) 50vw, 25vw"
               />
               {/* 悬浮提示 */}
@@ -97,7 +97,7 @@ export function SingleGenerationCard({ generation, onView }: SingleGenerationCar
                 src={generation.result_image}
                 alt="生成结果"
                 fill
-                className="object-cover transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105"
+                className="object-cover transition-all duration-500 ease-smooth group-hover:scale-105"
                 sizes="(max-width: 768px) 50vw, 25vw"
               />
               {/* 悬浮提示 */}

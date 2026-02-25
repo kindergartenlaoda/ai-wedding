@@ -55,8 +55,12 @@ const nextConfig = {
         hostname: 'ai-weddings.oss-cn-beijing.aliyuncs.com',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        pathname: '/**',
+      },
     ],
-    domains: ['localhost'],
   },
   // 启用SWC压缩
   swcMinify: true,

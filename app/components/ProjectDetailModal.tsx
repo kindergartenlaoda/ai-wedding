@@ -257,7 +257,7 @@ export function ProjectDetailModal({
                               src={img}
                               alt={`生成结果 ${i + 1}`}
                               fill
-                              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105"
+                              className="object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
                               sizes="(max-width: 768px) 50vw, 33vw"
                             />
                             <div className="absolute inset-0 bg-obsidian/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
