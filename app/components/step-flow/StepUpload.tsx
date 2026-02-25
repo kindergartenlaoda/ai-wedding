@@ -39,6 +39,10 @@ export function StepUpload({
   const [freezing, setFreezing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // 生成数量选择
+  const maxImages = template.prompt_list?.length || 1;
+  const [imageCount, setImageCount] = useState(Math.min(1, maxImages));
+
   const { handleFiles, removePhoto } = useParallelPhotoUpload({
     maxPhotos: MAX_PHOTOS,
     dispatch,
@@ -96,8 +100,11 @@ export function StepUpload({
       return;
     }
 
+    // 计算总积分
+    const totalCredits = template.price_credits * imageCount;
     const userCredits = profile?.credits ?? 0;
-    if (userCredits < template.price_credits) {
+
+    if (userCredits < totalCredits) {
       router.push('/pricing');
       return;
     }
@@ -108,7 +115,7 @@ export function StepUpload({
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: template.price_credits }),
+        body: JSON.stringify({ amount: totalCredits }),
       });
 
       if (!res.ok) {
@@ -116,7 +123,11 @@ export function StepUpload({
         throw new Error(data.error || '系统繁忙，请稍后重试');
       }
 
-      dispatch({ type: 'START_GENERATE', photos: validPhotos });
+      dispatch({
+        type: 'START_GENERATE',
+        photos: validPhotos,
+        imageCount,
+      });
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : '冻结积分失败');
     } finally {
@@ -234,6 +245,47 @@ export function StepUpload({
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
           <span className="text-sm text-red-700">{errorMsg}</span>
+        </div>
+      )}
+
+      {/* 生成数量选择器 */}
+      {maxImages > 1 && validPhotos.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <label className="text-sm font-medium text-alabaster">
+              生成数量
+            </label>
+            <span className="text-lg font-semibold text-gold">
+              {imageCount} 张
+            </span>
+          </div>
+
+          <input
+            type="range"
+            min="1"
+            max={maxImages}
+            value={imageCount}
+            onChange={(e) => setImageCount(Number(e.target.value))}
+            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gold [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gold [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+          />
+
+          <div className="flex items-center justify-between mt-3 text-xs">
+            <span className="text-pearl/50">1 张</span>
+            <span className="text-pearl/50">{maxImages} 张</span>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+            <div className="text-xs text-pearl/60">
+              <span className="text-pearl/80">单价：</span>
+              {template.price_credits} 积分/张
+            </div>
+            <div className="text-sm">
+              <span className="text-pearl/60">共需：</span>
+              <span className="text-gold font-semibold ml-1">
+                {template.price_credits * imageCount} 积分
+              </span>
+            </div>
+          </div>
         </div>
       )}
 

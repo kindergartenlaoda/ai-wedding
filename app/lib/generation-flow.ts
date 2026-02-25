@@ -16,6 +16,7 @@ export interface GenerationFlowParams {
   domain: GenerationDomain;
   template: Template;
   photos: ValidatedPhoto[];
+  imageCount?: number;  // 用户选择的生成数量，默认为全部
 }
 
 export interface GenerationFlowResult {
@@ -303,11 +304,17 @@ export async function startGeneration(
   params: GenerationFlowParams,
   onProgress?: ProgressCallback
 ): Promise<GenerationFlowResult> {
-  const { domain, template, photos } = params;
+  const { domain, template, photos, imageCount } = params;
   const photoUrls = photos.map(p => p.minioUrl).filter(Boolean);
-  const prompts = template.prompt_list?.length
+
+  // 根据用户选择的数量截取 prompts
+  const allPrompts = template.prompt_list?.length
     ? template.prompt_list
     : [template.prompt_config.basePrompt];
+
+  const prompts = imageCount
+    ? allPrompts.slice(0, imageCount)
+    : allPrompts;
 
   let projectId: string | null = null;
   let generationId: string | null = null;

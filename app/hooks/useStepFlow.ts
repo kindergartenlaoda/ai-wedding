@@ -63,6 +63,7 @@ export function stepFlowReducer(
         domain: state.domain,
         template: state.template,
         photos: action.photos,
+        imageCount: action.imageCount || 1,
         progress: 0,
         progressText: '正在准备...',
       };

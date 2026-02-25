@@ -60,6 +60,7 @@ export function StepGenerate({ state, dispatch }: StepGenerateProps) {
         domain: state.domain,
         template: state.template,
         photos: state.photos,
+        imageCount: state.imageCount,
       },
       (progress) => {
         dispatch({
