@@ -1,101 +1,129 @@
 /**
- * 结构化日志工具
+ * 结构化日志系统 - 基于 Pino
  *
- * 设计原则：
- * 1. 开发环境：详细日志
- * 2. 生产环境：简化日志
- * 3. 支持条件日志
+ * 使用方式：
+ * ```typescript
+ * import { logger, createRequestLogger, sanitize } from '@/lib/logger';
+ *
+ * // 基础日志
+ * logger.info('User logged in');
+ * logger.error({ error, userId }, 'Login failed');
+ *
+ * // 创建带上下文的子 logger
+ * const log = createRequestLogger('generate-image', requestId);
+ * log.info({ userId }, '用户认证成功');
+ * ```
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+import pino from 'pino';
 
-interface LogContext {
-  [key: string]: unknown;
-}
+// 判断是否为生产环境
+const isProduction = process.env.NODE_ENV === 'production';
 
-const IS_DEV = process.env.NODE_ENV === 'development';
-const IS_DEBUG = process.env.DEBUG === 'true';
+// 创建基础 logger
+export const logger = pino({
+  level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
 
-class Logger {
-  private formatMessage(level: LogLevel, message: string, context?: LogContext): string {
-    const timestamp = new Date().toISOString();
-    const contextStr = context ? ` ${JSON.stringify(context)}` : '';
-    return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}`;
-  }
-
-  debug(message: string, context?: LogContext): void {
-    if (IS_DEV || IS_DEBUG) {
-      console.debug(this.formatMessage('debug', message, context));
+  // 开发环境使用 pino-pretty 美化输出
+  transport: !isProduction ? {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+      ignore: 'pid,hostname',
+      singleLine: false,
     }
-  }
+  } : undefined,
 
-  info(message: string, context?: LogContext): void {
-    if (IS_DEV) {
-      console.info(this.formatMessage('info', message, context));
-    } else {
-      // 生产环境：简化日志
-      console.info(`[INFO] ${message}`);
-    }
-  }
+  // 生产环境输出 JSON 格式（便于日志聚合系统解析）
+  formatters: isProduction ? {
+    level: (label) => {
+      return { level: label };
+    },
+  } : undefined,
 
-  warn(message: string, context?: LogContext): void {
-    console.warn(this.formatMessage('warn', message, context));
-  }
-
-  error(message: string, context?: LogContext): void {
-    console.error(this.formatMessage('error', message, context));
-  }
-}
-
-export const logger = new Logger();
+  // 基础字段
+  base: {
+    env: process.env.NODE_ENV,
+  },
+});
 
 /**
- * API 请求日志器
+ * 创建带上下文的子 logger
+ *
+ * @param context - 上下文标识（如 'api:generate-image', 'service:credit'）
+ * @param additionalContext - 额外的上下文字段
  */
-export class ApiLogger {
-  constructor(private requestId: string) {}
-
-  info(message: string, context?: LogContext): void {
-    logger.info(`[${this.requestId}] ${message}`, context);
-  }
-
-  error(message: string, context?: LogContext): void {
-    logger.error(`[${this.requestId}] ${message}`, context);
-  }
-
-  debug(message: string, context?: LogContext): void {
-    logger.debug(`[${this.requestId}] ${message}`, context);
-  }
-
-  /**
-   * 记录请求开始
-   */
-  logRequestStart(method: string, endpoint: string, context?: LogContext): void {
-    this.info(`${method} ${endpoint} - 开始处理`, context);
-  }
-
-  /**
-   * 记录请求完成
-   */
-  logRequestEnd(duration: number, statusCode: number): void {
-    this.info(`请求完成`, { duration: `${duration}ms`, statusCode });
-  }
-
-  /**
-   * 记录请求失败
-   */
-  logRequestError(error: Error, context?: LogContext): void {
-    this.error(`请求失败: ${error.message}`, {
-      ...context,
-      stack: IS_DEV ? error.stack : undefined,
-    });
-  }
+export function createLogger(context: string, additionalContext?: Record<string, unknown>) {
+  return logger.child({
+    context,
+    ...additionalContext,
+  });
 }
 
 /**
- * 创建 API 日志器
+ * 为 API 请求创建 logger
+ *
+ * @param route - API 路由（如 'generate-image', 'generate-stream'）
+ * @param requestId - 请求 ID
  */
-export function createApiLogger(requestId?: string): ApiLogger {
-  const id = requestId || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  return new ApiLogger(id);
+export function createRequestLogger(route: string, requestId: string) {
+  return logger.child({
+    context: `api:${route}`,
+    requestId,
+  });
 }
+
+/**
+ * 脱敏工具函数 - 用于隐藏敏感信息
+ */
+export const sanitize = {
+  /**
+   * 脱敏 API Key（只显示前 10 个字符）
+   */
+  apiKey: (key: string | undefined): string => {
+    if (!key) return 'missing';
+    return `${key.substring(0, 10)}...`;
+  },
+
+  /**
+   * 脱敏 Base64 图片（只显示长度）
+   */
+  base64Image: (dataUrl: string): string => {
+    if (dataUrl.startsWith('data:image')) {
+      return `data:image/...[base64 ${dataUrl.length} 字符]`;
+    }
+    return dataUrl;
+  },
+
+  /**
+   * 脱敏图片数组
+   */
+  imageArray: (images: string[]): string[] => {
+    return images.map(img => sanitize.base64Image(img));
+  },
+
+  /**
+   * 截断长文本（用于 prompt）
+   */
+  truncate: (text: string, maxLength = 100): string => {
+    if (text.length <= maxLength) return text;
+    return `${text.substring(0, maxLength)}... [${text.length} 字符]`;
+  },
+};
+
+/**
+ * 日志级别说明：
+ *
+ * - trace: 最详细的调试信息（开发环境）
+ * - debug: 调试信息（开发环境）
+ * - info: 一般信息（生产环境默认）
+ * - warn: 警告信息
+ * - error: 错误信息
+ * - fatal: 致命错误
+ *
+ * 环境变量配置：
+ * - LOG_LEVEL=debug  # 显示所有日志
+ * - LOG_LEVEL=info   # 只显示 info 及以上
+ * - LOG_LEVEL=error  # 只显示错误
+ */

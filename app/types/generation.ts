@@ -7,8 +7,12 @@ export type GenerationStage = 'uploading' | 'analyzing' | 'generating' | 'comple
 
 export interface SavedGenerationState {
   photos: string[];
-  projectName: string;
+  projectName?: string;
   shareToGallery?: boolean;
+  // Single generation fields
+  prompt?: string;
+  originalImage?: string;
+  settings?: object;
 }
 
 // 状态机：使用判别联合类型（只保留 idle/processing/completed/failed）

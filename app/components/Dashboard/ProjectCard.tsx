@@ -32,7 +32,7 @@ export function ProjectCard({
     project.generation.preview_images.length > 0;
 
   const displayImage = hasGeneratedImages
-    ? project.generation!.preview_images[0]
+    ? project.generation!.preview_images![0]
     : project.template?.preview_image_url ||
     project.uploaded_photos[0] ||
     'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=400';
@@ -90,9 +90,9 @@ export function ProjectCard({
         </div>
 
         {/* 已完成的生成结果 - 显示缩略图网格 */}
-        {hasGeneratedImages && project.generation!.preview_images.length > 1 && (
+        {hasGeneratedImages && project.generation!.preview_images!.length > 1 && (
           <div className="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10">
-            {project.generation!.preview_images.slice(0, 4).map((img, idx) => (
+            {project.generation!.preview_images!.slice(0, 4).map((img, idx) => (
               <div
                 key={idx}
                 className="overflow-hidden relative flex-shrink-0 w-16 h-16 rounded-sm border border-white/20 shadow-xl"
@@ -106,10 +106,10 @@ export function ProjectCard({
                 />
               </div>
             ))}
-            {project.generation!.preview_images.length > 4 && (
+            {project.generation!.preview_images!.length > 4 && (
               <div className="flex flex-shrink-0 justify-center items-center w-16 h-16 rounded-sm border border-white/20 shadow-xl backdrop-blur-md bg-obsidian/80">
                 <span className="text-xs font-medium text-alabaster tracking-widest">
-                  +{project.generation!.preview_images.length - 4}
+                  +{project.generation!.preview_images!.length - 4}
                 </span>
               </div>
             )}
@@ -117,7 +117,7 @@ export function ProjectCard({
         )}
 
         {/* 已完成但只有1张图 - 显示查看按钮 */}
-        {hasGeneratedImages && project.generation!.preview_images.length === 1 && (
+        {hasGeneratedImages && project.generation!.preview_images!.length === 1 && (
           <div className="absolute right-4 bottom-4 left-4 opacity-0 transition-opacity duration-500 group-hover:opacity-100 z-10">
             <button className="w-full px-4 py-3 bg-gold text-obsidian rounded-sm hover:-translate-y-px transition-all duration-500 font-medium flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(0,0,0,0.4)] hover:shadow-[0_0_15px_rgba(200,160,100,0.4)] uppercase tracking-widest text-xs border border-transparent hover:border-white/10">
               查看结果
@@ -153,7 +153,7 @@ export function ProjectCard({
             {hasGeneratedImages && (
               <div className="flex items-center gap-1.5 text-gold font-medium">
                 <Sparkles className="w-3.5 h-3.5" />
-                {project.generation!.preview_images.length} 张作品
+                {project.generation!.preview_images!.length} 张作品
               </div>
             )}
             {!hasGeneratedImages && project.uploaded_photos.length > 0 && (

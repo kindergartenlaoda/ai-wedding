@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Coins } from 'lucide-react';
 import type { GenerationDomain } from '@/types/domain';
-import { DOMAIN_CONFIG } from '@/types/domain';
 import type { Template } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import FadeIn from '@/components/react-bits/animations/FadeIn';
@@ -26,7 +25,6 @@ export function StepStyle({
   const router = useRouter();
   const { profile } = useAuth();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const domainConfig = DOMAIN_CONFIG[domain];
   const userCredits = profile?.credits ?? 0;
 
   const selectedTemplate = templates.find((t) => t.id === selectedId);

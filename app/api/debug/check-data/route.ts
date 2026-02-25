@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +39,7 @@ export async function GET() {
       generations,
     });
   } catch (error) {
-    console.error('数据检查失败:', error);
+    logger.error({ error }, '数据检查失败');
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '检查失败' },
       { status: 500 }

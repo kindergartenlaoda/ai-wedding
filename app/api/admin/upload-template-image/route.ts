@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-admin';
 import { uploadImage } from '@/lib/oss-client';
+import { logger } from '@/lib/logger';
 
 /**
  * POST /api/admin/upload-template-image
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
       objectName: result.objectName,
     });
   } catch (error) {
-    console.error('Upload template image error:', error);
+    logger.error({ error }, 'Upload template image error');
     const message = error instanceof Error ? error.message : 'Upload failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }

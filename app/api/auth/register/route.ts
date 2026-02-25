@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import type { Prisma } from '../../../../generated/prisma/client';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Registration error:', error);
+    logger.error({ error }, 'Registration error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

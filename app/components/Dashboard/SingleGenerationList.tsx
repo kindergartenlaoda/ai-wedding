@@ -1,15 +1,16 @@
 import { Loader2, ChevronDown } from 'lucide-react';
 import { SingleGenerationCard } from '../SingleGenerationCard';
 import { EmptyState } from './EmptyState';
-import type { SingleGeneration } from '@/types/database';
+import type { Generation } from '@/types/database';
+import { generationToSingleGeneration } from '@/types/database';
 
 interface SingleGenerationListProps {
-  generations: SingleGeneration[];
+  generations: Generation[];
   loading: boolean;
   hasMore?: boolean;
   onLoadMore?: () => void;
   onDelete: (id: string) => void;
-  onView: (generation: SingleGeneration) => void;
+  onView: (generation: Generation) => void;
   onNavigateToGenerateSingle: () => void;
 }
 
@@ -37,14 +38,18 @@ export function SingleGenerationList({
   return (
     <div>
       <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2 lg:grid-cols-3">
-        {generations.map(generation => (
-          <SingleGenerationCard
-            key={generation.id}
-            generation={generation}
-            onDelete={onDelete}
-            onView={onView}
-          />
-        ))}
+        {generations.map(generation => {
+          const singleGen = generationToSingleGeneration(generation);
+          if (!singleGen) return null;
+          return (
+            <SingleGenerationCard
+              key={generation.id}
+              generation={singleGen}
+              onDelete={onDelete}
+              onView={() => onView(generation)}
+            />
+          );
+        })}
       </div>
       {hasMore && onLoadMore && (
         <div className="flex justify-center py-10">

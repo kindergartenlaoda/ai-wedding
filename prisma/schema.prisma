@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -10,15 +7,321 @@ datasource db {
   provider = "postgresql"
 }
 
-// ---------------------------------------------------------------------------
-// Enums
-// ---------------------------------------------------------------------------
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model credit_transactions {
+  id              String                  @id
+  user_id         String
+  type            CreditTransactionType
+  status          CreditTransactionStatus @default(pending)
+  amount          Int
+  balance_before  Int
+  balance_after   Int
+  generation_id   String?
+  order_id        String?
+  invite_event_id String?
+  description     String?
+  metadata        Json?
+  created_by      String?
+  created_at      DateTime                @default(now())
+  completed_at    DateTime?
+  users           users                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-enum ModelConfigType {
-  generate_image    @map("generate-image")
-  identify_image    @map("identify-image")
-  generate_prompts   @map("generate-prompts")
-  other
+  @@index([created_at])
+  @@index([generation_id])
+  @@index([order_id])
+  @@index([status])
+  @@index([type])
+  @@index([user_id])
+}
+
+model domains {
+  id          String   @id
+  slug        String   @unique
+  name        String
+  description String   @default("")
+  icon        String   @default("Camera")
+  color       String   @default("from-pink-500 to-rose-500")
+  cover_image String?
+  is_active   Boolean  @default(true)
+  sort_order  Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+
+  @@index([is_active])
+  @@index([sort_order])
+}
+
+model favorites {
+  id          String    @id
+  user_id     String
+  template_id String
+  created_at  DateTime  @default(now())
+  templates   templates @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, template_id])
+  @@index([template_id])
+  @@index([user_id])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model generated_images {
+  id            String      @id
+  generation_id String
+  image_url     String
+  image_type    ImageType   @default(preview)
+  image_index   Int         @default(0)
+  metadata      Json?
+  created_at    DateTime    @default(now())
+  generations   generations @relation(fields: [generation_id], references: [id], onDelete: Cascade)
+
+  @@index([generation_id])
+  @@index([image_type])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model generations {
+  id                   String             @id
+  project_id           String?
+  user_id              String
+  template_id          String?
+  domain               String             @default("wedding")
+  status               String             @default("pending")
+  preview_images       Json               @default("[]")
+  high_res_images      Json               @default("[]")
+  error_message        String?
+  credits_used         Int                @default(0)
+  is_shared_to_gallery Boolean            @default(false)
+  completed_at         DateTime?
+  created_at           DateTime           @default(now())
+  updated_at           DateTime
+  generation_type      GenerationType?    @default(batch)
+  prompt               String?
+  original_image       String?
+  settings             Json?
+  generated_images     generated_images[]
+  projects             projects?          @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  templates            templates?         @relation(fields: [template_id], references: [id])
+  users                users              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  image_downloads      image_downloads[]
+  image_likes          image_likes[]
+  orders               orders[]
+
+  @@index([created_at])
+  @@index([domain])
+  @@index([generation_type])
+  @@index([project_id])
+  @@index([status])
+  @@index([template_id])
+  @@index([user_id])
+}
+
+model image_downloads {
+  id            String      @id
+  user_id       String
+  generation_id String
+  image_index   Int
+  image_type    String      @default("preview")
+  order_id      String?
+  created_at    DateTime    @default(now())
+  generations   generations @relation(fields: [generation_id], references: [id], onDelete: Cascade)
+  orders        orders?     @relation(fields: [order_id], references: [id])
+  users         users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at])
+  @@index([generation_id])
+  @@index([user_id])
+}
+
+model image_likes {
+  id            String      @id
+  user_id       String
+  generation_id String
+  image_index   Int
+  image_type    String      @default("preview")
+  created_at    DateTime    @default(now())
+  generations   generations @relation(fields: [generation_id], references: [id], onDelete: Cascade)
+  users         users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at])
+  @@index([generation_id])
+  @@index([user_id])
+}
+
+model invite_events {
+  id                                    String   @id
+  inviter_id                            String?
+  invitee_id                            String?
+  inviter_code                          String?
+  reward_credits                        Int      @default(0)
+  created_at                            DateTime @default(now())
+  users_invite_events_invitee_idTousers users?   @relation("invite_events_invitee_idTousers", fields: [invitee_id], references: [id])
+  users_invite_events_inviter_idTousers users?   @relation("invite_events_inviter_idTousers", fields: [inviter_id], references: [id])
+
+  @@index([created_at])
+  @@index([invitee_id])
+  @@index([inviter_id])
+}
+
+model model_configs {
+  id           String            @id
+  type         ModelConfigType
+  name         String
+  api_base_url String
+  api_key      String
+  model_name   String
+  status       ModelConfigStatus @default(inactive)
+  description  String?
+  source       ModelConfigSource @default(openAi)
+  created_by   String?
+  created_at   DateTime          @default(now())
+  updated_at   DateTime
+  users        users?            @relation(fields: [created_by], references: [id])
+
+  @@index([status])
+  @@index([type])
+}
+
+model orders {
+  id                String            @id
+  user_id           String
+  generation_id     String?
+  amount            Decimal           @db.Decimal(12, 2)
+  currency          String            @default("USD")
+  status            String            @default("pending")
+  payment_method    String?
+  payment_intent_id String?
+  purchased_images  Json              @default("[]")
+  created_at        DateTime          @default(now())
+  updated_at        DateTime
+  image_downloads   image_downloads[]
+  generations       generations?      @relation(fields: [generation_id], references: [id])
+  users             users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at])
+  @@index([generation_id])
+  @@index([status])
+  @@index([user_id])
+}
+
+model profiles {
+  id             String   @id
+  user_id        String   @unique
+  credits        Int      @default(50)
+  invite_code    String?  @unique
+  invited_by     String?
+  invite_count   Int      @default(0)
+  reward_credits Int      @default(0)
+  role           String   @default("user")
+  created_at     DateTime @default(now())
+  updated_at     DateTime
+  frozen_credits Int      @default(0)
+  users          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model projects {
+  id              String        @id
+  user_id         String
+  name            String
+  domain          String        @default("wedding")
+  status          String        @default("draft")
+  uploaded_photos Json          @default("[]")
+  created_at      DateTime      @default(now())
+  updated_at      DateTime
+  generations     generations[]
+  users           users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at])
+  @@index([domain])
+  @@index([status])
+  @@index([user_id])
+}
+
+model system_announcements {
+  id           String   @id
+  content      String
+  is_active    Boolean  @default(false)
+  published_at DateTime @default(now())
+  created_at   DateTime @default(now())
+  updated_at   DateTime
+
+  @@index([is_active])
+  @@index([published_at])
+}
+
+model templates {
+  id                String        @id
+  name              String
+  description       String?
+  category          String
+  domain            String        @default("wedding")
+  preview_image_url String?
+  prompt_config     Json          @default("{}")
+  prompt_list       Json          @default("[]")
+  price_credits     Int           @default(10)
+  is_active         Boolean       @default(true)
+  sort_order        Int           @default(0)
+  created_at        DateTime      @default(now())
+  favorites         favorites[]
+  generations       generations[]
+
+  @@index([category])
+  @@index([domain])
+  @@index([is_active])
+}
+
+model users {
+  id                                            String                @id
+  email                                         String                @unique
+  password_hash                                 String
+  name                                          String?
+  image                                         String?
+  email_verified                                DateTime?
+  created_at                                    DateTime              @default(now())
+  updated_at                                    DateTime
+  credit_transactions                           credit_transactions[]
+  favorites                                     favorites[]
+  generations                                   generations[]
+  image_downloads                               image_downloads[]
+  image_likes                                   image_likes[]
+  invite_events_invite_events_invitee_idTousers invite_events[]       @relation("invite_events_invitee_idTousers")
+  invite_events_invite_events_inviter_idTousers invite_events[]       @relation("invite_events_inviter_idTousers")
+  model_configs                                 model_configs[]
+  orders                                        orders[]
+  profiles                                      profiles?
+  projects                                      projects[]
+}
+
+enum CreditTransactionStatus {
+  pending
+  completed
+  failed
+  cancelled
+}
+
+enum CreditTransactionType {
+  purchase
+  generation
+  refund
+  invite_reward
+  system_grant
+  admin_adjust
+}
+
+enum GenerationType {
+  batch
+  single
+}
+
+enum ImageType {
+  preview
+  high_res
+}
+
+enum ModelConfigSource {
+  openRouter
+  openAi
+  // 302 @map("302")
 }
 
 enum ModelConfigStatus {
@@ -26,339 +329,9 @@ enum ModelConfigStatus {
   inactive
 }
 
-enum ModelConfigSource {
-  openRouter  @map("openRouter")
-  openAi      @map("openAi")
-  source_302  @map("302")
-}
-
-// ---------------------------------------------------------------------------
-// User & Profile (NextAuth)
-// ---------------------------------------------------------------------------
-
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String    @map("password_hash")
-  name          String?
-  image         String?
-  emailVerified DateTime? @map("email_verified")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-
-  profile             Profile?
-  projects            Project[]
-  generations         Generation[]
-  orders              Order[]
-  favorites           Favorite[]
-  imageDownloads      ImageDownload[]
-  imageLikes          ImageLike[]
-  singleGenerations   SingleGeneration[]
-  inviteEventsAsInviter InviteEvent[] @relation("InviterEvents")
-  inviteEventsAsInvitee InviteEvent[] @relation("InviteeEvents")
-  modelConfigsCreated ModelConfig[]
-
-  @@map("users")
-}
-
-model Profile {
-  id            String   @id @default(cuid())
-  userId        String   @unique @map("user_id")
-  credits       Int      @default(50)
-  frozenCredits Int      @default(0) @map("frozen_credits")
-  inviteCode    String?  @unique @map("invite_code")
-  invitedBy     String?  @map("invited_by")
-  inviteCount   Int      @default(0) @map("invite_count")
-  rewardCredits Int      @default(0) @map("reward_credits")
-  role          String   @default("user")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("profiles")
-}
-
-// ---------------------------------------------------------------------------
-// Templates
-// ---------------------------------------------------------------------------
-
-model Template {
-  id               String   @id @default(cuid())
-  name             String
-  description      String?
-  category         String
-  domain           String   @default("wedding")
-  previewImageUrl  String?  @map("preview_image_url")
-  promptConfig     Json     @default("{}") @map("prompt_config")
-  promptList       Json     @default("[]") @map("prompt_list")
-  priceCredits     Int      @default(10) @map("price_credits")
-  isActive         Boolean  @default(true) @map("is_active")
-  sortOrder        Int      @default(0) @map("sort_order")
-  createdAt        DateTime @default(now()) @map("created_at")
-
-  generations Generation[]
-  favorites   Favorite[]
-
-  @@index([domain])
-  @@index([category])
-  @@index([isActive])
-  @@map("templates")
-}
-
-// ---------------------------------------------------------------------------
-// Projects
-// ---------------------------------------------------------------------------
-
-model Project {
-  id             String   @id @default(cuid())
-  userId         String   @map("user_id")
-  name           String
-  domain         String   @default("wedding")
-  status         String   @default("draft")
-  uploadedPhotos Json     @default("[]") @map("uploaded_photos")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  generations  Generation[]
-
-  @@index([userId])
-  @@index([domain])
-  @@index([status])
-  @@index([createdAt])
-  @@map("projects")
-}
-
-// ---------------------------------------------------------------------------
-// Generations
-// ---------------------------------------------------------------------------
-
-model Generation {
-  id                 String    @id @default(cuid())
-  projectId          String    @map("project_id")
-  userId             String    @map("user_id")
-  templateId         String?   @map("template_id")
-  domain             String    @default("wedding")
-  status             String    @default("pending")
-  previewImages      Json      @default("[]") @map("preview_images")
-  highResImages      Json      @default("[]") @map("high_res_images")
-  errorMessage       String?   @map("error_message")
-  creditsUsed        Int       @default(0) @map("credits_used")
-  isSharedToGallery  Boolean   @default(false) @map("is_shared_to_gallery")
-  completedAt        DateTime? @map("completed_at")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-
-  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  template       Template?      @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  orders         Order[]
-  imageDownloads ImageDownload[]
-  imageLikes     ImageLike[]
-
-  @@index([userId])
-  @@index([projectId])
-  @@index([templateId])
-  @@index([domain])
-  @@index([status])
-  @@index([createdAt])
-  @@map("generations")
-}
-
-// ---------------------------------------------------------------------------
-// Orders
-// ---------------------------------------------------------------------------
-
-model Order {
-  id               String   @id @default(cuid())
-  userId           String   @map("user_id")
-  generationId     String?  @map("generation_id")
-  amount           Decimal  @db.Decimal(12, 2)
-  currency         String   @default("USD")
-  status           String   @default("pending")
-  paymentMethod    String?  @map("payment_method")
-  paymentIntentId  String?  @map("payment_intent_id")
-  purchasedImages  Json     @default("[]") @map("purchased_images")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
-
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  generation   Generation?  @relation(fields: [generationId], references: [id], onDelete: SetNull)
-  imageDownloads ImageDownload[]
-
-  @@index([userId])
-  @@index([generationId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("orders")
-}
-
-// ---------------------------------------------------------------------------
-// Favorites
-// ---------------------------------------------------------------------------
-
-model Favorite {
-  id         String   @id @default(cuid())
-  userId     String   @map("user_id")
-  templateId String   @map("template_id")
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, templateId])
-  @@index([userId])
-  @@index([templateId])
-  @@map("favorites")
-}
-
-// ---------------------------------------------------------------------------
-// Image Downloads
-// ---------------------------------------------------------------------------
-
-model ImageDownload {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  generationId String   @map("generation_id")
-  imageIndex   Int      @map("image_index")
-  imageType    String   @default("preview") @map("image_type")
-  orderId      String?  @map("order_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  generation Generation  @relation(fields: [generationId], references: [id], onDelete: Cascade)
-  order      Order?      @relation(fields: [orderId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([generationId])
-  @@index([createdAt])
-  @@map("image_downloads")
-}
-
-// ---------------------------------------------------------------------------
-// Image Likes
-// ---------------------------------------------------------------------------
-
-model ImageLike {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  generationId String   @map("generation_id")
-  imageIndex   Int      @map("image_index")
-  imageType    String   @default("preview") @map("image_type")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  generation Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([generationId])
-  @@index([createdAt])
-  @@map("image_likes")
-}
-
-// ---------------------------------------------------------------------------
-// Invite Events
-// ---------------------------------------------------------------------------
-
-model InviteEvent {
-  id            String   @id @default(cuid())
-  inviterId     String?  @map("inviter_id")
-  inviteeId     String?  @map("invitee_id")
-  inviterCode   String?  @map("inviter_code")
-  rewardCredits Int      @default(0) @map("reward_credits")
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  inviter User? @relation("InviterEvents", fields: [inviterId], references: [id], onDelete: SetNull)
-  invitee User? @relation("InviteeEvents", fields: [inviteeId], references: [id], onDelete: SetNull)
-
-  @@index([inviterId])
-  @@index([inviteeId])
-  @@index([createdAt])
-  @@map("invite_events")
-}
-
-// ---------------------------------------------------------------------------
-// Model Configs
-// ---------------------------------------------------------------------------
-
-model ModelConfig {
-  id          String           @id @default(cuid())
-  type        ModelConfigType
-  name        String
-  apiBaseUrl  String           @map("api_base_url")
-  apiKey      String           @map("api_key")
-  modelName   String           @map("model_name")
-  status      ModelConfigStatus @default(inactive)
-  description String?
-  source      ModelConfigSource @default(openAi)
-  createdBy   String?          @map("created_by")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-
-  createdByUser User? @relation(fields: [createdBy], references: [id], onDelete: SetNull)
-
-  @@index([type])
-  @@index([status])
-  @@map("model_configs")
-}
-
-// ---------------------------------------------------------------------------
-// Single Generations
-// ---------------------------------------------------------------------------
-
-model SingleGeneration {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  prompt       String
-  originalImage String  @map("original_image")
-  resultImage  String   @map("result_image")
-  settings     Json     @default("{}")
-  creditsUsed  Int      @default(15) @map("credits_used")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([createdAt])
-  @@map("single_generations")
-}
-
-// ---------------------------------------------------------------------------
-// System Announcements
-// ---------------------------------------------------------------------------
-
-model SystemAnnouncement {
-  id          String    @id @default(cuid())
-  content     String
-  isActive    Boolean   @default(false) @map("is_active")
-  publishedAt DateTime  @default(now()) @map("published_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  @@index([isActive])
-  @@index([publishedAt])
-  @@map("system_announcements")
-}
-
-// ---------------------------------------------------------------------------
-// Domains (Generation Categories)
-// ---------------------------------------------------------------------------
-
-model Domain {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  name        String
-  description String   @default("")
-  icon        String   @default("Camera")
-  color       String   @default("from-pink-500 to-rose-500")
-  coverImage  String?  @map("cover_image")
-  isActive    Boolean  @default(true) @map("is_active")
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@index([isActive])
-  @@index([sortOrder])
-  @@map("domains")
+enum ModelConfigType {
+  generate_image   @map("generate-image")
+  identify_image   @map("identify-image")
+  generate_prompts @map("generate-prompts")
+  other
 }

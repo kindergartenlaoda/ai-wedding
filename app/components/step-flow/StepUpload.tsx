@@ -9,7 +9,6 @@ import {
   AlertCircle,
   AlertTriangle,
   Loader2,
-  ArrowLeft,
 } from 'lucide-react';
 import type { Template } from '@/types/database';
 import type { PhotoState, StepFlowAction, ValidatedPhoto } from '@/types/step-flow';
@@ -30,7 +29,6 @@ export function StepUpload({
   template,
   photos,
   dispatch,
-  onBack,
 }: StepUploadProps) {
   const router = useRouter();
   const { user, profile } = useAuth();
@@ -176,16 +174,16 @@ export function StepUpload({
   };
 
   return (
-    <div className="w-full flex flex-col">
+    <div className="flex flex-col w-full">
       <div className="flex flex-col gap-6 mb-8">
         <div
-          className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center flex flex-col items-center justify-center cursor-pointer hover:border-gold/60 hover:bg-gold/5 transition-colors"
+          className="flex flex-col justify-center items-center p-8 text-center rounded-xl border-2 border-dashed transition-colors cursor-pointer border-white/20 hover:border-gold/60 hover:bg-gold/5"
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
         >
-          <Upload className="w-10 h-10 text-pearl/40 mx-auto mb-4" />
-          <p className="text-sm text-pearl/80 mb-1">
+          <Upload className="mx-auto mb-4 w-10 h-10 text-pearl/40" />
+          <p className="mb-1 text-sm text-pearl/80">
             拖拽照片到此处，或点击上传
           </p>
           <p className="text-xs text-pearl/40">
@@ -201,24 +199,24 @@ export function StepUpload({
           />
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 flex flex-col justify-center">
-          <h3 className="text-sm font-medium text-alabaster mb-4 flex items-center gap-2">
+        <div className="flex flex-col justify-center p-6 rounded-xl border bg-white/5 border-white/10">
+          <h3 className="flex gap-2 items-center mb-4 text-sm font-medium text-alabaster">
             <CheckCircle className="w-4 h-4 text-emerald-400" /> 为了获得最佳效果，请确保：
           </h3>
           <ul className="space-y-3">
-            <li className="flex items-start gap-2 text-xs text-pearl/70">
+            <li className="flex gap-2 items-start text-xs text-pearl/70">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
               <span><strong className="text-pearl/90">光线充足：</strong>面部清晰可见，无强烈阴影。</span>
             </li>
-            <li className="flex items-start gap-2 text-xs text-pearl/70">
+            <li className="flex gap-2 items-start text-xs text-pearl/70">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
               <span><strong className="text-pearl/90">正面免冠：</strong>五官无遮挡，避免戴墨镜或口罩。</span>
             </li>
-            <li className="flex items-start gap-2 text-xs text-pearl/70">
+            <li className="flex gap-2 items-start text-xs text-pearl/70">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
               <span><strong className="text-pearl/90">单人近照：</strong>照片中只有您一个人，背景尽量干净。</span>
             </li>
-            <li className="flex items-start gap-2 text-xs text-pearl/70">
+            <li className="flex gap-2 items-start text-xs text-pearl/70">
               <X className="w-3.5 h-3.5 text-red-400 mt-0.5 flex-shrink-0" />
               <span><strong className="text-pearl/90">应当避免：</strong>过度美颜、模糊、多人大合照、侧脸角度过大。</span>
             </li>
@@ -231,18 +229,18 @@ export function StepUpload({
           {photos.map((photo) => (
             <div
               key={photo.id}
-              className="relative aspect-square rounded-lg overflow-hidden bg-white/5"
+              className="overflow-hidden relative rounded-lg aspect-square bg-white/5"
             >
               <img
                 src={photo.dataUrl}
                 alt="uploaded"
-                className="w-full h-full object-cover"
+                className="object-cover w-full h-full"
               />
 
               {(photo.uploadStatus === 'uploading' ||
                 photo.identifyStatus === 'pending' ||
                 photo.identifyStatus === 'identifying') && (
-                  <div className="absolute inset-0 bg-obsidian/40 flex items-center justify-center">
+                  <div className="flex absolute inset-0 justify-center items-center bg-obsidian/40">
                     <Loader2 className="w-6 h-6 text-white animate-spin" />
                   </div>
                 )}
@@ -255,8 +253,8 @@ export function StepUpload({
                 )}
 
               {photo.identifyStatus === 'invalid' && (
-                <div className="absolute inset-0 bg-red-900/50 flex flex-col items-center justify-center p-2">
-                  <AlertCircle className="w-5 h-5 text-red-300 mb-1" />
+                <div className="flex absolute inset-0 flex-col justify-center items-center p-2 bg-red-900/50">
+                  <AlertCircle className="mb-1 w-5 h-5 text-red-300" />
                   <span className="text-[10px] text-red-200 text-center leading-tight">
                     {photo.identifyDescription || '未检测到人物'}
                   </span>
@@ -272,7 +270,7 @@ export function StepUpload({
               <button
                 type="button"
                 onClick={() => removePhoto(photo.id)}
-                className="absolute top-2 right-2 p-1 rounded-full bg-obsidian/60 text-white/80 hover:bg-obsidian/80 transition-colors"
+                className="absolute top-2 right-2 p-1 rounded-full transition-colors bg-obsidian/60 text-white/80 hover:bg-obsidian/80"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -282,16 +280,16 @@ export function StepUpload({
       )}
 
       {errorMsg && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+        <div className="flex gap-2 items-center p-3 mb-4 bg-red-50 rounded-lg border border-red-200">
+          <AlertCircle className="flex-shrink-0 w-4 h-4 text-red-500" />
           <span className="text-sm text-red-700">{errorMsg}</span>
         </div>
       )}
 
       {/* 生成数量选择器 */}
       {maxImages > 1 && validPhotos.length > 0 && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="p-6 mb-6 rounded-xl border bg-white/5 border-white/10">
+          <div className="flex justify-between items-center mb-4">
             <label className="text-sm font-medium text-alabaster">
               生成数量
             </label>
@@ -309,27 +307,27 @@ export function StepUpload({
             className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gold [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gold [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
           />
 
-          <div className="flex items-center justify-between mt-3 text-xs">
+          <div className="flex justify-between items-center mt-3 text-xs">
             <span className="text-pearl/50">1 张</span>
             <span className="text-pearl/50">{maxImages} 张</span>
           </div>
 
           {/* 显示包含的风格 */}
           {template.prompt_list && template.prompt_list.length > 1 && (
-            <div className="mt-4 pt-4 border-t border-white/10">
-              <p className="text-xs text-pearl/60 mb-2">包含风格：</p>
+            <div className="pt-4 mt-4 border-t border-white/10">
+              <p className="mb-2 text-xs text-pearl/60">包含风格：</p>
               <div className="flex flex-wrap gap-2">
                 {template.prompt_list.slice(0, imageCount).map((_, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-gold/10 border border-gold/30 rounded text-xs text-gold"
+                    className="inline-flex gap-1 items-center px-2 py-1 text-xs rounded border bg-gold/10 border-gold/30 text-gold"
                   >
                     <CheckCircle className="w-3 h-3" />
                     风格 {index + 1}
                   </span>
                 ))}
                 {imageCount < template.prompt_list.length && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-white/5 border border-white/10 rounded text-xs text-pearl/40">
+                  <span className="inline-flex gap-1 items-center px-2 py-1 text-xs rounded border bg-white/5 border-white/10 text-pearl/40">
                     +{template.prompt_list.length - imageCount} 个未选
                   </span>
                 )}
@@ -337,20 +335,20 @@ export function StepUpload({
             </div>
           )}
 
-          <div className="mt-4 pt-4 border-t border-white/10">
+          <div className="pt-4 mt-4 border-t border-white/10">
             {/* 批量折扣提示 */}
             {hasDiscount && (
-              <div className="mb-3 flex items-center gap-2 text-xs">
-                <span className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded text-emerald-400 font-medium">
+              <div className="flex gap-2 items-center mb-3 text-xs">
+                <span className="px-2 py-1 font-medium text-emerald-400 rounded border bg-emerald-500/10 border-emerald-500/30">
                   批量优惠 -{discount} 积分
                 </span>
-                <span className="text-pearl/50 line-through">
+                <span className="line-through text-pearl/50">
                   原价 {originalTotal} 积分
                 </span>
               </div>
             )}
 
-            <div className="flex items-center justify-between">
+            <div className="flex justify-between items-center">
               <div className="text-xs text-pearl/60">
                 <span className="text-pearl/80">单价：</span>
                 {unitPrice} 积分/张
@@ -362,7 +360,7 @@ export function StepUpload({
               </div>
               <div className="text-sm">
                 <span className="text-pearl/60">共需：</span>
-                <span className="text-gold font-semibold ml-1">
+                <span className="ml-1 font-semibold text-gold">
                   {totalCredits} 积分
                 </span>
               </div>
@@ -378,8 +376,8 @@ export function StepUpload({
         </div>
       )}
 
-      <div className="bg-obsidian/90 backdrop-blur-md pt-4 mt-6 border-t border-white/5 w-full">
-        <div className="w-full flex items-center justify-between">
+      <div className="pt-4 mt-6 w-full border-t backdrop-blur-md bg-obsidian/90 border-white/5">
+        <div className="flex justify-between items-center w-full">
           <span className="text-sm text-pearl/60">
             {validPhotos.length} 张就绪
             {isProcessing && (

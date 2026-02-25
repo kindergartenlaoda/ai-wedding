@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export async function PATCH(
   request: NextRequest,
@@ -50,7 +51,7 @@ export async function PATCH(
       message: isShared ? '已分享到画廊' : '已取消分享',
     });
   } catch (error) {
-    console.error('分享状态切换 API 错误:', error);
+    logger.error({ error }, '分享状态切换 API 错误');
     return NextResponse.json(
       { error: '服务器内部错误' },
       { status: 500 }

@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import type { ModelConfigSource } from '@/types/model-config';
 import { ModelConfigType } from '../../../../generated/prisma/enums';
+import { logger } from '@/lib/logger';
 
 export interface AvailableSourcesResponse {
   sources: ModelConfigSource[];
@@ -28,7 +29,7 @@ export async function GET() {
 
     return NextResponse.json({ sources: uniqueSources });
   } catch (error) {
-    console.error('获取可用模型来源出错:', error);
+    logger.error({ error }, '获取可用模型来源出错');
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '未知错误' },
       { status: 500 }

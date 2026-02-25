@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { isValidDomain, DOMAIN_CONFIG } from '@/types/domain';
+import { prisma } from '@/lib/prisma';
 
 interface TemplateDomainPageProps {
   params: Promise<{ domain: string }>;
@@ -10,11 +10,14 @@ interface TemplateDomainPageProps {
 export default async function TemplateDomainPage({ params }: TemplateDomainPageProps) {
   const { domain } = await params;
 
-  if (!isValidDomain(domain)) {
+  // Fetch domain info from database
+  const domainInfo = await prisma.domain.findUnique({
+    where: { slug: domain },
+  });
+
+  if (!domainInfo || !domainInfo.isActive) {
     notFound();
   }
-
-  const domainInfo = DOMAIN_CONFIG[domain];
 
   return (
     <div className="min-h-screen bg-obsidian">

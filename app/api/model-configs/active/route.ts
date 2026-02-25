@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import type { ModelConfig, ModelConfigType } from '@/types/model-config';
 import { ModelConfigType as PrismaModelConfigType } from '../../../../generated/prisma/enums';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ data });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unexpected error';
-    console.error('获取激活配置异常:', err);
+    logger.error({ error: err }, '获取激活配置异常');
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

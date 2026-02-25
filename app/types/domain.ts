@@ -42,6 +42,17 @@ export function getDomainIcon(iconName: string): LucideIcon {
   return DOMAIN_ICON_MAP[iconName] ?? Camera;
 }
 
+/**
+ * GenerationDomain is now a string type alias to support dynamic domains from database.
+ * Previously it was a fixed union type, but now domains are managed dynamically.
+ */
+export type GenerationDomain = string;
+
+/**
+ * Legacy domain list - kept for backward compatibility.
+ * New code should fetch domains from API instead.
+ * @deprecated Use useDomains() hook or /api/domains endpoint
+ */
 export const GENERATION_DOMAINS = [
   'wedding',
   'children',
@@ -53,8 +64,6 @@ export const GENERATION_DOMAINS = [
   'product',
 ] as const;
 
-export type GenerationDomain = (typeof GENERATION_DOMAINS)[number];
-
 export interface DomainInfo {
   id: GenerationDomain;
   name: string;
@@ -63,7 +72,12 @@ export interface DomainInfo {
   color: string; // Tailwind color class for the card
 }
 
-export const DOMAIN_CONFIG: Record<GenerationDomain, DomainInfo> = {
+/**
+ * Legacy domain config - kept for backward compatibility.
+ * New code should fetch domains from API instead.
+ * @deprecated Use useDomains() hook or /api/domains endpoint
+ */
+export const DOMAIN_CONFIG: Record<string, DomainInfo> = {
   wedding: {
     id: 'wedding',
     name: 'AI 婚纱照',
@@ -122,6 +136,10 @@ export const DOMAIN_CONFIG: Record<GenerationDomain, DomainInfo> = {
   },
 };
 
+/**
+ * Check if a domain slug is valid.
+ * Domains are now dynamic (from DB), so any non-empty string is valid.
+ */
 export function isValidDomain(domain: string): domain is GenerationDomain {
-  return GENERATION_DOMAINS.includes(domain as GenerationDomain);
+  return domain.length > 0;
 }

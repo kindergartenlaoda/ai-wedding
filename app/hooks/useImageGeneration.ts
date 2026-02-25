@@ -124,7 +124,7 @@ export function useImageGeneration(options: UseImageGenerationOptions) {
     }
 
     const { photos, projectName, shareToGallery } = savedStateRef.current;
-    await startGeneration(photos, projectName, shareToGallery);
+    await startGeneration(photos, projectName || '', shareToGallery);
   }, [startGeneration]);
 
   /**

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { GalleryItem } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('画廊 API 错误:', error);
+    logger.error({ error }, '画廊 API 错误');
     return NextResponse.json(
       { error: '服务器内部错误' },
       { status: 500 }

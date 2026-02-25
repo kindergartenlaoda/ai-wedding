@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Plus, RefreshCw, Sparkles } from 'lucide-react';
-import { Template } from '@/types/database';
+import { Template, generationToSingleGeneration } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjects } from '@/hooks/useProjects';
-import { useSingleGenerations } from '@/hooks/useSingleGenerations';
+import { useSingleGenerations } from '@/hooks/useGenerations';
 import { useDashboardActions } from '@/hooks/useDashboardActions';
 import { useDashboardModals } from '@/hooks/useDashboardModals';
 import { ProjectFilters } from './ProjectFilters';
@@ -178,7 +178,12 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                 hasMore={generationsHasMore}
                 onLoadMore={loadMoreGenerations}
                 onDelete={actions.handleDeleteSingleGeneration}
-                onView={modals.setSelectedSingleGeneration}
+                onView={(generation) => {
+                  const singleGen = generationToSingleGeneration(generation);
+                  if (singleGen) {
+                    modals.setSelectedSingleGeneration(singleGen);
+                  }
+                }}
                 onNavigateToGenerateSingle={() => onNavigate('generate-single')}
               />
             ) : (

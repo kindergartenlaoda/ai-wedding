@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   if (process.env.NODE_ENV !== 'development') {
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: '未知操作' }, { status: 400 });
   } catch (error) {
-    console.error('测试数据创建失败:', error);
+    logger.error({ error }, '测试数据创建失败');
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '创建失败' },
       { status: 500 }

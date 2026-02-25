@@ -9,6 +9,7 @@
 
 import { mockGenerateImages } from '@/lib/mock-generator';
 import { parseImageFromContent } from '@/lib/image-stream';
+import { refundCreditsForGeneration } from '@/lib/credit-service';
 import type { GenerationInput, GenerationProgress, GenerationResult } from '@/types/generation';
 import type { Template } from '@/types/database';
 
@@ -236,14 +237,17 @@ export async function generateAsAuthenticated(
 
     return { images: storedUrls, generationId };
   } catch (error) {
-    await fetch('/api/credits/unfreeze', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: input.template.price_credits,
-      }),
-    }).catch(() => {});
+    // 生成失败，退款积分
+    try {
+      await refundCreditsForGeneration(
+        _userId,
+        generationId,
+        input.template.price_credits,
+        '生成失败自动退款'
+      );
+    } catch (refundError) {
+      console.error('退款失败:', refundError);
+    }
 
     await markGenerationFailed(
       generationId,

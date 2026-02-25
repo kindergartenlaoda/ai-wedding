@@ -1,20 +1,23 @@
 import { NextResponse } from 'next/server';
 import { uploadDataUrlImage, uploadImage } from '@/lib/oss-client';
 import { getSessionUser } from '@/lib/auth-api';
+import { createRequestLogger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   const requestId = `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  console.log(`[${requestId}] ========== 开始处理图片上传请求 ==========`);
+  const log = createRequestLogger('upload-image', requestId);
+
+  log.info('开始处理图片上传请求');
 
   try {
     // 1) 可选的认证校验（从 NextAuth session/cookies）
     const user = await getSessionUser();
     if (user) {
-      console.log(`[${requestId}] ✅ 用户认证成功: ${user.id}`);
+      log.info({ userId: user.id }, '用户认证成功');
     } else {
-      console.log(`[${requestId}] ⚠️ 未登录，允许匿名上传`);
+      log.warn('未登录，允许匿名上传');
     }
 
     // 2) 解析请求体
@@ -23,12 +26,12 @@ export async function POST(req: Request) {
     if (contentType.includes('application/json')) {
       // JSON 格式：包含 base64 或 dataURL
       const body = await req.json();
-      console.log(`[${requestId}] 收到 JSON 格式上传请求`);
+      log.debug('收到 JSON 格式上传请求');
 
       const { image, folder } = body;
 
       if (!image || typeof image !== 'string') {
-        console.error(`[${requestId}] ❌ 缺少 image 字段`);
+        log.error('缺少 image 字段');
         return NextResponse.json(
           { error: '缺少 image 字段' },
           { status: 400 }
@@ -38,8 +41,7 @@ export async function POST(req: Request) {
       // 上传到 OSS
       const result = await uploadDataUrlImage(image, folder || 'uploads');
 
-      console.log(`[${requestId}] ✅ 图片上传成功: ${result.url}`);
-      console.log(`[${requestId}] ========== 请求处理完成 ==========`);
+      log.info({ url: result.url }, '图片上传成功');
 
       return NextResponse.json({
         success: true,
@@ -59,14 +61,14 @@ export async function POST(req: Request) {
       const folder = formData.get('folder') as string || 'uploads';
 
       if (!file) {
-        console.error(`[${requestId}] ❌ 缺少 file 字段`);
+        log.error('缺少 file 字段');
         return NextResponse.json(
           { error: '缺少 file 字段' },
           { status: 400 }
         );
       }
 
-      console.log(`[${requestId}] 收到文件上传请求: ${file.name}, ${file.size} bytes`);
+      log.debug({ fileName: file.name, fileSize: file.size }, '收到文件上传请求');
 
       // 读取文件内容
       const arrayBuffer = await file.arrayBuffer();
@@ -80,8 +82,7 @@ export async function POST(req: Request) {
         folder,
       });
 
-      console.log(`[${requestId}] ✅ 图片上传成功: ${result.url}`);
-      console.log(`[${requestId}] ========== 请求处理完成 ==========`);
+      log.info({ url: result.url }, '图片上传成功');
 
       return NextResponse.json({
         success: true,
@@ -95,7 +96,7 @@ export async function POST(req: Request) {
       });
 
     } else {
-      console.error(`[${requestId}] ❌ 不支持的 Content-Type: ${contentType}`);
+      log.error({ contentType }, '不支持的 Content-Type');
       return NextResponse.json(
         { error: `不支持的 Content-Type: ${contentType}` },
         { status: 400 }
@@ -105,12 +106,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : '未知错误';
     const stack = error instanceof Error ? error.stack : undefined;
-    console.error(`[${requestId}] ❌ 上传失败:`, {
-      message,
-      stack,
-      error,
-    });
-    console.error(`[${requestId}] ========== 请求处理失败 ==========`);
+    log.error({ error: message, stack }, '上传失败');
     return NextResponse.json(
       { error: message },
       { status: 500 }

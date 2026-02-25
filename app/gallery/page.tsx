@@ -157,7 +157,7 @@ export default function GalleryPage() {
             <div className="flex gap-6 justify-center items-center mt-6 text-sm text-pearl/60 uppercase tracking-widest text-xs">
               <div className="flex gap-2 items-center">
                 <ImageIcon className="w-4 h-4 text-gold" />
-                <span>共 {items.reduce((acc, item) => acc + item.preview_images.length, 0)} 张作品</span>
+                <span>共 {items.reduce((acc, item) => acc + (item.preview_images?.length || 0), 0)} 张作品</span>
               </div>
               <div className="flex gap-2 items-center">
                 <User className="w-4 h-4 text-gold" />
@@ -197,7 +197,7 @@ export default function GalleryPage() {
               columnClassName="pl-4 bg-clip-padding"
             >
               {items.map((item) =>
-                item.preview_images.map((imageSrc, imageIndex) => (
+                (item.preview_images || []).map((imageSrc, imageIndex) => (
                   <div
                     key={`${item.id}-${imageIndex}`}
                     className="mb-4 cursor-pointer group"
@@ -306,7 +306,7 @@ export default function GalleryPage() {
           onClose={() => setSelectedImage(null)}
           images={[selectedImage.src]}
           initialIndex={0}
-          projectName={selectedImage.item.project_name}
+          projectName={selectedImage.item.project_name || 'Gallery Image'}
           onDownload={async (url: string) => {
             try {
               const response = await fetch(url);
