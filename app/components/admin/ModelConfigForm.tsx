@@ -2,6 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { X } from 'lucide-react';
 import type { ModelConfig, CreateModelConfigInput, ModelConfigType, ModelConfigStatus, ModelConfigSource } from '@/types/model-config';
 
@@ -41,7 +51,7 @@ export function ModelConfigForm({ config, onSubmit, onCancel }: ModelConfigFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.api_base_url || !formData.api_key || !formData.model_name) {
       alert('请填写所有必填字段');
       return;
@@ -60,8 +70,8 @@ export function ModelConfigForm({ config, onSubmit, onCancel }: ModelConfigFormP
   };
 
   return (
-    <div className="flex fixed inset-0 z-50 justify-center items-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="flex fixed inset-0 z-50 justify-center items-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-card text-card-foreground border rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-2xl font-bold">
             {config ? '编辑配置' : '新建配置'}
@@ -72,127 +82,133 @@ export function ModelConfigForm({ config, onSubmit, onCancel }: ModelConfigFormP
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block mb-2 text-sm font-medium">
-              配置类型 <span className="text-red-500">*</span>
-            </label>
-            <select
+          <div className="space-y-2">
+            <Label>
+              配置类型 <span className="text-destructive">*</span>
+            </Label>
+            <Select
               value={formData.type}
-              onChange={(e) => handleChange('type', e.target.value)}
-              className="px-3 py-2 w-full rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
-           
+              onValueChange={(value) => handleChange('type', value)}
             >
-              <option value="generate-image">图片生成</option>
-              <option value="other">其他</option>
-              <option value="identify-image">识别图片</option>
-              <option value="generate-prompts">生成提示词</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="选择类型" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="generate-image">图片生成</SelectItem>
+                <SelectItem value="other">其他</SelectItem>
+                <SelectItem value="identify-image">识别图片</SelectItem>
+                <SelectItem value="generate-prompts">生成提示词</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label className="block mb-2 text-sm font-medium">
-              配置名称 <span className="text-red-500">*</span>
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label>
+              配置名称 <span className="text-destructive">*</span>
+            </Label>
+            <Input
               type="text"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               placeholder="例如：默认图片生成配置"
-              className="px-3 py-2 w-full rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
-          <div>
-            <label className="block mb-2 text-sm font-medium">
-              API Base URL <span className="text-red-500">*</span>
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label>
+              API Base URL <span className="text-destructive">*</span>
+            </Label>
+            <Input
               type="url"
               value={formData.api_base_url}
               onChange={(e) => handleChange('api_base_url', e.target.value)}
               placeholder="https://api.example.com"
-              className="px-3 py-2 w-full rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
-          <div>
-            <label className="block mb-2 text-sm font-medium">
-              API Key <span className="text-red-500">*</span>
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label>
+              API Key <span className="text-destructive">*</span>
+            </Label>
+            <Input
               type="password"
               value={formData.api_key}
               onChange={(e) => handleChange('api_key', e.target.value)}
               placeholder="sk-..."
-              className="px-3 py-2 w-full rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               敏感信息，请妥善保管
             </p>
           </div>
 
-          <div>
-            <label className="block mb-2 text-sm font-medium">
-              模型名称 <span className="text-red-500">*</span>
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label>
+              模型名称 <span className="text-destructive">*</span>
+            </Label>
+            <Input
               type="text"
               value={formData.model_name}
               onChange={(e) => handleChange('model_name', e.target.value)}
-              placeholder="例如：gemini-2.5-flash-image"
-              className="px-3 py-2 w-full rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="例如：gemini-2.5-flash"
               required
             />
           </div>
 
-          <div>
-            <label className="block mb-2 text-sm font-medium">
-              状态 <span className="text-red-500">*</span>
-            </label>
-            <select
+          <div className="space-y-2">
+            <Label>
+              状态 <span className="text-destructive">*</span>
+            </Label>
+            <Select
               value={formData.status}
-              onChange={(e) => handleChange('status', e.target.value)}
-              className="px-3 py-2 w-full rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(value) => handleChange('status', value)}
             >
-              <option value="inactive">停用</option>
-              <option value="active">激活</option>
-            </select>
-            <p className="mt-1 text-xs text-muted-foreground">
+              <SelectTrigger>
+                <SelectValue placeholder="选择状态" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="inactive">停用</SelectItem>
+                <SelectItem value="active">激活</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
               同一类型只能有一个激活配置，激活此配置将自动停用其他配置
             </p>
           </div>
 
-          <div>
-            <label className="block mb-2 text-sm font-medium">
-              模型来源 <span className="text-red-500">*</span>
-            </label>
-            <select
+          <div className="space-y-2">
+            <Label>
+              模型来源 <span className="text-destructive">*</span>
+            </Label>
+            <Select
               value={formData.source}
-              onChange={(e) => handleChange('source', e.target.value)}
-              className="px-3 py-2 w-full rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(value) => handleChange('source', value)}
             >
-              <option value="openAi">OpenAI</option>
-              <option value="openRouter">OpenRouter</option>
-              <option value="302">302.AI</option>
-            </select>
-            <p className="mt-1 text-xs text-muted-foreground">
+              <SelectTrigger>
+                <SelectValue placeholder="选择来源" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="openAi">OpenAI</SelectItem>
+                <SelectItem value="openRouter">OpenRouter</SelectItem>
+                <SelectItem value="302">302.AI</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
               选择模型的API提供商
             </p>
           </div>
 
-          <div>
-            <label className="block mb-2 text-sm font-medium">
+          <div className="space-y-2">
+            <Label>
               描述
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               value={formData.description}
               onChange={(e) => handleChange('description', e.target.value)}
               placeholder="配置说明..."
               rows={3}
-              className="px-3 py-2 w-full rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 

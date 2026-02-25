@@ -45,6 +45,16 @@ const nextConfig = {
         hostname: 'files.closeai.fans',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'ai-weddings.oss-cn-beijing.aliyuncs.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ai-weddings.oss-cn-beijing.aliyuncs.com',
+        pathname: '/**',
+      },
     ],
     domains: ['localhost'],
   },

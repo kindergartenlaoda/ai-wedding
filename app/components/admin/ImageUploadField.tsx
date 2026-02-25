@@ -4,8 +4,9 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, Loader2, X } from 'lucide-react';
+import { Upload, Loader2, X, ImagePlus } from 'lucide-react';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 interface ImageUploadFieldProps {
   currentUrl: string;
@@ -71,28 +72,39 @@ export function ImageUploadField({ currentUrl, onUrlChange }: ImageUploadFieldPr
       </Label>
 
       {currentUrl ? (
-        <div className="relative w-full max-w-md">
-          <div className="overflow-hidden relative w-full rounded-lg border aspect-video">
+        <div className="relative w-full max-w-md group">
+          <div className="overflow-hidden relative w-full rounded-xl border border-primary/20 aspect-video bg-muted/20">
             <Image
               src={currentUrl}
               alt="预览图"
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
               unoptimized
             />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="gap-2"
+                onClick={handleRemoveImage}
+              >
+                <X className="w-4 h-4" />
+                移除图片
+              </Button>
+            </div>
           </div>
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="absolute -top-2 -right-2"
-            onClick={handleRemoveImage}
-          >
-            <X className="w-4 h-4" />
-          </Button>
         </div>
       ) : (
-        <div className="flex gap-4 items-center">
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className={cn(
+            "flex flex-col items-center justify-center p-10 border-2 border-dashed rounded-xl transition-all duration-300 cursor-pointer bg-muted/20 group",
+            isUploading
+              ? "opacity-50 pointer-events-none"
+              : "hover:border-primary/50 hover:bg-muted/40"
+          )}
+        >
           <Input
             ref={fileInputRef}
             type="file"
@@ -102,27 +114,24 @@ export function ImageUploadField({ currentUrl, onUrlChange }: ImageUploadFieldPr
             className="hidden"
             id="image-upload"
           />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
+          <div className="flex flex-col items-center gap-4 text-muted-foreground">
             {isUploading ? (
               <>
-                <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                上传中...
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                <span className="text-sm font-medium">处理并上传中...</span>
               </>
             ) : (
               <>
-                <Upload className="mr-2 w-4 h-4" />
-                上传图片
+                <div className="p-4 bg-background rounded-full shadow-sm border group-hover:scale-110 transition-transform duration-300 text-primary">
+                  <ImagePlus className="w-6 h-6" />
+                </div>
+                <div className="text-center space-y-1.5">
+                  <p className="text-sm font-medium text-foreground">点击上传预览图片</p>
+                  <p className="text-xs">支持 JPG, PNG, WEBP</p>
+                </div>
               </>
             )}
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            或在下方粘贴图片链接
-          </span>
+          </div>
         </div>
       )}
 

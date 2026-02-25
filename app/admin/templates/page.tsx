@@ -240,8 +240,8 @@ export default function AdminTemplatesPage() {
                   }
                 }}
                 className={cn(
-                  'group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer',
-                  !template.is_active && 'opacity-75'
+                  'group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:border-primary/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer',
+                  !template.is_active && 'opacity-70 grayscale-[0.2]'
                 )}
               >
                 {/* 状态标签 */}
@@ -275,8 +275,8 @@ export default function AdminTemplatesPage() {
                           className={cn(
                             "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium",
                             template.is_active
-                              ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300"
-                              : "bg-muted text-muted-foreground"
+                              ? "bg-primary/5 text-primary border-primary/20 shadow-[0_0_10px_rgba(160,140,100,0.1)]"
+                              : "bg-muted text-muted-foreground border-transparent"
                           )}
                         >
                           {template.is_active ? "启用中" : "未启用"}
@@ -296,8 +296,8 @@ export default function AdminTemplatesPage() {
                     {expanded[template.id]
                       ? template.description
                       : (template.description?.length ?? 0) > 100
-                      ? `${template.description?.slice(0, 100)}…`
-                      : template.description}
+                        ? `${template.description?.slice(0, 100)}…`
+                        : template.description}
                     {(template.description?.length ?? 0) > 100 && (
                       <button
                         type="button"

@@ -188,7 +188,7 @@ export default function AdminModelConfigsPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-8 p-4">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">模型配置管理</h1>
@@ -214,8 +214,8 @@ export default function AdminModelConfigsPage() {
         {isFormOpen && (
           <ModelConfigForm
             config={editingConfig}
-            onSubmit={editingConfig 
-              ? (input) => handleUpdate(editingConfig.id, input as UpdateModelConfigInput) 
+            onSubmit={editingConfig
+              ? (input) => handleUpdate(editingConfig.id, input as UpdateModelConfigInput)
               : handleCreate
             }
             onCancel={handleCloseForm}

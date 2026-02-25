@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Megaphone, Save, Trash2, AlertCircle } from 'lucide-react';
 import type { SystemAnnouncement } from '@/types/database';
 
@@ -86,16 +90,16 @@ export default function AdminAnnouncementsPage() {
 
       const requestBody = isUpdate
         ? {
-            id: formData.id,
-            content: formData.content,
-            is_active: formData.is_active,
-            published_at: new Date(formData.published_at).toISOString(),
-          }
+          id: formData.id,
+          content: formData.content,
+          is_active: formData.is_active,
+          published_at: new Date(formData.published_at).toISOString(),
+        }
         : {
-            content: formData.content,
-            is_active: formData.is_active,
-            published_at: new Date(formData.published_at).toISOString(),
-          };
+          content: formData.content,
+          is_active: formData.is_active,
+          published_at: new Date(formData.published_at).toISOString(),
+        };
 
       const response = await fetch(url, {
         method,
@@ -144,7 +148,7 @@ export default function AdminAnnouncementsPage() {
       }
 
       setSuccess('公告已删除');
-      
+
       // 重置表单
       setFormData({
         id: '',
@@ -163,7 +167,7 @@ export default function AdminAnnouncementsPage() {
   if (error && announcements.length === 0) {
     return (
       <AdminLayout>
-        <div className="p-4 text-red-800 bg-red-50 rounded-lg border border-red-200">
+        <div className="p-4 text-destructive bg-destructive/10 rounded-xl border border-destructive/20">
           {error}
         </div>
       </AdminLayout>
@@ -188,14 +192,14 @@ export default function AdminAnnouncementsPage() {
 
         {/* 提示信息 */}
         {error && (
-          <div className="flex gap-3 items-center p-4 text-red-800 bg-red-50 rounded-lg border border-red-200">
+          <div className="flex gap-3 items-center p-4 text-destructive bg-destructive/10 rounded-xl border border-destructive/20">
             <AlertCircle className="flex-shrink-0 w-5 h-5" />
             <p>{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="flex gap-3 items-center p-4 text-green-800 bg-green-50 rounded-lg border border-green-200">
+          <div className="flex gap-3 items-center p-4 text-primary bg-primary/10 rounded-xl border border-primary/20">
             <AlertCircle className="flex-shrink-0 w-5 h-5" />
             <p>{success}</p>
           </div>
@@ -206,15 +210,15 @@ export default function AdminAnnouncementsPage() {
           <div className="space-y-4">
             {/* 公告内容 */}
             <div className="space-y-2">
-              <label htmlFor="content" className="text-sm font-medium">
-                公告内容 <span className="text-red-500">*</span>
-              </label>
-              <textarea
+              <Label htmlFor="content">
+                公告内容 <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
                 id="content"
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 placeholder="请输入系统公告内容（纯文本）"
-                className="w-full min-h-[120px] px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring resize-vertical"
+                className="min-h-[120px] resize-y"
                 required
               />
               <p className="text-xs text-muted-foreground">
@@ -223,30 +227,27 @@ export default function AdminAnnouncementsPage() {
             </div>
 
             {/* 是否显示 */}
-            <div className="flex gap-3 items-center p-4 rounded-lg bg-muted/50">
-              <input
-                type="checkbox"
+            <div className="flex gap-3 items-center p-4 rounded-xl bg-muted/30 border">
+              <Switch
                 id="is_active"
                 checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-ring"
+                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
-              <label htmlFor="is_active" className="text-sm font-medium cursor-pointer">
+              <Label htmlFor="is_active" className="cursor-pointer">
                 立即显示公告
-              </label>
+              </Label>
             </div>
 
             {/* 发布日期 */}
             <div className="space-y-2">
-              <label htmlFor="published_at" className="text-sm font-medium">
+              <Label htmlFor="published_at">
                 发布日期
-              </label>
-              <input
+              </Label>
+              <Input
                 type="date"
                 id="published_at"
                 value={formData.published_at}
                 onChange={(e) => setFormData({ ...formData, published_at: e.target.value })}
-                className="px-3 py-2 rounded-md border border-input focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <p className="text-xs text-muted-foreground">
                 发布日期将显示在公告内容旁边
@@ -299,7 +300,7 @@ export default function AdminAnnouncementsPage() {
                         <span>
                           {new Date(announcement.published_at).toLocaleDateString('zh-CN')}
                         </span>
-                        <span className={announcement.is_active ? 'text-green-600' : ''}>
+                        <span className={announcement.is_active ? 'text-primary' : ''}>
                           {announcement.is_active ? '✓ 显示中' : '未显示'}
                         </span>
                       </div>
