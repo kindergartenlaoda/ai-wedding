@@ -44,19 +44,19 @@ export function Toast({ message, type = 'success', onClose, duration }: ToastPro
 
   const styles = {
     success: {
-      bg: 'bg-champagne border-rose-gold/30',
-      text: 'text-navy',
-      icon: 'text-rose-gold'
+      bg: 'bg-gold/10 border-gold/30',
+      text: 'text-alabaster',
+      icon: 'text-gold'
     },
     error: {
-      bg: 'bg-destructive/10 border-destructive/30',
-      text: 'text-destructive',
-      icon: 'text-destructive'
+      bg: 'bg-red-500/10 border-red-500/30',
+      text: 'text-red-400',
+      icon: 'text-red-400'
     },
     info: {
-      bg: 'bg-ivory border-stone/20',
-      text: 'text-navy',
-      icon: 'text-dusty-rose'
+      bg: 'bg-white/5 border-white/10',
+      text: 'text-alabaster',
+      icon: 'text-pearl'
     },
     warning: {
       bg: 'bg-yellow-50 border-yellow-300',
@@ -70,15 +70,15 @@ export function Toast({ message, type = 'success', onClose, duration }: ToastPro
 
   return (
     <div className="fixed top-4 right-4 z-[9999] animate-in slide-in-from-top-2 fade-in duration-300">
-      <div className={`flex items-center gap-3 px-5 py-4 rounded-lg border-2 shadow-xl backdrop-blur-sm ${style.bg} ${style.text} min-w-[320px] max-w-md`}>
-        <Icon className={`w-6 h-6 flex-shrink-0 ${style.icon}`} />
-        <p className="flex-1 font-medium text-sm leading-relaxed">{message}</p>
+      <div className={`flex items-center gap-3 px-5 py-4 rounded-sm border shadow-2xl backdrop-blur-md ${style.bg} ${style.text} min-w-[320px] max-w-md`}>
+        <Icon className={`w-5 h-5 flex-shrink-0 ${style.icon}`} />
+        <p className="flex-1 font-light text-sm tracking-wide leading-relaxed">{message}</p>
         <button
           onClick={onClose}
-          className="p-1.5 hover:bg-stone/10 rounded-md transition-colors flex-shrink-0"
+          className="p-1.5 hover:bg-white/10 rounded-sm transition-colors flex-shrink-0"
           aria-label="关闭提示"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4 text-pearl/60 hover:text-alabaster transition-colors" />
         </button>
       </div>
     </div>

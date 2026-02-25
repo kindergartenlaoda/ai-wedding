@@ -31,22 +31,22 @@ export function GenerationProgress({ stage, progress }: GenerationProgressProps)
     <div className="mt-6">
       <div className="flex justify-between items-center mb-2">
         <div className="flex gap-2 items-center">
-          <Loader2 className="w-4 h-4 animate-spin text-dusty-rose" />
-          <span className="text-sm font-medium text-navy">
+          <Loader2 className="w-4 h-4 animate-spin text-gold" />
+          <span className="text-sm font-medium text-alabaster">
             {STAGE_TEXT[stage]}
           </span>
         </div>
-        <span className="text-sm font-medium text-dusty-rose">{progress}%</span>
+        <span className="text-sm font-medium text-gold">{progress}%</span>
       </div>
 
-      <div className="overflow-hidden w-full h-3 rounded-full border bg-champagne border-stone/10">
+      <div className="overflow-hidden w-full h-3 rounded-full border bg-black/40 border-white/10">
         <div
-          className="h-full bg-gradient-to-r transition-all duration-500 from-rose-gold to-dusty-rose"
+          className="h-full bg-gradient-to-r transition-all duration-500 from-gold to-yellow-600"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <p className="mt-2 text-xs text-stone">
+      <p className="mt-2 text-xs text-pearl/40">
         {STAGE_DESCRIPTION[stage]}
       </p>
 

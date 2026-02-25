@@ -29,7 +29,7 @@ export default function Page({ params }: { params: { id: string } }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-obsidian">
-        <div className="flex items-center gap-3 text-stone-400">
+        <div className="flex items-center gap-3 text-pearl/60">
           <span className="w-3 h-3 rounded-full bg-gold animate-pulse" />
           <span>正在加载账户信息...</span>
         </div>
@@ -46,7 +46,7 @@ export default function Page({ params }: { params: { id: string } }) {
               <Lock className="w-8 h-8 text-gold" />
             </div>
             <h1 className="text-2xl font-display font-medium text-alabaster mb-2">需要登录才能查看生成结果</h1>
-            <p className="text-stone-400 mb-8">请登录或创建账号后继续查看与管理您的作品。</p>
+            <p className="text-pearl/60 mb-8">请登录或创建账号后继续查看与管理您的作品。</p>
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={() => setShowAuth(true)}

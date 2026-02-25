@@ -25,17 +25,17 @@ export function SingleGenerationDetailModal({
       // 使用 fetch 获取图片数据
       const response = await fetch(generation.result_image);
       const blob = await response.blob();
-      
+
       // 创建临时 URL
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       // 创建下载链接
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = `single-generation-${generation.id}-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
-      
+
       // 清理
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
@@ -78,15 +78,15 @@ export function SingleGenerationDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-center items-center p-4 bg-black/50">
-      <div className="overflow-hidden relative w-full max-w-5xl max-h-[90vh] bg-white rounded-2xl shadow-2xl">
+      <div className="overflow-hidden relative w-full max-w-5xl max-h-[90vh] bg-obsidian border border-white/10 rounded-sm shadow-2xl">
         {/* 头部 */}
-        <div className="flex justify-between items-center p-6 border-b bg-champagne/30 border-stone/10">
-          <h2 className="text-xl font-medium font-display text-navy">生成详情</h2>
+        <div className="flex justify-between items-center p-6 border-b bg-white/5 border-white/10">
+          <h2 className="text-xl font-medium font-display text-alabaster tracking-wider">生成详情</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-full transition-colors hover:bg-white/50"
+            className="p-2 rounded-sm transition-colors hover:bg-white/10"
           >
-            <X className="w-5 h-5 text-stone" />
+            <X className="w-5 h-5 text-pearl/60 hover:text-alabaster" />
           </button>
         </div>
 
@@ -97,9 +97,9 @@ export function SingleGenerationDetailModal({
             <div className="space-y-6">
               {/* 提示词 */}
               <div>
-                <h3 className="mb-3 text-sm font-medium text-stone">提示词</h3>
-                <div className="p-4 rounded-lg border bg-ivory/50 border-stone/10">
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-navy">
+                <h3 className="mb-3 text-sm font-medium text-pearl/60 tracking-wider">提示词</h3>
+                <div className="p-4 rounded-sm border bg-black/40 border-white/10">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-pearl">
                     {generation.prompt}
                   </p>
                 </div>
@@ -107,20 +107,20 @@ export function SingleGenerationDetailModal({
 
               {/* 生成设置 */}
               <div>
-                <h3 className="flex gap-2 items-center mb-3 text-sm font-medium text-stone">
+                <h3 className="flex gap-2 items-center mb-3 text-sm font-medium text-pearl/60 tracking-wider">
                   <Settings className="w-4 h-4" />
                   生成设置
                 </h3>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 rounded-lg bg-ivory/50">
-                    <span className="text-sm text-stone">五官保持强度</span>
-                    <span className="text-sm font-medium text-navy">
+                  <div className="flex justify-between items-center p-3 rounded-sm bg-black/40 border border-white/5">
+                    <span className="text-sm text-pearl/60 tracking-wide">五官保持强度</span>
+                    <span className="text-sm font-medium text-alabaster">
                       {getFacePreservationLabel(generation.settings.facePreservation)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center p-3 rounded-lg bg-ivory/50">
-                    <span className="text-sm text-stone">创意程度</span>
-                    <span className="text-sm font-medium text-navy">
+                  <div className="flex justify-between items-center p-3 rounded-sm bg-black/40 border border-white/5">
+                    <span className="text-sm text-pearl/60 tracking-wide">创意程度</span>
+                    <span className="text-sm font-medium text-alabaster">
                       {getCreativityLevelLabel(generation.settings.creativityLevel)}
                     </span>
                   </div>
@@ -129,15 +129,15 @@ export function SingleGenerationDetailModal({
 
               {/* 其他信息 */}
               <div>
-                <h3 className="mb-3 text-sm font-medium text-stone">其他信息</h3>
+                <h3 className="mb-3 text-sm font-medium text-pearl/60 tracking-wider">其他信息</h3>
                 <div className="space-y-3">
-                  <div className="flex gap-2 items-center p-3 rounded-lg bg-ivory/50">
-                    <Calendar className="w-4 h-4 text-stone" />
-                    <span className="text-sm text-navy">{formatDate(generation.created_at)}</span>
+                  <div className="flex gap-2 items-center p-3 rounded-sm bg-black/40 border border-white/5">
+                    <Calendar className="w-4 h-4 text-pearl/60" />
+                    <span className="text-sm text-pearl tracking-wide">{formatDate(generation.created_at)}</span>
                   </div>
-                  <div className="flex gap-2 items-center p-3 rounded-lg bg-ivory/50">
-                    <Coins className="w-4 h-4 text-stone" />
-                    <span className="text-sm text-navy">消耗 {generation.credits_used} 积分</span>
+                  <div className="flex gap-2 items-center p-3 rounded-sm bg-black/40 border border-white/5">
+                    <Coins className="w-4 h-4 text-pearl/60" />
+                    <span className="text-sm text-pearl tracking-wide">消耗 {generation.credits_used} 积分</span>
                   </div>
                 </div>
               </div>
@@ -146,7 +146,7 @@ export function SingleGenerationDetailModal({
               <button
                 onClick={handleDownload}
                 disabled={downloading}
-                className="flex gap-2 justify-center items-center px-6 py-3 w-full font-medium rounded-lg shadow-sm transition-all duration-200 bg-navy text-ivory hover:bg-navy/90 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex gap-2 justify-center items-center px-6 py-3 w-full font-medium rounded-sm shadow-sm transition-all duration-500 bg-white/5 border border-white/10 text-alabaster hover:bg-white/10 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs"
               >
                 <Download className="w-4 h-4" />
                 {downloading ? '下载中...' : '下载结果图'}
@@ -158,28 +158,26 @@ export function SingleGenerationDetailModal({
               <div className="flex gap-2">
                 <button
                   onClick={() => setActiveImage('original')}
-                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                    activeImage === 'original'
-                      ? 'bg-navy text-ivory shadow-sm'
-                      : 'bg-champagne text-stone hover:bg-champagne/70'
-                  }`}
+                  className={`flex-1 px-4 py-2.5 text-xs tracking-widest uppercase font-medium rounded-sm transition-all duration-500 border ${activeImage === 'original'
+                      ? 'bg-gold border-gold text-obsidian shadow-[0_0_15px_rgba(200,160,100,0.3)]'
+                      : 'bg-transparent border-white/10 text-pearl/60 hover:bg-white/5 hover:text-alabaster'
+                    }`}
                 >
                   原图
                 </button>
                 <button
                   onClick={() => setActiveImage('result')}
-                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                    activeImage === 'result'
-                      ? 'bg-navy text-ivory shadow-sm'
-                      : 'bg-champagne text-stone hover:bg-champagne/70'
-                  }`}
+                  className={`flex-1 px-4 py-2.5 text-xs tracking-widest uppercase font-medium rounded-sm transition-all duration-500 border ${activeImage === 'result'
+                      ? 'bg-gold border-gold text-obsidian shadow-[0_0_15px_rgba(200,160,100,0.3)]'
+                      : 'bg-transparent border-white/10 text-pearl/60 hover:bg-white/5 hover:text-alabaster'
+                    }`}
                 >
                   生成结果
                 </button>
               </div>
 
               {/* 图片展示 */}
-              <div className="relative overflow-hidden rounded-lg aspect-square bg-champagne">
+              <div className="relative overflow-hidden rounded-sm aspect-square bg-black border border-white/5">
                 <Image
                   src={activeImage === 'original' ? generation.original_image : generation.result_image}
                   alt={activeImage === 'original' ? '原图' : '生成结果'}
@@ -193,27 +191,29 @@ export function SingleGenerationDetailModal({
               {/* 图片对比缩略图 */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-center text-stone">原图</p>
-                  <div className="relative overflow-hidden rounded-md aspect-square bg-champagne">
+                  <p className="text-[10px] font-medium tracking-widest uppercase text-center text-pearl/60">原图</p>
+                  <div className="relative overflow-hidden rounded-sm aspect-square bg-black border border-white/5 group cursor-pointer" onClick={() => setActiveImage('original')}>
                     <Image
                       src={generation.original_image}
                       alt="原图缩略图"
                       fill
-                      className="object-cover"
+                      className={`object-cover transition-transform duration-500 group-hover:scale-105 ${activeImage === 'original' ? 'opacity-100' : 'opacity-60'}`}
                       sizes="200px"
                     />
+                    {activeImage === 'original' && <div className="absolute inset-0 border-2 border-gold rounded-sm z-10" />}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-center text-stone">结果</p>
-                  <div className="relative overflow-hidden rounded-md aspect-square bg-champagne">
+                  <p className="text-[10px] font-medium tracking-widest uppercase text-center text-pearl/60">结果</p>
+                  <div className="relative overflow-hidden rounded-sm aspect-square bg-black border border-white/5 group cursor-pointer" onClick={() => setActiveImage('result')}>
                     <Image
                       src={generation.result_image}
                       alt="结果缩略图"
                       fill
-                      className="object-cover"
+                      className={`object-cover transition-transform duration-500 group-hover:scale-105 ${activeImage === 'result' ? 'opacity-100' : 'opacity-60'}`}
                       sizes="200px"
                     />
+                    {activeImage === 'result' && <div className="absolute inset-0 border-2 border-gold rounded-sm z-10" />}
                   </div>
                 </div>
               </div>

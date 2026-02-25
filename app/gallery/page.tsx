@@ -133,9 +133,9 @@ export default function GalleryPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-alabaster">
-        <div className="flex gap-3 items-center text-stone">
-          <Loader2 className="w-8 h-8 animate-spin text-obsidian" />
+      <div className="flex justify-center items-center min-h-screen bg-obsidian">
+        <div className="flex gap-3 items-center text-pearl/60">
+          <Loader2 className="w-8 h-8 animate-spin text-alabaster" />
           <span className="text-lg">正在加载画廊...</span>
         </div>
       </div>
@@ -143,18 +143,18 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="py-12 min-h-screen bg-alabaster">
+    <div className="py-12 min-h-screen bg-obsidian">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {/* 页面标题 */}
         <FadeIn delay={0.1}>
           <div className="mb-12 text-center">
-            <h1 className="mb-4 text-4xl font-medium font-display text-obsidian uppercase tracking-wider">
-              AI 图片生成画廊
+            <h1 className="mb-4 text-4xl font-medium font-display text-alabaster uppercase tracking-wider">
+              焕影 AI 画廊
             </h1>
-            <p className="mx-auto max-w-2xl text-lg text-stone font-light">
+            <p className="mx-auto max-w-2xl text-lg text-pearl/60 font-light">
               欣赏由AI生成的精美作品，发现无限创意灵感
             </p>
-            <div className="flex gap-6 justify-center items-center mt-6 text-sm text-stone uppercase tracking-widest text-xs">
+            <div className="flex gap-6 justify-center items-center mt-6 text-sm text-pearl/60 uppercase tracking-widest text-xs">
               <div className="flex gap-2 items-center">
                 <ImageIcon className="w-4 h-4 text-gold" />
                 <span>共 {items.reduce((acc, item) => acc + item.preview_images.length, 0)} 张作品</span>
@@ -171,18 +171,18 @@ export default function GalleryPage() {
         {items.length === 0 ? (
           <FadeIn delay={0.2}>
             <div className="py-20 text-center">
-              <div className="flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full bg-stone/5 border border-stone/10">
-                <ImageIcon className="w-10 h-10 text-stone" />
+              <div className="flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full bg-white/5 border border-white/10">
+                <ImageIcon className="w-10 h-10 text-pearl/60" />
               </div>
-              <h3 className="mb-2 text-xl font-medium font-display text-obsidian tracking-wider">
+              <h3 className="mb-2 text-xl font-medium font-display text-alabaster tracking-wider">
                 画廊暂时为空
               </h3>
-              <p className="mb-6 text-stone font-light max-w-md mx-auto">
+              <p className="mb-6 text-pearl/60 font-light max-w-md mx-auto">
                 还没有用户分享作品到画廊，成为第一个分享者吧！
               </p>
               <a
                 href="/templates"
-                className="inline-flex gap-2 items-center px-8 py-4 text-sm tracking-widest uppercase font-medium bg-obsidian rounded-sm transition-colors duration-700 text-alabaster hover:bg-gold hover:text-obsidian"
+                className="inline-flex gap-2 items-center px-8 py-4 text-sm tracking-widest uppercase font-medium bg-gold rounded-sm transition-all duration-700 text-obsidian hover:shadow-glow"
               >
                 <ImageIcon className="w-4 h-4" />
                 开始创作
@@ -225,11 +225,10 @@ export default function GalleryPage() {
                                 e.stopPropagation();
                                 toggleLike(item.generation_id, imageIndex);
                               }}
-                              className={`flex justify-center items-center w-10 h-10 rounded-sm shadow-xl backdrop-blur-md transition-all duration-300 border border-white/20 ${
-                                likedImages[`${item.generation_id}-${imageIndex}`]
-                                  ? 'bg-gold/90 text-obsidian'
-                                  : 'bg-obsidian/50 hover:bg-gold/90 text-alabaster hover:text-obsidian'
-                              }`}
+                              className={`flex justify-center items-center w-10 h-10 rounded-sm shadow-xl backdrop-blur-md transition-all duration-300 border border-white/20 ${likedImages[`${item.generation_id}-${imageIndex}`]
+                                ? 'bg-gold/90 text-obsidian'
+                                : 'bg-black/50 hover:bg-gold text-alabaster hover:text-obsidian'
+                                }`}
                               title={likedImages[`${item.generation_id}-${imageIndex}`] ? '取消点赞' : '点赞'}
                             >
                               <Heart className={`w-4 h-4 ${likedImages[`${item.generation_id}-${imageIndex}`] ? 'fill-obsidian' : ''}`} />
@@ -243,7 +242,7 @@ export default function GalleryPage() {
                                 link.download = `${item.project_name}_${imageIndex + 1}.jpg`;
                                 link.click();
                               }}
-                              className="flex justify-center items-center w-10 h-10 rounded-sm shadow-xl backdrop-blur-md transition-all duration-300 bg-obsidian/50 hover:bg-gold/90 text-alabaster hover:text-obsidian border border-white/20"
+                              className="flex justify-center items-center w-10 h-10 rounded-sm shadow-xl backdrop-blur-md transition-all duration-300 bg-black/50 hover:bg-gold text-alabaster hover:text-obsidian border border-white/20"
                               title="下载"
                             >
                               <Download className="w-4 h-4" />
@@ -253,14 +252,14 @@ export default function GalleryPage() {
                       </div>
 
                       {/* 图片信息 */}
-                      <div className="p-5 bg-alabaster">
-                        <h3 className="mb-2 font-medium font-display text-obsidian uppercase tracking-wide line-clamp-1">
+                      <div className="p-5 bg-black/40 border-t border-white/10">
+                        <h3 className="mb-2 font-medium font-display text-alabaster uppercase tracking-wide line-clamp-1">
                           {item.project_name}
                         </h3>
-                        <p className="mb-4 text-xs tracking-widest uppercase text-stone line-clamp-1">
+                        <p className="mb-4 text-xs tracking-widest uppercase text-pearl/60 line-clamp-1">
                           模板：{item.template_name}
                         </p>
-                        <div className="flex justify-between items-center text-xs font-light text-stone/80 uppercase tracking-widest">
+                        <div className="flex justify-between items-center text-xs font-light text-pearl/40 uppercase tracking-widest">
                           <div className="flex gap-2 items-center">
                             <User className="w-3.5 h-3.5" />
                             <span>{item.user_name}</span>
@@ -283,7 +282,7 @@ export default function GalleryPage() {
                 <button
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="flex gap-3 items-center px-10 py-4 mx-auto font-medium rounded-sm transition-all duration-700 bg-transparent border border-stone/20 text-obsidian hover:bg-stone/5 hover:border-obsidian/30 disabled:opacity-50 disabled:cursor-not-allowed uppercase text-xs tracking-[0.2em]"
+                  className="flex gap-3 items-center px-10 py-4 mx-auto font-medium rounded-sm transition-all duration-700 bg-transparent border border-white/20 text-alabaster hover:bg-white/5 hover:border-white/40 disabled:opacity-50 disabled:cursor-not-allowed uppercase text-xs tracking-[0.2em]"
                 >
                   {loadingMore ? (
                     <>

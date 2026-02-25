@@ -41,12 +41,12 @@ export function ConfirmDialog({
   const styles = variantStyles[variant];
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onCancel}
     >
-      <div 
-        className="bg-ivory rounded-xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95 duration-200"
+      <div
+        className="bg-black/80 border border-white/10 rounded-xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
@@ -55,22 +55,22 @@ export function ConfirmDialog({
               <AlertTriangle className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-display font-semibold text-navy mb-2">{title}</h3>
-              <p className="text-stone leading-relaxed">{message}</p>
+              <h3 className="text-xl font-display font-semibold text-alabaster mb-2">{title}</h3>
+              <p className="text-pearl/60 leading-relaxed">{message}</p>
             </div>
             <button
               onClick={onCancel}
-              className="p-1 hover:bg-stone/10 rounded-md transition-colors"
+              className="p-1 hover:bg-white/10 rounded-md transition-colors"
               aria-label="关闭对话框"
             >
-              <X className="w-5 h-5 text-stone" />
+              <X className="w-5 h-5 text-pearl/60" />
             </button>
           </div>
 
           <div className="flex items-center gap-3 mt-6">
             <button
               onClick={onCancel}
-              className="flex-1 px-4 py-3 bg-champagne text-navy rounded-lg hover:bg-stone/20 transition-all font-medium"
+              className="flex-1 px-4 py-3 bg-white/5 text-alabaster border border-white/10 rounded-lg hover:bg-white/10 transition-all font-medium"
             >
               {cancelText}
             </button>

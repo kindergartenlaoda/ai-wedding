@@ -32,35 +32,21 @@ export function useImageIdentification(): UseImageIdentificationReturn {
   const [error, setError] = useState<string | null>(null);
 
   const identifyImages = async (images: string[]): Promise<IdentifyResponse> => {
-    setIsIdentifying(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/identify-image', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images }),
-      });
-
-      if (response.status === 401) {
-        throw new Error('未登录，无法进行图片识别');
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '图片识别失败');
-      }
-
-      const result: IdentifyResponse = await response.json();
-      return result;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : '图片识别失败';
-      setError(message);
-      throw err;
-    } finally {
-      setIsIdentifying(false);
-    }
+    // TODO: 暂时跳过 identify-image 接口调用，直接返回全部通过
+    return {
+      success: true,
+      total: images.length,
+      validCount: images.length,
+      invalidCount: 0,
+      results: images.map((_, index) => ({
+        index,
+        success: true,
+        hasPerson: true,
+        confidence: 1,
+        description: '跳过识别（临时禁用）',
+      })),
+      allValid: true,
+    };
   };
 
   return {

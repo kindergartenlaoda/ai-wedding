@@ -21,61 +21,61 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b shadow-sm backdrop-blur-md bg-alabaster/90 border-stone/10">
+      <header className="sticky top-0 z-50 border-b shadow-sm backdrop-blur-md bg-obsidian/80 border-white/10">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-18">
             <div className="flex gap-8 items-center">
               <button
                 onClick={() => onNavigate('home')}
-                className="flex items-center gap-2.5"
+                className="flex items-center gap-2.5 group"
               >
-                <div className="flex justify-center items-center w-9 h-9 bg-obsidian rounded-sm shadow-sm border border-stone/20">
-                  <Camera className="w-5 h-5 text-gold" />
+                <div className="flex justify-center items-center w-9 h-9 bg-obsidian rounded-sm shadow-sm border border-white/10 group-hover:border-gold/30 transition-colors duration-500">
+                  <Camera className="w-5 h-5 text-gold group-hover:scale-110 transition-transform duration-500" />
                 </div>
-                <span className="text-xl font-medium tracking-wide font-display text-obsidian uppercase">
-                  AI 图片生成
+                <span className="text-xl font-medium tracking-wide font-display text-alabaster uppercase group-hover:text-gold transition-colors duration-500">
+                  焕影 AI
                 </span>
               </button>
 
               <nav className="hidden gap-8 items-center md:flex">
                 <button
                   onClick={() => onNavigate('templates')}
-                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'templates' ? 'text-gold' : 'text-stone hover:text-obsidian'
+                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'templates' ? 'text-gold' : 'text-pearl/70 hover:text-alabaster'
                     }`}
                 >
                   模板
                 </button>
                 <button
                   onClick={() => onNavigate('create')}
-                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'create' ? 'text-gold' : 'text-stone hover:text-obsidian'
+                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'create' ? 'text-gold' : 'text-pearl/70 hover:text-alabaster'
                     }`}
                 >
                   创建
                 </button>
                 <button
                   onClick={() => onNavigate('generate-single')}
-                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'generate-single' ? 'text-gold' : 'text-stone hover:text-obsidian'
+                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'generate-single' ? 'text-gold' : 'text-pearl/70 hover:text-alabaster'
                     }`}
                 >
                   生成单张
                 </button>
                 <button
                   onClick={() => onNavigate('gallery')}
-                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'gallery' ? 'text-gold' : 'text-stone hover:text-obsidian'
+                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'gallery' ? 'text-gold' : 'text-pearl/70 hover:text-alabaster'
                     }`}
                 >
                   画廊
                 </button>
                 <button
                   onClick={() => onNavigate('pricing')}
-                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'pricing' ? 'text-gold' : 'text-stone hover:text-obsidian'
+                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'pricing' ? 'text-gold' : 'text-pearl/70 hover:text-alabaster'
                     }`}
                 >
                   价格
                 </button>
                 <a
                   href="/testimonials"
-                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'testimonials' ? 'text-gold' : 'text-stone hover:text-obsidian'
+                  className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'testimonials' ? 'text-gold' : 'text-pearl/70 hover:text-alabaster'
                     }`}
                 >
                   案例
@@ -83,7 +83,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                 {user && (
                   <button
                     onClick={() => onNavigate('dashboard')}
-                    className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'dashboard' ? 'text-gold' : 'text-stone hover:text-obsidian'
+                    className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase ${currentPage === 'dashboard' ? 'text-gold' : 'text-pearl/70 hover:text-alabaster'
                       }`}
                   >
                     我的项目
@@ -92,9 +92,8 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                 {profile?.role === 'admin' && (
                   <a
                     href="/admin/templates"
-                    className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase flex items-center gap-1.5 ${
-                      currentPage === 'admin' ? 'text-gold' : 'text-stone hover:text-obsidian'
-                    }`}
+                    className={`text-sm font-medium tracking-wide transition-colors duration-200 uppercase flex items-center gap-1.5 ${currentPage === 'admin' ? 'text-gold' : 'text-pearl/70 hover:text-alabaster'
+                      }`}
                   >
                     <Settings className="w-3.5 h-3.5" />
                     管理后台
@@ -108,27 +107,27 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                 href={GITHUB_REPO_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-sm transition-all duration-200 text-stone hover:text-obsidian hover:bg-stone/5"
+                className="p-2 rounded-sm transition-all duration-200 text-pearl/70 hover:text-alabaster hover:bg-white/5"
                 aria-label="GitHub 仓库"
               >
                 <Github className="w-5 h-5" />
               </a>
               {user ? (
                 <>
-                  <div className="flex items-center gap-2.5 px-4 py-2 bg-alabaster border border-stone/20 rounded-sm shadow-sm">
+                  <div className="flex items-center gap-2.5 px-4 py-2 bg-obsidian border border-white/10 rounded-sm shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                     <Sparkles className="w-4 h-4 text-gold" />
-                    <span className="text-sm font-medium text-obsidian">{profile?.credits || 0}</span>
+                    <span className="text-sm font-medium text-alabaster">{profile?.credits || 0}</span>
                   </div>
                   <button
                     onClick={() => onNavigate('profile')}
-                    className="flex gap-2 items-center px-4 py-2 rounded-sm transition-all duration-200 text-stone hover:text-obsidian hover:bg-stone/5 uppercase text-xs tracking-wider font-medium"
+                    className="flex gap-2 items-center px-4 py-2 rounded-sm transition-all duration-200 text-pearl/70 hover:text-alabaster hover:bg-white/5 uppercase text-xs tracking-wider font-medium"
                   >
                     <User className="w-4 h-4" />
                     <span>{profile?.full_name || '账户'}</span>
                   </button>
                   <button
                     onClick={handleSignOut}
-                    className="flex gap-2 items-center px-4 py-2 rounded-sm transition-all duration-200 text-stone hover:text-obsidian hover:bg-stone/5 uppercase text-xs tracking-wider font-medium"
+                    className="flex gap-2 items-center px-4 py-2 rounded-sm transition-all duration-200 text-pearl/70 hover:text-alabaster hover:bg-white/5 uppercase text-xs tracking-wider font-medium"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>退出</span>
@@ -137,7 +136,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
               ) : (
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-obsidian text-alabaster rounded-sm hover:bg-gold hover:text-obsidian transition-all duration-500 shadow-sm hover:shadow-md font-medium uppercase text-xs tracking-wider"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-gold text-obsidian rounded-sm transition-all duration-500 shadow-[0_0_15px_rgba(200,160,100,0.3)] hover:-translate-y-px hover:shadow-[0_0_20px_rgba(200,160,100,0.5)] font-medium uppercase text-xs tracking-wider"
                 >
                   <LogIn className="w-4 h-4" />
                   开始使用
@@ -147,7 +146,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 transition-colors md:hidden text-stone hover:text-navy"
+              className="p-2 transition-colors md:hidden text-pearl hover:text-gold"
               aria-label={mobileMenuOpen ? '关闭菜单' : '打开菜单'}
               aria-expanded={mobileMenuOpen}
             >
@@ -157,14 +156,14 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t md:hidden border-stone/10 bg-alabaster">
+          <div className="border-t md:hidden border-white/10 bg-obsidian shadow-2xl">
             <nav className="px-4 py-4 space-y-2">
               <button
                 onClick={() => {
                   onNavigate('templates');
                   setMobileMenuOpen(false);
                 }}
-                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
+                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-pearl/70 hover:text-alabaster hover:bg-white/5"
               >
                 模板
               </button>
@@ -173,7 +172,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                   onNavigate('create');
                   setMobileMenuOpen(false);
                 }}
-                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
+                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-pearl/70 hover:text-alabaster hover:bg-white/5"
               >
                 创建
               </button>
@@ -182,7 +181,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                   onNavigate('generate-single');
                   setMobileMenuOpen(false);
                 }}
-                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
+                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-pearl/70 hover:text-alabaster hover:bg-white/5"
               >
                 生成单张
               </button>
@@ -191,7 +190,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                   onNavigate('gallery');
                   setMobileMenuOpen(false);
                 }}
-                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
+                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-pearl/70 hover:text-alabaster hover:bg-white/5"
               >
                 画廊
               </button>
@@ -200,14 +199,14 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                   onNavigate('pricing');
                   setMobileMenuOpen(false);
                 }}
-                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
+                className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-pearl/70 hover:text-alabaster hover:bg-white/5"
               >
                 价格
               </button>
               <a
                 href="/testimonials"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
+                className="block px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-pearl/70 hover:text-alabaster hover:bg-white/5"
               >
                 案例
               </a>
@@ -216,7 +215,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex gap-2 items-center px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
+                className="flex gap-2 items-center px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-pearl/70 hover:text-alabaster hover:bg-white/5"
               >
                 <Github className="w-4 h-4" />
                 <span>GitHub</span>
@@ -224,9 +223,9 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
               {user ? (
                 <>
                   <div className="px-4 py-2">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-stone/5 border border-stone/20 rounded-sm">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-sm">
                       <Sparkles className="w-4 h-4 text-gold" />
-                      <span className="text-sm font-medium text-obsidian">{profile?.credits || 0} 积分</span>
+                      <span className="text-sm font-medium text-alabaster">{profile?.credits || 0} 积分</span>
                     </div>
                   </div>
                   <button
@@ -234,7 +233,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                       onNavigate('dashboard');
                       setMobileMenuOpen(false);
                     }}
-                    className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
+                    className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-pearl/70 hover:text-alabaster hover:bg-white/5"
                   >
                     我的项目
                   </button>
@@ -242,7 +241,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                     <a
                       href="/admin/templates"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex gap-2 items-center px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-stone hover:text-obsidian hover:bg-stone/5"
+                      className="flex gap-2 items-center px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-pearl/70 hover:text-alabaster hover:bg-white/5"
                     >
                       <Settings className="w-4 h-4" />
                       <span>管理后台</span>
@@ -250,7 +249,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                   )}
                   <button
                     onClick={handleSignOut}
-                    className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-destructive hover:bg-destructive/10"
+                    className="px-4 py-3 w-full text-xs tracking-wider uppercase font-medium text-left rounded-sm transition-colors text-red-400 hover:bg-red-400/10"
                   >
                     退出登录
                   </button>
@@ -261,7 +260,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
                     setShowAuthModal(true);
                     setMobileMenuOpen(false);
                   }}
-                  className="px-4 py-3 w-full font-medium rounded-sm transition-colors bg-obsidian text-alabaster hover:bg-gold hover:text-obsidian text-xs tracking-wider uppercase mt-4"
+                  className="px-4 py-3 w-full font-medium rounded-sm transition-all bg-gold text-obsidian hover:shadow-[0_0_15px_rgba(200,160,100,0.4)] text-xs tracking-wider uppercase mt-4"
                 >
                   开始使用
                 </button>

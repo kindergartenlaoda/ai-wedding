@@ -38,7 +38,11 @@
       "Bash(git push:*)",
       "Bash(pnpm tsx:*)",
       "Bash(pnpm lint:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(chmod:*)",
+      "Bash(bash scripts/test-generate-single.sh -t 'eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..8vHNdbZDIbjURhEH.ankgBLcd_gRm6RI1YNK-B4rvpIINF31Qi4mdiGXCaV-R2jM1uaWxYOSwaKihn_mxN-kIZyUeYerfx8RAy6iburY183InVQptDhK41QaFDlLmUCGY2keekf4ASuujkyyC6VKxOIc-wsdqqXVrqsYuz2oFtXWj_4omorgGl1UQ6pmi5n1CppNOYx2NZUcxURbGNdEaUgwU1hgpH5I7BO1_VIUTa3fYPy4DfdanFMk_jXiNvxMtivPdOLqrUoocnke6trgZ7RFPHWPLXFv7nVoZcA.vfWKijU6IAhdUfE9L5hjyw')",
+      "Bash(wc:*)",
+      "Bash(git diff:*)"
     ],
     "deny": [],
     "ask": []

@@ -51,7 +51,7 @@ export function ProjectCard({
 
   return (
     <div
-      className="overflow-hidden rounded-sm border shadow-md transition-all duration-700 cursor-pointer bg-alabaster border-stone/10 hover:shadow-2xl hover:border-gold/30 group"
+      className="overflow-hidden rounded-sm border shadow-md transition-all duration-700 cursor-pointer bg-obsidian border-white/10 hover:shadow-[0_0_30px_rgba(200,160,100,0.15)] hover:border-gold/30 group"
       onClick={onClick}
     >
       <div className="relative aspect-[4/3] overflow-hidden">
@@ -60,20 +60,20 @@ export function ProjectCard({
           src={displayImage}
           alt={project.name}
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-110"
+          className="object-cover transition-transform duration-1000 group-hover:scale-105 ease-[cubic-bezier(0.25,1,0.5,1)]"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
 
         {/* 渐变遮罩 */}
-        <div className="absolute inset-0 bg-gradient-to-t to-transparent from-obsidian/80 via-obsidian/20" />
+        <div className="absolute inset-0 bg-gradient-to-t to-transparent from-obsidian/90 via-obsidian/30 opacity-80 group-hover:opacity-100 transition-opacity duration-700" />
 
         {/* 顶部状态栏 */}
         <div className="flex absolute top-4 right-4 left-4 z-10 justify-between items-center">
-          <div className="flex items-center gap-2 px-4 py-2 bg-alabaster/95 backdrop-blur-md rounded-sm shadow-sm border border-stone/10">
+          <div className="flex items-center gap-2 px-4 py-2 bg-obsidian/80 backdrop-blur-md rounded-sm shadow-sm border border-white/10">
             {renderStatus(project.generation?.status || project.status)}
           </div>
 
-          <div className="rounded-sm shadow-sm backdrop-blur-md bg-alabaster/95 border border-stone/10">
+          <div className="rounded-sm shadow-sm backdrop-blur-md bg-obsidian/80 border border-white/10">
             <ProjectActionsMenu
               projectId={project.id}
               projectName={project.name}
@@ -91,7 +91,7 @@ export function ProjectCard({
 
         {/* 已完成的生成结果 - 显示缩略图网格 */}
         {hasGeneratedImages && project.generation!.preview_images.length > 1 && (
-          <div className="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+          <div className="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10">
             {project.generation!.preview_images.slice(0, 4).map((img, idx) => (
               <div
                 key={idx}
@@ -118,18 +118,18 @@ export function ProjectCard({
 
         {/* 已完成但只有1张图 - 显示查看按钮 */}
         {hasGeneratedImages && project.generation!.preview_images.length === 1 && (
-          <div className="absolute right-4 bottom-4 left-4 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-            <button className="w-full px-4 py-3 bg-alabaster text-obsidian rounded-sm hover:bg-gold transition-all duration-500 font-medium flex items-center justify-center gap-2 shadow-xl uppercase tracking-widest text-xs border border-transparent hover:border-obsidian/10">
+          <div className="absolute right-4 bottom-4 left-4 opacity-0 transition-opacity duration-500 group-hover:opacity-100 z-10">
+            <button className="w-full px-4 py-3 bg-gold text-obsidian rounded-sm hover:-translate-y-px transition-all duration-500 font-medium flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(0,0,0,0.4)] hover:shadow-[0_0_15px_rgba(200,160,100,0.4)] uppercase tracking-widest text-xs border border-transparent hover:border-white/10">
               查看结果
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
             </button>
           </div>
         )}
 
         {/* 未完成 - 显示进度提示 */}
         {!hasGeneratedImages && project.generation?.status !== 'failed' && (
-          <div className="absolute right-4 bottom-4 left-4 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-            <div className="w-full px-4 py-3 bg-obsidian/90 backdrop-blur-md text-alabaster rounded-sm font-medium flex items-center justify-center gap-2 shadow-xl border border-white/10 uppercase tracking-widest text-xs">
+          <div className="absolute right-4 bottom-4 left-4 opacity-0 transition-opacity duration-500 group-hover:opacity-100 z-10">
+            <div className="w-full px-4 py-3 bg-obsidian/90 backdrop-blur-md text-gold rounded-sm font-medium flex items-center justify-center gap-2 shadow-xl border border-gold/20 uppercase tracking-widest text-xs">
               <Loader2 className="w-4 h-4 animate-spin" />
               生成中...
             </div>
@@ -138,26 +138,26 @@ export function ProjectCard({
       </div>
 
       {/* 卡片信息区域 */}
-      <div className="p-6 space-y-4 bg-alabaster">
+      <div className="p-6 space-y-4 bg-obsidian border-t border-white/5 relative z-20">
         <div>
-          <h3 className="mb-2 text-lg font-medium transition-colors font-display text-obsidian group-hover:text-gold line-clamp-1 uppercase tracking-wider">
+          <h3 className="mb-2 text-lg font-medium transition-colors font-display text-alabaster group-hover:text-gold line-clamp-1 uppercase tracking-wider">
             {project.name}
           </h3>
-          <p className="text-xs tracking-widest text-stone line-clamp-1 uppercase">
+          <p className="text-xs tracking-widest text-pearl/50 line-clamp-1 uppercase">
             模板：{project.template?.name || '未选择'}
           </p>
         </div>
 
-        <div className="flex justify-between items-center pt-4 text-xs font-light text-stone/80 uppercase tracking-widest border-t border-stone/10">
+        <div className="flex justify-between items-center pt-4 text-xs font-light text-pearl/40 uppercase tracking-widest border-t border-white/10">
           <div className="flex gap-3 items-center">
             {hasGeneratedImages && (
-              <div className="flex items-center gap-1.5 text-obsidian font-medium">
+              <div className="flex items-center gap-1.5 text-gold font-medium">
                 <Sparkles className="w-3.5 h-3.5" />
                 {project.generation!.preview_images.length} 张作品
               </div>
             )}
             {!hasGeneratedImages && project.uploaded_photos.length > 0 && (
-              <div className="flex items-center gap-1.5 text-stone transition-colors group-hover:text-obsidian">
+              <div className="flex items-center gap-1.5 text-pearl/50 transition-colors group-hover:text-alabaster">
                 <Camera className="w-3.5 h-3.5" />
                 {project.uploaded_photos.length} 张照片
               </div>

@@ -44,12 +44,12 @@ export function TestimonialsPage({ onNavigate }: TestimonialsPageProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-champagne via-ivory to-blush py-16">
+    <div className="min-h-screen bg-obsidian py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn delay={0.1}>
           <div className="text-center mb-14">
-            <h1 className="text-4xl sm:text-5xl font-display font-medium text-navy">用户评价与案例</h1>
-            <p className="text-stone mt-3">真实反馈与风格展示，帮你快速找到心动灵感</p>
+            <h1 className="text-4xl sm:text-5xl font-display font-medium text-alabaster uppercase tracking-widest">用户评价与案例</h1>
+            <p className="text-pearl/60 mt-3 tracking-wide">真实反馈与风格展示，帮你快速找到心动灵感</p>
           </div>
         </FadeIn>
 
@@ -61,9 +61,9 @@ export function TestimonialsPage({ onNavigate }: TestimonialsPageProps) {
                 <div className="p-6">
                   <div className="flex items-center gap-3 mb-3">
                     <Image src={t.avatar} alt={t.name} width={40} height={40} className="rounded-full object-cover" />
-                    <div className="text-navy font-medium">{t.name}</div>
+                    <div className="text-alabaster font-medium tracking-wider">{t.name}</div>
                   </div>
-                  <p className="text-stone leading-relaxed">“{t.quote}”</p>
+                  <p className="text-pearl/60 leading-relaxed font-light">“{t.quote}”</p>
                 </div>
               </GlassCard>
             ))}
@@ -79,7 +79,7 @@ export function TestimonialsPage({ onNavigate }: TestimonialsPageProps) {
                   <Image src={c.cover} alt={c.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 25vw" />
                 </div>
                 <div className="p-4">
-                  <div className="text-navy font-medium">{c.title}</div>
+                  <div className="text-alabaster font-medium tracking-wider">{c.title}</div>
                 </div>
               </GlassCard>
             ))}
@@ -90,7 +90,7 @@ export function TestimonialsPage({ onNavigate }: TestimonialsPageProps) {
           <div className="text-center mt-12">
             <button
               onClick={() => onNavigate('templates')}
-              className="px-6 py-3 bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory rounded-lg hover:shadow-glow transition-all font-medium"
+              className="px-8 py-4 bg-gold text-obsidian rounded-sm hover:shadow-[0_0_15px_rgba(200,160,100,0.4)] transition-all duration-500 font-medium tracking-widest uppercase text-sm"
             >
               立即选择风格，开始创作
             </button>

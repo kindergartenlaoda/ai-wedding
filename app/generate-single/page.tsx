@@ -10,10 +10,10 @@ function GenerateSinglePageWrapper() {
 export default function Page() {
   return (
     <Suspense fallback={
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-champagne via-ivory to-blush">
+      <div className="flex justify-center items-center min-h-screen bg-obsidian">
         <div className="text-center">
-          <div className="inline-block mb-4 w-8 h-8 rounded-full border-4 animate-spin border-rose-gold border-t-transparent"></div>
-          <p className="text-navy">加载中...</p>
+          <div className="inline-block mb-4 w-8 h-8 rounded-full border-4 animate-spin border-gold border-t-transparent"></div>
+          <p className="text-pearl/60">加载中...</p>
         </div>
       </div>
     }>

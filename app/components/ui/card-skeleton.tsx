@@ -9,7 +9,7 @@ type Props = {
 
 export function CardSkeleton({ aspectClass = 'aspect-video', lines = 2, showBadge = true }: Props) {
   return (
-    <div className="bg-ivory rounded-md overflow-hidden shadow-sm border border-stone/10">
+    <div className="bg-black/40 rounded-md overflow-hidden shadow-sm border border-white/10">
       <div className={`relative ${aspectClass} w-full`}>
         <Skeleton className="absolute inset-0 w-full h-full" />
         {showBadge && (

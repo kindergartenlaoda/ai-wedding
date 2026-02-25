@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { SystemAnnouncement } from '@/types/database';
 
 const STORAGE_KEY = 'announcement_dismissed';
@@ -14,18 +14,34 @@ export function useAnnouncement() {
   const [isLoading, setIsLoading] = useState(true);
   const fetchedRef = useRef(false);
 
-  useEffect(() => {
-    if (!fetchedRef.current) {
-      fetchedRef.current = true;
-      fetchAnnouncement();
-    }
-  }, []);
+  const checkIfDismissed = (announcementId: string): boolean => {
+    if (typeof window === 'undefined') return false;
 
-  const fetchAnnouncement = async () => {
+    try {
+      const dismissedData = localStorage.getItem(STORAGE_KEY);
+      if (!dismissedData) return false;
+
+      const { id, timestamp } = JSON.parse(dismissedData);
+
+      // 检查是否是同一条公告且未超过24小时
+      if (id === announcementId && Date.now() - timestamp < DISMISS_DURATION) {
+        return true;
+      }
+
+      // 如果是不同的公告或已超过24小时，清除旧记录
+      localStorage.removeItem(STORAGE_KEY);
+      return false;
+    } catch (error) {
+      console.error('检查公告关闭状态失败:', error);
+      return false;
+    }
+  };
+
+  const fetchAnnouncement = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/announcements');
-      
+
       if (!response.ok) {
         throw new Error('获取公告失败');
       }
@@ -35,7 +51,7 @@ export function useAnnouncement() {
 
       if (fetchedAnnouncement) {
         setAnnouncement(fetchedAnnouncement);
-        
+
         // 检查用户是否已关闭此公告
         const dismissed = checkIfDismissed(fetchedAnnouncement.id);
         setIsVisible(!dismissed);
@@ -50,30 +66,14 @@ export function useAnnouncement() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const checkIfDismissed = (announcementId: string): boolean => {
-    if (typeof window === 'undefined') return false;
-
-    try {
-      const dismissedData = localStorage.getItem(STORAGE_KEY);
-      if (!dismissedData) return false;
-
-      const { id, timestamp } = JSON.parse(dismissedData);
-      
-      // 检查是否是同一条公告且未超过24小时
-      if (id === announcementId && Date.now() - timestamp < DISMISS_DURATION) {
-        return true;
-      }
-
-      // 如果是不同的公告或已超过24小时，清除旧记录
-      localStorage.removeItem(STORAGE_KEY);
-      return false;
-    } catch (error) {
-      console.error('检查公告关闭状态失败:', error);
-      return false;
+  useEffect(() => {
+    if (!fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchAnnouncement();
     }
-  };
+  }, [fetchAnnouncement]);
 
   const dismissAnnouncement = () => {
     if (!announcement) return;
@@ -101,6 +101,7 @@ export function useAnnouncement() {
     dismissAnnouncement,
   };
 }
+
 
 
 

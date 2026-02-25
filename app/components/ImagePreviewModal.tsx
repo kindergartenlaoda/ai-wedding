@@ -102,7 +102,7 @@ export function ImagePreviewModal({
               {projectName} - {currentIndex + 1} / {images.length}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             {/* 下载按钮 */}
             <button
               onClick={(e) => {
@@ -110,11 +110,11 @@ export function ImagePreviewModal({
                 handleDownload();
               }}
               disabled={downloading}
-              className="flex items-center gap-2 px-4 py-2 text-white transition-all rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-2.5 text-alabaster bg-white/5 border border-white/10 transition-all duration-300 rounded-sm hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs font-medium"
               title="下载图片"
             >
-              <Download className="w-5 h-5" />
-              <span className="text-sm">{downloading ? '下载中...' : '下载'}</span>
+              <Download className="w-4 h-4" />
+              <span>{downloading ? '下载中' : '下载'}</span>
             </button>
             {/* 关闭按钮 */}
             <button
@@ -122,18 +122,17 @@ export function ImagePreviewModal({
                 e.stopPropagation();
                 onClose();
               }}
-              className="flex items-center gap-2 px-4 py-2 text-white transition-all rounded-lg hover:bg-white/10"
+              className="flex items-center gap-2 p-2.5 text-pearl hover:text-alabaster transition-all rounded-sm hover:bg-white/5"
               title="关闭 (ESC)"
             >
               <X className="w-5 h-5" />
-              <span className="text-sm">关闭</span>
             </button>
           </div>
         </div>
 
         {/* 图片容器 */}
         <div
-          className="relative w-full h-full bg-white rounded-xl shadow-2xl overflow-hidden"
+          className="relative w-full h-full bg-obsidian border border-white/10 rounded-sm shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 上一张按钮 */}

@@ -8,11 +8,11 @@ import type { ShareCardOptions } from '@/types/share';
  */
 export function generateShareText(options: ShareCardOptions): string {
   const { projectName, templateName, imageCount, inviteCode, siteUrl } = options;
-  
+
   const inviteTail = inviteCode ? `\n🎁 邀请码：${inviteCode}（新用户有礼）` : '';
   const linkTail = siteUrl ? `\n🔗 体验链接：${siteUrl}${inviteCode ? `?inv=${inviteCode}` : ''}` : '';
 
-  return `✨ 我用AI 图片生成创作了${imageCount}张${templateName}风格的作品！
+  return `✨ 我用焕影 AI 创作了${imageCount}张${templateName}风格的作品！
 
 📸 项目：${projectName}
 🎨 风格：${templateName}
@@ -31,7 +31,7 @@ export async function copyShareLink(url: string): Promise<boolean> {
       await navigator.clipboard.writeText(url);
       return true;
     }
-    
+
     // 降级方案：使用 document.execCommand
     const textArea = document.createElement('textarea');
     textArea.value = url;
@@ -39,7 +39,7 @@ export async function copyShareLink(url: string): Promise<boolean> {
     textArea.style.left = '-999999px';
     document.body.appendChild(textArea);
     textArea.select();
-    
+
     try {
       document.execCommand('copy');
       return true;
@@ -62,14 +62,14 @@ export function shareToSocial(platform: 'wechat' | 'weibo' | 'qq' | 'twitter', o
   image?: string;
 }): void {
   const { url, title, description, image } = options;
-  
+
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
   const encodedDesc = encodeURIComponent(description || '');
   const encodedImage = encodeURIComponent(image || '');
-  
+
   let shareUrl = '';
-  
+
   switch (platform) {
     case 'weibo':
       shareUrl = `https://service.weibo.com/share/share.php?url=${encodedUrl}&title=${encodedTitle}&pic=${encodedImage}`;
@@ -87,7 +87,7 @@ export function shareToSocial(platform: 'wechat' | 'weibo' | 'qq' | 'twitter', o
     default:
       return;
   }
-  
+
   window.open(shareUrl, '_blank', 'width=600,height=400');
 }
 
@@ -106,14 +106,14 @@ export async function downloadShareCard(
       const blob = await response.blob();
       url = URL.createObjectURL(blob);
     }
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = `${projectName}-分享卡片.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     if (!imageUrl.startsWith('data:')) URL.revokeObjectURL(url);
   } catch (error) {
     console.error('下载失败:', error);
@@ -174,7 +174,7 @@ export async function generateShareCardImage(opts: ShareCardOptions): Promise<st
   // 标题
   ctx.fillStyle = '#0b1220';
   ctx.font = '700 44px Cormorant, serif';
-  ctx.fillText('AI 图片生成', cardX + 32, cardY + 64);
+  ctx.fillText('焕影 AI', cardX + 32, cardY + 64);
 
   // 项目名 + 模板
   ctx.font = '600 24px Inter, system-ui, -apple-system, sans-serif';

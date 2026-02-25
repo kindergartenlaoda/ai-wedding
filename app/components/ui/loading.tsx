@@ -16,8 +16,8 @@ export function Loading({ size = 'md', text, className }: LoadingProps) {
 
   return (
     <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
-      <Loader2 className={cn('animate-spin text-dusty-rose', sizeClasses[size])} />
-      {text && <p className="text-sm text-stone font-medium">{text}</p>}
+      <Loader2 className={cn('animate-spin text-gold', sizeClasses[size])} />
+      {text && <p className="text-sm text-pearl/60 font-medium">{text}</p>}
     </div>
   );
 }
@@ -28,7 +28,7 @@ interface PageLoadingProps {
 
 export function PageLoading({ text = '加载中...' }: PageLoadingProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-champagne to-ivory flex items-center justify-center">
+    <div className="min-h-screen bg-obsidian flex items-center justify-center">
       <Loading size="lg" text={text} />
     </div>
   );

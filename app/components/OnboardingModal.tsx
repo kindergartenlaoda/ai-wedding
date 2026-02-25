@@ -25,7 +25,7 @@ const STEPS: OnboardingStep[] = [
   {
     icon: Sparkles,
     title: '生成 AI 作品',
-    description: '点击生成，等待片刻即可获得精美的 AI 图片作品。',
+    description: '点击生成，等待片刻即可获得精美的 AI 写真作品。',
   },
 ];
 
@@ -90,16 +90,16 @@ export function OnboardingModal({ onClose }: OnboardingModalProps) {
         aria-modal="true"
         aria-label="新手引导"
         tabIndex={-1}
-        className="bg-alabaster rounded-sm shadow-2xl max-w-md w-full overflow-hidden border border-stone/10 outline-none"
+        className="bg-black/90 rounded-sm shadow-2xl max-w-md w-full overflow-hidden border border-white/10 outline-none"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-stone/10">
-          <h2 className="text-lg font-display font-medium text-obsidian tracking-wider uppercase">
+        <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <h2 className="text-lg font-display font-medium text-alabaster tracking-wider uppercase">
             欢迎使用
           </h2>
           <button
             onClick={handleComplete}
-            className="p-1.5 rounded-sm text-stone hover:text-obsidian hover:bg-stone/10 transition-colors"
+            className="p-1.5 rounded-sm text-pearl/60 hover:text-alabaster hover:bg-white/10 transition-colors"
             aria-label="关闭"
           >
             <X className="w-5 h-5" />
@@ -108,18 +108,18 @@ export function OnboardingModal({ onClose }: OnboardingModalProps) {
 
         {/* Content */}
         <div className="p-8 text-center">
-          <div className="w-16 h-16 bg-obsidian rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
             <Icon className="w-7 h-7 text-gold" />
           </div>
 
-          <div className="text-xs text-stone tracking-[0.2em] uppercase mb-4">
+          <div className="text-xs text-pearl/60 tracking-[0.2em] uppercase mb-4">
             {currentStep + 1} / {STEPS.length}
           </div>
 
-          <h3 className="text-xl font-display font-medium text-obsidian mb-3 tracking-wide">
+          <h3 className="text-xl font-display font-medium text-alabaster mb-3 tracking-wide">
             {step.title}
           </h3>
-          <p className="text-stone font-light leading-relaxed text-sm">
+          <p className="text-pearl/60 font-light leading-relaxed text-sm">
             {step.description}
           </p>
 
@@ -128,29 +128,28 @@ export function OnboardingModal({ onClose }: OnboardingModalProps) {
             {STEPS.map((_, idx) => (
               <div
                 key={idx}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  idx === currentStep
-                    ? 'w-6 bg-gold'
-                    : idx < currentStep
-                      ? 'w-1.5 bg-gold/50'
-                      : 'w-1.5 bg-stone/20'
-                }`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentStep
+                  ? 'w-6 bg-gold'
+                  : idx < currentStep
+                    ? 'w-1.5 bg-gold/50'
+                    : 'w-1.5 bg-white/20'
+                  }`}
               />
             ))}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-stone/10 flex items-center justify-between">
+        <div className="p-6 border-t border-white/10 flex items-center justify-between">
           <button
             onClick={handleComplete}
-            className="text-xs text-stone hover:text-obsidian transition-colors tracking-wider uppercase"
+            className="text-xs text-pearl/60 hover:text-alabaster transition-colors tracking-wider uppercase"
           >
             跳过
           </button>
           <button
             onClick={handleNext}
-            className="flex items-center gap-2 px-6 py-2.5 bg-obsidian text-alabaster rounded-sm hover:bg-gold hover:text-obsidian transition-colors duration-500 text-xs tracking-[0.15em] uppercase font-medium"
+            className="flex items-center gap-2 px-6 py-2.5 bg-gold text-obsidian rounded-sm hover:-translate-y-0.5 hover:shadow-[0_0_15px_rgba(200,160,100,0.4)] transition-all duration-500 text-xs tracking-[0.15em] uppercase font-medium"
           >
             {currentStep < STEPS.length - 1 ? '下一步' : '开始创作'}
             <ArrowRight className="w-4 h-4" />

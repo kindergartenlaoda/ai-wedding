@@ -102,19 +102,19 @@ export function GeneratePromptsPage() {
   };
 
   return (
-    <div className="py-12 min-h-screen bg-gradient-to-b from-champagne via-ivory to-blush">
+    <div className="py-12 min-h-screen bg-obsidian">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-champagne border border-rose-gold/20 text-navy rounded-full text-sm font-medium tracking-wide shadow-sm mb-6">
-            <Sparkles className="w-4 h-4 text-rose-gold" />
+          <div className="inline-flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 text-alabaster rounded-sm text-xs font-medium tracking-widest shadow-sm mb-8 uppercase">
+            <Sparkles className="w-4 h-4 text-gold opacity-80" />
             AI 风格定制
           </div>
-          <h1 className="mb-4 text-4xl font-medium md:text-5xl font-display text-navy">
+          <h1 className="mb-4 text-4xl font-medium md:text-5xl font-display text-alabaster tracking-wider">
             智能生成
-            <span className="text-dusty-rose"> 风格方案</span>
+            <span className="italic text-gold font-serif"> 风格方案</span>
           </h1>
-          <p className="mb-6 text-xl text-stone">
+          <p className="mb-6 text-sm text-pearl/60 font-light tracking-wide">
             上传参考图片，AI 为您生成 5 个专业的风格方案
           </p>
         </div>
@@ -122,9 +122,9 @@ export function GeneratePromptsPage() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* 左侧：图片上传 */}
           <div className="space-y-6">
-            <div className="p-8 rounded-xl border shadow-sm backdrop-blur-md bg-ivory/50 border-stone/10">
-              <h2 className="mb-4 text-2xl font-medium font-display text-navy">上传参考图片</h2>
-              <p className="mb-6 text-sm text-stone">
+            <div className="p-8 rounded-sm border shadow-inner bg-black/40 border-white/10">
+              <h2 className="mb-4 text-2xl font-medium font-display text-alabaster tracking-wider">上传参考图片</h2>
+              <p className="mb-6 text-sm text-pearl/60 font-light leading-relaxed">
                 上传一张您喜欢的风格参考图片，AI 将分析并生成相似风格的拍摄方案
               </p>
 
@@ -133,11 +133,10 @@ export function GeneratePromptsPage() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
-                  isDragging
-                    ? 'border-rose-gold bg-rose-gold/10'
-                    : 'border-stone/30 hover:border-rose-gold/50'
-                } ${uploadedImage ? 'bg-champagne/30' : 'bg-ivory'}`}
+                className={`relative border-2 border-dashed rounded-sm p-8 text-center transition-all duration-500 ${isDragging
+                    ? 'border-gold bg-gold/10'
+                    : 'border-white/10 hover:border-gold/50'
+                  } ${uploadedImage ? 'bg-white/5' : 'bg-transparent'}`}
               >
                 {uploadedImage ? (
                   <div className="space-y-4">
@@ -157,21 +156,21 @@ export function GeneratePromptsPage() {
                           fileInputRef.current.value = '';
                         }
                       }}
-                      className="px-4 py-2 text-sm text-dusty-rose hover:text-rose-gold transition-colors"
+                      className="px-4 py-3 text-xs tracking-widest uppercase font-medium text-gold hover:text-gold/80 transition-colors"
                     >
                       重新上传
                     </button>
                   </div>
                 ) : (
                   <>
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-stone/50" />
-                    <p className="mb-2 text-lg font-medium text-navy">
+                    <Upload className="w-12 h-12 mx-auto mb-4 text-pearl/40" />
+                    <p className="mb-2 text-sm font-medium tracking-wide text-alabaster">
                       拖拽图片到这里，或点击上传
                     </p>
-                    <p className="mb-4 text-sm text-stone">支持 JPG、PNG 格式，最大 10MB</p>
+                    <p className="mb-6 text-xs text-pearl/60 font-light">支持 JPG、PNG 格式，最大 10MB</p>
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-6 py-2 bg-navy text-ivory rounded-md hover:bg-navy/90 transition-colors"
+                      className="px-8 py-3 bg-white/10 text-alabaster rounded-sm hover:bg-white/20 transition-all duration-500 text-xs font-medium tracking-widest uppercase border border-white/10 shadow-sm"
                     >
                       选择图片
                     </button>
@@ -193,7 +192,7 @@ export function GeneratePromptsPage() {
               <button
                 onClick={handleGenerate}
                 disabled={!uploadedImage || isGenerating}
-                className="w-full mt-6 flex gap-3 justify-center items-center px-8 py-4 text-lg font-medium bg-gradient-to-r rounded-md transition-all duration-300 from-rose-gold to-dusty-rose text-ivory hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mt-6 flex gap-3 justify-center items-center px-8 py-4 text-sm font-medium bg-gold rounded-sm transition-all duration-500 text-obsidian hover:shadow-[0_0_20px_rgba(200,160,100,0.4)] disabled:opacity-50 disabled:cursor-not-allowed tracking-widest uppercase"
               >
                 {isGenerating ? (
                   <>
@@ -212,23 +211,23 @@ export function GeneratePromptsPage() {
 
           {/* 右侧：提示词展示 */}
           <div className="space-y-6">
-            <div className="p-8 rounded-xl border shadow-sm backdrop-blur-md bg-ivory/50 border-stone/10">
-              <h2 className="mb-4 text-2xl font-medium font-display text-navy">生成的风格方案</h2>
-              <p className="mb-6 text-sm text-stone">
+            <div className="p-8 rounded-sm border shadow-inner bg-black/40 border-white/10 h-full">
+              <h2 className="mb-4 text-2xl font-medium font-display text-alabaster tracking-wider">生成的风格方案</h2>
+              <p className="mb-8 text-sm text-pearl/60 font-light">
                 选择一个风格方案，在新窗口中生成图片
               </p>
 
               {prompts.length === 0 && !isGenerating && (
-                <div className="py-12 text-center text-stone">
-                  <Sparkles className="w-12 h-12 mx-auto mb-4 text-stone/30" />
-                  <p>上传图片后点击"生成风格方案"</p>
+                <div className="py-20 text-center text-pearl/40">
+                  <Sparkles className="w-12 h-12 mx-auto mb-6 opacity-30" />
+                  <p className="text-sm font-light tracking-wide">上传图片后点击"生成风格方案"</p>
                 </div>
               )}
 
               {isGenerating && (
-                <div className="py-12 text-center">
-                  <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-rose-gold" />
-                  <p className="text-stone">AI 正在分析图片并生成风格方案...</p>
+                <div className="py-20 text-center">
+                  <Loader2 className="w-12 h-12 mx-auto mb-6 animate-spin text-gold opacity-80" />
+                  <p className="text-sm text-pearl/60 font-light tracking-wide">AI 正在分析图片并生成风格方案...</p>
                 </div>
               )}
 
@@ -237,33 +236,37 @@ export function GeneratePromptsPage() {
                   {prompts.map((prompt) => (
                     <div
                       key={prompt.index}
-                      className="p-4 rounded-lg border border-stone/20 bg-ivory hover:border-rose-gold/30 transition-all duration-300 hover:shadow-md"
+                      className="p-5 rounded-sm border border-white/5 bg-white/5 hover:border-gold/30 transition-all duration-300 hover:shadow-md group"
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-rose-gold/20 text-dusty-rose text-sm font-medium">
-                              {prompt.index}
-                            </span>
-                            <h3 className="font-medium text-navy">中文</h3>
+                      <div className="flex items-start justify-between gap-6">
+                        <div className="flex-1 space-y-4">
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gold/10 text-gold text-xs font-mono">
+                                {prompt.index}
+                              </span>
+                              <h3 className="text-xs font-medium tracking-widest text-pearl/80 uppercase">中文</h3>
+                            </div>
+                            <p className="text-sm text-pearl/60 font-light leading-relaxed pl-8">{prompt.chinese}</p>
                           </div>
-                          <p className="text-sm text-stone pl-8">{prompt.chinese}</p>
-                          
-                          <div className="flex items-center gap-2 pt-2">
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-rose-gold/20 text-dusty-rose text-sm font-medium">
-                              EN
-                            </span>
-                            <h3 className="font-medium text-navy">English</h3>
+
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/10 text-pearl/40 text-[10px] font-mono">
+                                EN
+                              </span>
+                              <h3 className="text-xs font-medium tracking-widest text-pearl/80 uppercase">English</h3>
+                            </div>
+                            <p className="text-sm text-pearl/60 font-light leading-relaxed pl-8 font-mono">{prompt.english}</p>
                           </div>
-                          <p className="text-sm text-stone pl-8">{prompt.english}</p>
                         </div>
-                        
+
                         <button
                           onClick={() => handleUsePrompt(prompt.english)}
-                          className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-navy text-ivory rounded-md hover:bg-navy/90 transition-colors text-sm"
+                          className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-white/10 text-alabaster rounded-sm hover:bg-gold hover:text-obsidian hover:shadow-sm transition-all duration-300 text-xs font-medium tracking-widest uppercase border border-white/10 group-hover:border-gold/20"
                         >
                           使用
-                          <ExternalLink className="w-4 h-4" />
+                          <ExternalLink className="w-3 h-3" />
                         </button>
                       </div>
                     </div>

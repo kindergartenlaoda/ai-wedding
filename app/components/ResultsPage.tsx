@@ -99,7 +99,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-[3/4] w-full rounded-md bg-charcoal" />
+              <Skeleton key={i} className="aspect-[3/4] w-full rounded-md bg-white/5 border border-white/10" />
             ))}
           </div>
         </div>
@@ -115,7 +115,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
           <FadeIn delay={0.1}>
             <button
               onClick={() => onNavigate('dashboard')}
-              className="flex items-center gap-2 text-stone-400 hover:text-alabaster mb-8 transition-colors font-medium"
+              className="flex items-center gap-2 text-pearl/60 hover:text-alabaster mb-8 transition-colors font-medium shadow-sm w-fit bg-white/5 hover:bg-white/10 px-4 py-2 rounded-sm border border-white/10"
               aria-label="返回仪表盘"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -124,15 +124,15 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
           </FadeIn>
 
           <FadeIn delay={0.2}>
-            <GlassCard className="p-8 text-center bg-charcoal/50 border-white/10">
-              <div className="w-16 h-16 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+            <GlassCard className="p-8 text-center bg-obsidian border-white/10 shadow-lg">
+              <div className="w-16 h-16 bg-red-900/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
                 <AlertCircle className="w-8 h-8 text-red-400" />
               </div>
               <h2 className="text-2xl font-display font-medium text-alabaster mb-2">加载失败</h2>
-              <p className="text-stone-400 mb-6">{error}</p>
+              <p className="text-pearl/60 mb-6">{error}</p>
               <button
                 onClick={() => onNavigate('dashboard')}
-                className="px-6 py-3 bg-charcoal text-alabaster rounded-md hover:bg-white/5 transition-all duration-300 font-medium border border-white/10"
+                className="px-6 py-3 bg-white/5 text-alabaster rounded-sm hover:bg-white/10 transition-all duration-300 font-medium border border-white/10 hover:shadow-glow uppercase tracking-widest text-xs"
               >
                 返回仪表盘
               </button>
@@ -151,7 +151,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
           <FadeIn delay={0.1}>
             <button
               onClick={() => onNavigate('dashboard')}
-              className="flex items-center gap-2 text-stone-400 hover:text-alabaster mb-8 transition-colors font-medium"
+              className="flex items-center gap-2 text-pearl/60 hover:text-alabaster mb-8 transition-colors font-medium shadow-sm w-fit bg-white/5 hover:bg-white/10 px-4 py-2 rounded-sm border border-white/10"
               aria-label="返回仪表盘"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -160,14 +160,14 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
           </FadeIn>
 
           <FadeIn delay={0.2}>
-            <GlassCard className="p-12 text-center bg-charcoal/50 border-white/10">
-              <div className="w-20 h-20 bg-charcoal rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5">
-                <Sparkles className="w-10 h-10 text-gold" />
+            <GlassCard className="p-12 text-center bg-obsidian border-white/10 shadow-lg">
+              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+                <Sparkles className="w-10 h-10 text-gold opacity-80" />
               </div>
-              <h2 className="text-2xl font-display font-medium text-alabaster mb-2">
+              <h2 className="text-2xl font-display font-medium text-alabaster mb-2 tracking-wider">
                 {generation ? '图片生成中' : '未找到生成结果'}
               </h2>
-              <p className="text-stone-400 mb-6">
+              <p className="text-pearl/60 mb-8 font-light tracking-wide max-w-md mx-auto">
                 {generation?.status === 'processing'
                   ? '您的图片正在生成中，请稍候片刻...'
                   : generation?.status === 'pending'
@@ -182,14 +182,14 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => onNavigate('dashboard')}
-                  className="px-6 py-3 bg-charcoal text-alabaster rounded-md hover:bg-white/5 transition-all duration-300 font-medium border border-white/10"
+                  className="px-8 py-3 bg-transparent text-pearl rounded-sm hover:text-alabaster hover:bg-white/5 transition-all duration-300 font-medium border border-white/10 uppercase tracking-widest text-xs"
                 >
                   返回仪表盘
                 </button>
                 {generation?.status === 'processing' && (
                   <button
                     onClick={() => window.location.reload()}
-                    className="px-6 py-3 bg-gold text-obsidian rounded-md hover:bg-gold/90 transition-all duration-300 font-medium flex items-center gap-2"
+                    className="px-8 py-3 bg-obsidian text-alabaster rounded-sm hover:bg-gold hover:text-obsidian transition-all duration-500 font-medium flex items-center gap-2 border border-transparent hover:shadow-glow uppercase tracking-widest text-xs"
                   >
                     <Repeat className="w-5 h-5" />
                     刷新页面
@@ -209,7 +209,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
         <FadeIn delay={0.1}>
           <button
             onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-2 text-stone-400 hover:text-alabaster mb-8 transition-colors font-medium"
+            className="flex items-center gap-2 text-pearl/60 hover:text-alabaster mb-8 transition-colors font-medium shadow-sm w-fit bg-white/5 hover:bg-white/10 px-4 py-2 rounded-sm border border-white/10"
             aria-label="返回仪表盘"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -218,26 +218,26 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
         </FadeIn>
 
         <FadeIn delay={0.2}>
-          <GlassCard className="mb-8 bg-charcoal/30 border-white/10">
+          <GlassCard className="mb-8 bg-obsidian border-white/10 shadow-lg">
             <div className="p-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-charcoal border border-white/10 rounded-md flex items-center justify-center shadow-sm">
-                  <Sparkles className="w-6 h-6 text-gold" />
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-sm flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-7 h-7 text-gold opacity-80" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-display font-medium text-alabaster">照片已准备好！</h1>
-                  <p className="text-stone-400">{generation?.project?.name || '您的项目'} - 我们为您生成了 {currentImages.length} 张精美作品</p>
+                  <h1 className="text-3xl font-display font-medium text-alabaster tracking-wider mb-1">照片已准备好！</h1>
+                  <p className="text-pearl/60 font-light tracking-wide">{generation?.project?.name || '您的项目'} <span className="mx-2 opacity-30">|</span> 生成了 <span className="text-gold">{currentImages.length}</span> 张精美作品</p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-4 mt-6">
-                <button className="px-6 py-3 bg-gold text-obsidian rounded-md hover:bg-gold/90 transition-all duration-300 font-medium flex items-center gap-2 shadow-md">
-                  <Heart className="w-5 h-5" />
+              <div className="flex flex-wrap gap-4 mt-8">
+                <button className="px-6 py-3 bg-obsidian text-alabaster rounded-sm hover:bg-gold hover:text-obsidian transition-all duration-500 font-medium flex items-center gap-2 shadow-sm border border-transparent hover:shadow-[0_0_15px_rgba(200,160,100,0.3)] tracking-widest text-xs uppercase">
+                  <Heart className="w-4 h-4" />
                   保存收藏
                 </button>
                 <button
                   onClick={() => setShowShareModal(true)}
-                  className="px-6 py-3 bg-charcoal/50 backdrop-blur-sm text-alabaster rounded-md hover:bg-white/10 transition-all duration-300 font-medium flex items-center gap-2 border border-white/10"
+                  className="px-6 py-3 bg-white/5 backdrop-blur-sm text-pearl rounded-sm hover:bg-white/10 hover:text-alabaster transition-all duration-500 font-medium flex items-center gap-2 border border-white/10 tracking-widest text-xs uppercase"
                 >
                   <Share2 className="w-5 h-5" />
                   分享相册
@@ -248,12 +248,12 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
         </FadeIn>
 
         <FadeIn delay={0.3}>
-          <GlassCard className="mb-8">
+          <GlassCard className="mb-8 bg-transparent border-white/10">
             <div className="p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                <div className="flex-1">
-                  <h2 className="text-xl font-display font-medium text-navy">预览画廊</h2>
-                  <p className="text-sm text-stone mt-1">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                <div className="flex-1 border-l-2 border-gold pl-4">
+                  <h2 className="text-xl font-display font-medium text-alabaster tracking-wider">预览画廊</h2>
+                  <p className="text-sm text-pearl/60 font-light mt-1 tracking-wide">
                     {selectedImages.size > 0 ? `已选择 ${selectedImages.size} 张图片` : '选择图片购买'}
                   </p>
                 </div>
@@ -266,7 +266,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                         const allIndices = new Set(currentImages.map((_, i) => i));
                         setSelectedImages(allIndices);
                       }}
-                      className="px-4 py-2 bg-champagne text-navy rounded-md hover:bg-champagne/80 transition-all duration-300 font-medium text-sm border border-stone/10"
+                      className="px-5 py-2.5 bg-white/5 text-pearl rounded-sm hover:bg-white/10 hover:text-alabaster transition-all duration-300 font-medium text-xs tracking-widest uppercase border border-white/10"
                     >
                       全选
                     </button>
@@ -280,7 +280,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                         });
                         setSelectedImages(newSelection);
                       }}
-                      className="px-4 py-2 bg-champagne text-navy rounded-md hover:bg-champagne/80 transition-all duration-300 font-medium text-sm border border-stone/10"
+                      className="px-5 py-2.5 bg-white/5 text-pearl rounded-sm hover:bg-white/10 hover:text-alabaster transition-all duration-300 font-medium text-xs tracking-widest uppercase border border-white/10"
                     >
                       反选
                     </button>
@@ -293,15 +293,15 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                           .map(([index]) => index);
                         setSelectedImages(new Set(topRated));
                       }}
-                      className="px-4 py-2 bg-gradient-to-r from-rose-gold/20 to-dusty-rose/20 text-navy rounded-md hover:bg-gradient-to-r hover:from-rose-gold/30 hover:to-dusty-rose/30 transition-all duration-300 font-medium text-sm border border-rose-gold/30 flex items-center gap-1"
+                      className="px-5 py-2.5 bg-gold/10 text-gold rounded-sm hover:bg-gold/20 transition-all duration-300 font-medium text-xs tracking-widest uppercase border border-gold/30 flex items-center gap-1.5 shadow-[0_0_10px_rgba(200,160,100,0.1)]"
                     >
-                      <Sparkles className="w-4 h-4" />
+                      <Sparkles className="w-3.5 h-3.5" />
                       智能推荐
                     </button>
                     {selectedImages.size > 0 && (
                       <button
                         onClick={() => setSelectedImages(new Set())}
-                        className="px-4 py-2 bg-ivory text-stone rounded-md hover:bg-champagne transition-all duration-300 font-medium text-sm border border-stone/10"
+                        className="px-5 py-2.5 bg-transparent text-pearl/70 rounded-sm hover:bg-white/5 hover:text-alabaster transition-all duration-300 font-medium text-xs tracking-widest uppercase border border-transparent"
                       >
                         清空
                       </button>
@@ -312,44 +312,44 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                 <button
                   onClick={handlePurchase}
                   disabled={selectedImages.size === 0}
-                  className="px-6 py-3 bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory rounded-md hover:shadow-glow transition-all duration-300 font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-8 py-3 bg-obsidian text-alabaster rounded-sm hover:bg-gold hover:text-obsidian hover:shadow-[0_0_20px_rgba(200,160,100,0.3)] transition-all duration-500 font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border border-transparent uppercase tracking-widest text-xs"
                 >
-                  <Download className="w-5 h-5" />
+                  <Download className="w-4 h-4" />
                   购买所选 ({selectedImages.size})
                 </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-champagne border border-dusty-rose/20 rounded-md p-4 flex items-start gap-3">
-                  <Lock className="w-5 h-5 text-dusty-rose flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-navy">
-                    <p className="font-medium mb-1">预览模式</p>
-                    <p className="text-stone">这些是带水印的预览图。购买后可下载无水印的高清版本。</p>
+                <div className="bg-white/5 border border-white/10 rounded-sm p-4 flex items-start gap-4 shadow-sm hover:bg-white/10 transition-colors">
+                  <Lock className="w-5 h-5 text-pearl/50 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-alabaster">
+                    <p className="font-medium mb-1 tracking-wide">预览模式</p>
+                    <p className="text-pearl/60 font-light leading-relaxed">这些是带水印的预览图。购买后可下载无水印的高清版本。</p>
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-rose-gold/10 to-dusty-rose/10 border border-rose-gold/20 rounded-md p-4 flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-rose-gold flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-navy">
-                    <p className="font-medium mb-1">AI智能推荐</p>
-                    <p className="text-stone">点击"智能推荐"按钮，AI会自动选择质量最高的3张图片。</p>
+                <div className="bg-gold/5 border border-gold/20 rounded-sm p-4 flex items-start gap-4 shadow-sm hover:bg-gold/10 transition-colors">
+                  <Sparkles className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-alabaster">
+                    <p className="font-medium mb-1 tracking-wide">AI智能推荐</p>
+                    <p className="text-pearl/60 font-light leading-relaxed">点击"智能推荐"按钮，AI会自动选择质量最高的3张图片。</p>
                   </div>
                 </div>
               </div>
 
               {/* 预览/高清切换 */}
-              <div className="mb-6 flex items-center gap-3">
+              <div className="mb-8 flex items-center gap-3">
                 <button
                   onClick={() => setTab('preview')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 ${tab === 'preview' ? 'bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory shadow-md' : 'bg-champagne text-navy hover:bg-ivory'}`}
+                  className={`px-8 py-2.5 rounded-sm text-xs font-medium tracking-widest uppercase transition-all duration-500 border ${tab === 'preview' ? 'bg-gold text-obsidian border-gold shadow-[0_0_15px_rgba(200,160,100,0.3)]' : 'bg-transparent text-pearl/60 border-white/10 hover:bg-white/5 hover:text-alabaster'}`}
                 >
                   预览
                 </button>
                 <button
                   onClick={() => setTab('high_res')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 ${tab === 'high_res' ? 'bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory shadow-md' : 'bg-champagne text-navy hover:bg-ivory'}`}
+                  className={`px-8 py-2.5 rounded-sm text-xs font-medium tracking-widest uppercase transition-all duration-500 border ${tab === 'high_res' ? 'bg-gold text-obsidian border-gold shadow-[0_0_15px_rgba(200,160,100,0.3)]' : 'bg-transparent text-pearl/60 border-white/10 hover:bg-white/5 hover:text-alabaster'}`}
                   disabled={resultsHigh.length === 0}
                 >
-                  高清{resultsHigh.length === 0 ? '（未解锁）' : ''}
+                  高清{resultsHigh.length === 0 ? ' (未解锁)' : ''}
                 </button>
               </div>
 
@@ -360,7 +360,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                   return (
                     <div
                       key={index}
-                      className="relative aspect-[3/4] rounded-md overflow-hidden group cursor-pointer border border-stone/10 hover:border-rose-gold/30 transition-all duration-500"
+                      className="relative aspect-[3/4] rounded-sm overflow-hidden group cursor-pointer border border-white/5 hover:border-gold/50 transition-all duration-700 shadow-lg hover:shadow-[0_0_25px_rgba(200,160,100,0.15)]"
                       onClick={() => setLightboxIndex(index)}
                     >
                       <Image
@@ -371,7 +371,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                       />
 
-                      <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-obsidian/90 via-obsidian/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                       <div className="absolute top-3 right-3 flex items-center gap-2">
                         <button
@@ -379,9 +379,9 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                             e.stopPropagation();
                             (tab === 'preview' ? toggleLikePreview : toggleLikeHigh)(index);
                           }}
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 shadow-lg ${(tab === 'preview' ? likedPreview : likedHigh).has(index)
-                            ? 'bg-gold text-obsidian scale-105'
-                            : 'bg-charcoal/80 backdrop-blur-sm text-alabaster hover:bg-charcoal border border-white/10 hover:scale-105'
+                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 shadow-xl border ${(tab === 'preview' ? likedPreview : likedHigh).has(index)
+                            ? 'bg-gold border-gold text-obsidian scale-110'
+                            : 'bg-obsidian/40 backdrop-blur-md text-pearl hover:text-alabaster border-white/20 hover:bg-obsidian/80 hover:scale-110 hover:border-white/40'
                             }`}
                           aria-label={(tab === 'preview' ? likedPreview : likedHigh).has(index) ? '取消收藏' : '收藏'}
                         >
@@ -393,9 +393,9 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                               e.stopPropagation();
                               toggleImageSelection(index);
                             }}
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 shadow-lg ${selectedImages.has(index)
-                              ? 'bg-gold text-obsidian scale-110'
-                              : 'bg-charcoal/80 backdrop-blur-sm text-alabaster hover:bg-charcoal border border-white/20 hover:scale-105'
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 shadow-xl border ${selectedImages.has(index)
+                              ? 'bg-gold border-gold text-obsidian scale-110'
+                              : 'bg-obsidian/40 backdrop-blur-md text-pearl hover:text-alabaster border-white/20 hover:bg-obsidian/80 hover:scale-110 hover:border-white/40'
                               }`}
                             aria-label={selectedImages.has(index) ? '取消选择' : '选择'}
                           >
@@ -435,7 +435,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                             </div>
                           </div>
                           {/* 边角标签 */}
-                          <div className="absolute top-0 left-0 px-4 py-2 bg-charcoal/80 backdrop-blur-sm text-alabaster text-xs font-bold rounded-br-md border-b border-r border-white/10">
+                          <div className="absolute top-0 left-0 px-4 py-2 bg-obsidian/80 backdrop-blur-md text-pearl/80 text-xs font-medium tracking-widest uppercase rounded-br-sm border-b border-r border-white/10">
                             预览版
                           </div>
                         </>
@@ -449,9 +449,9 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                                 e.stopPropagation();
                                 toggleImageSelection(index);
                               }}
-                              className={`flex-1 px-4 py-3 rounded-lg transition-all duration-300 font-medium text-sm flex items-center justify-center gap-2 shadow-lg ${selectedImages.has(index)
-                                ? 'bg-gold text-obsidian'
-                                : 'bg-charcoal/90 text-alabaster hover:bg-stone border border-white/10'
+                              className={`flex-1 px-4 py-3 rounded-sm transition-all duration-500 font-medium text-xs tracking-widest uppercase flex items-center justify-center gap-2 shadow-xl border ${selectedImages.has(index)
+                                ? 'bg-gold border-gold text-obsidian'
+                                : 'bg-obsidian/60 backdrop-blur-md text-pearl border-white/20 hover:text-alabaster hover:bg-obsidian/90 hover:border-white/40'
                                 }`}
                             >
                               {selectedImages.has(index) ? (
@@ -478,20 +478,21 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
         </FadeIn>
 
         <FadeIn delay={0.4}>
-          <GlassCard className="bg-gradient-to-br from-champagne to-blush border-rose-gold/20">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-display font-medium text-navy">价格选项</h3>
+          <GlassCard className="bg-obsidian border-white/10 shadow-2xl overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-transparent pointer-events-none" />
+            <div className="p-10 relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-display font-medium text-2xl text-alabaster tracking-wider">价格选项</h3>
                 {selectedImages.size > 0 && bestValue && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-gold/20 text-navy rounded-full text-sm font-medium">
-                    <TrendingUp className="w-4 h-4 text-rose-gold" />
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gold/10 text-gold rounded-sm border border-gold/20 text-xs tracking-widest uppercase font-medium shadow-[0_0_15px_rgba(200,160,100,0.1)]">
+                    <TrendingUp className="w-4 h-4 text-gold" />
                     为您推荐：{bestValue.name}
                   </div>
                 )}
               </div>
               {selectedImages.size > 0 && (
-                <p className="text-sm text-stone mb-4">
-                  已选择 {selectedImages.size} 张图片 • 根据您的选择智能推荐最优惠套餐
+                <p className="text-sm text-pearl/60 font-light tracking-wide mb-8">
+                  已选择 <span className="text-gold font-medium">{selectedImages.size}</span> 张图片 • 根据您的选择智能推荐最优惠套餐
                 </p>
               )}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -502,29 +503,29 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
                   return (
                     <div
                       key={pkg.id}
-                      className={`rounded-md p-6 border-2 transition-all duration-300 cursor-pointer ${isRecommended
-                        ? 'bg-gradient-to-br from-rose-gold to-dusty-rose text-ivory border-rose-gold shadow-glow'
-                        : 'bg-ivory text-navy border-transparent hover:border-dusty-rose/30'
+                      className={`relative rounded-sm p-8 border transition-all duration-500 cursor-pointer overflow-hidden ${isRecommended
+                        ? 'bg-obsidian border-gold shadow-[0_0_20px_rgba(200,160,100,0.15)] transform hover:-translate-y-1'
+                        : 'bg-white/5 border-white/10 hover:border-white/30 hover:bg-white/10'
                         }`}
                     >
                       {isRecommended && (
-                        <div className="inline-block px-3 py-1 bg-ivory/20 backdrop-blur-sm rounded-full text-xs font-bold mb-3">
+                        <div className="absolute top-0 right-0 bg-gold text-obsidian px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-bl-sm">
                           推荐
                         </div>
                       )}
-                      <div className="text-3xl font-display font-semibold mb-2">${pkg.price}</div>
-                      <div className={`mb-4 ${isRecommended ? 'text-ivory/80' : 'text-stone'}`}>
+                      <div className={`text-4xl font-display font-medium mb-3 ${isRecommended ? 'text-gold' : 'text-alabaster'}`}>${pkg.price}</div>
+                      <div className={`mb-6 text-sm tracking-widest uppercase ${isRecommended ? 'text-alabaster' : 'text-pearl/60'}`}>
                         {pkg.name}
                       </div>
                       {savings > 0 && (
-                        <div className={`text-sm font-medium mb-3 ${isRecommended ? 'text-ivory/90' : 'text-rose-gold'}`}>
+                        <div className={`text-xs font-medium mb-4 px-3 py-1 rounded-sm inline-block ${isRecommended ? 'bg-gold/10 text-gold border border-gold/20' : 'bg-white/5 text-alabaster border border-white/10'}`}>
                           节省 ${savings}
                         </div>
                       )}
-                      <ul className={`space-y-2 text-sm ${isRecommended ? 'text-ivory/80' : 'text-stone'}`}>
+                      <ul className={`space-y-3 text-sm font-light ${isRecommended ? 'text-pearl' : 'text-pearl/60'}`}>
                         {pkg.features.map((feature, idx) => (
                           <li key={idx} className="flex items-center gap-2">
-                            <Check className="w-4 h-4 flex-shrink-0" />
+                            <Check className={`w-4 h-4 flex-shrink-0 ${isRecommended ? 'text-gold' : 'text-pearl/40'}`} />
                             {feature}
                           </li>
                         ))}
@@ -609,11 +610,11 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
     >
       {/* 顶部条：索引指示器与关闭 */}
       <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-4">
-        <div className="text-ivory/80 text-sm font-medium">
-          {index + 1} / {images.length}
+        <div className="text-pearl/80 text-sm font-medium tracking-widest">
+          {index + 1} <span className="text-pearl/40 mx-2">/</span> {images.length}
         </div>
         <button
-          className="p-2 bg-ivory/20 backdrop-blur-sm text-ivory rounded-md hover:bg-ivory/30 transition-all duration-300 shadow-md"
+          className="p-2 bg-obsidian/40 border border-white/10 backdrop-blur-md text-pearl rounded-sm hover:bg-white/10 hover:text-alabaster transition-all duration-500 shadow-md"
           onClick={(e) => { e.stopPropagation(); onClose(); }}
           aria-label="关闭"
         >
@@ -651,7 +652,7 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
                     PREVIEW • 预览 • PREVIEW
                   </div>
                 </div>
-                <div className="absolute top-8 left-8 px-6 py-3 bg-charcoal/80 border border-white/10 backdrop-blur-sm text-alabaster text-sm font-bold rounded-md">
+                <div className="absolute top-8 left-8 px-6 py-3 bg-obsidian/80 border border-gold/30 backdrop-blur-md text-gold text-xs font-medium tracking-widest uppercase rounded-sm shadow-[0_0_20px_rgba(200,160,100,0.1)]">
                   预览版 • 购买后无水印
                 </div>
               </>
@@ -663,9 +664,9 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
       <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-3">
         <button
           onClick={(e) => { e.stopPropagation(); onToggleLike(index); }}
-          className={`px-4 py-2 rounded-md transition-all duration-300 flex items-center gap-2 shadow-md ${liked.has(index) ? 'bg-gold text-obsidian' : 'bg-charcoal/50 border border-white/10 backdrop-blur-sm text-alabaster hover:bg-white/10'}`}
+          className={`px-6 py-3 rounded-sm transition-all duration-500 font-medium text-xs tracking-widest uppercase flex items-center gap-2 shadow-xl border ${liked.has(index) ? 'bg-gold border-gold text-obsidian' : 'bg-obsidian/60 border-white/10 backdrop-blur-md text-pearl hover:text-alabaster hover:bg-white/10'}`}
         >
-          <Heart className="w-5 h-5" />
+          <Heart className="w-4 h-4" />
           {liked.has(index) ? '已收藏' : '收藏'}
         </button>
         <a
@@ -685,24 +686,24 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
               } catch (err) { void err; }
             })();
           }}
-          className="px-4 py-2 rounded-md transition-all duration-300 flex items-center gap-2 bg-ivory/20 backdrop-blur-sm text-ivory hover:bg-ivory/30 shadow-md"
+          className="px-6 py-3 rounded-sm transition-all duration-500 font-medium text-xs tracking-widest uppercase flex items-center gap-2 bg-white/5 border border-white/10 backdrop-blur-md text-pearl hover:text-alabaster hover:bg-white/10 shadow-xl"
         >
-          <Download className="w-5 h-5" />
+          <Download className="w-4 h-4" />
           下载
         </a>
         <button
-          className="px-4 py-2 rounded-md transition-all duration-300 flex items-center gap-2 bg-charcoal/50 border border-white/10 backdrop-blur-sm text-alabaster hover:bg-white/10 shadow-md"
+          className="px-6 py-3 rounded-sm transition-all duration-500 font-medium text-xs tracking-widest uppercase flex items-center gap-2 bg-obsidian/60 border border-white/10 backdrop-blur-md text-pearl hover:text-alabaster hover:bg-white/10 shadow-xl"
           onClick={(e) => { e.stopPropagation(); navigator.clipboard?.writeText(current).catch(() => { }); }}
         >
-          <Share2 className="w-5 h-5" />
+          <Share2 className="w-4 h-4" />
           复制链接
         </button>
         {originalPhotos.length > 0 && (
           <button
             onClick={(e) => { e.stopPropagation(); setCompareMode(prev => !prev); }}
-            className={`px-4 py-2 rounded-md transition-all duration-300 flex items-center gap-2 shadow-md ${compareMode ? 'bg-gold text-obsidian' : 'bg-charcoal/50 border border-white/10 backdrop-blur-sm text-alabaster hover:bg-white/10'}`}
+            className={`px-6 py-3 rounded-sm transition-all duration-500 font-medium text-xs tracking-widest uppercase flex items-center gap-2 shadow-xl border ${compareMode ? 'bg-gold border-gold text-obsidian' : 'bg-obsidian/60 border-white/10 backdrop-blur-md text-pearl hover:text-alabaster hover:bg-white/10'}`}
           >
-            <Repeat className="w-5 h-5" />
+            <Repeat className="w-4 h-4" />
             {compareMode ? '退出对比' : '对比原图'}
           </button>
         )}
@@ -710,14 +711,14 @@ function Lightbox({ images, index, onClose, onIndexChange, liked, onToggleLike, 
 
       {/* 左右切换 */}
       <button
-        className="absolute left-4 p-2 bg-ivory/20 backdrop-blur-sm text-ivory rounded-md hover:bg-ivory/30 transition-all duration-300 shadow-md"
+        className="absolute left-8 p-3 bg-obsidian/40 border border-white/10 backdrop-blur-md text-pearl rounded-full hover:bg-white/10 hover:text-alabaster hover:scale-110 transition-all duration-500 shadow-xl"
         onClick={toPrev}
         aria-label="上一张"
       >
         ‹
       </button>
       <button
-        className="absolute right-4 p-2 bg-ivory/20 backdrop-blur-sm text-ivory rounded-md hover:bg-ivory/30 transition-all duration-300 shadow-md"
+        className="absolute right-8 p-3 bg-obsidian/40 border border-white/10 backdrop-blur-md text-pearl rounded-full hover:bg-white/10 hover:text-alabaster hover:scale-110 transition-all duration-500 shadow-xl"
         onClick={toNext}
         aria-label="下一张"
       >

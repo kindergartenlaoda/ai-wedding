@@ -42,19 +42,19 @@ export function ProfilePage() {
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen bg-alabaster flex items-center justify-center">
-        <p className="text-stone">请先登录</p>
+      <div className="min-h-screen bg-obsidian flex items-center justify-center">
+        <p className="text-pearl/60">请先登录</p>
       </div>
     );
   }
 
   return (
-    <div className="py-12 min-h-screen bg-alabaster">
+    <div className="py-12 min-h-screen bg-obsidian">
       <div className="px-4 mx-auto max-w-3xl sm:px-6 lg:px-8">
         <FadeIn delay={0.1}>
           <button
             onClick={() => router.push('/dashboard')}
-            className="flex items-center gap-2 text-stone hover:text-obsidian mb-8 transition-colors text-sm tracking-wider uppercase font-medium"
+            className="flex items-center gap-2 text-pearl/60 hover:text-alabaster mb-8 transition-colors text-sm tracking-wider uppercase font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
             返回工作台
@@ -62,21 +62,21 @@ export function ProfilePage() {
         </FadeIn>
 
         <FadeIn delay={0.2}>
-          <h1 className="text-2xl font-display font-medium text-obsidian uppercase tracking-widest mb-8">
+          <h1 className="text-2xl font-display font-medium text-alabaster uppercase tracking-widest mb-8">
             个人中心
           </h1>
         </FadeIn>
 
         {/* Profile info */}
         <FadeIn delay={0.3}>
-          <div className="bg-alabaster border border-stone/10 rounded-sm p-6 mb-6 shadow-sm">
+          <div className="bg-white/5 border border-white/10 rounded-sm p-6 mb-6 shadow-sm">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 bg-obsidian rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-black/40 rounded-full flex items-center justify-center border border-white/10">
                 <User className="w-6 h-6 text-gold" />
               </div>
               <div>
-                <p className="text-sm text-stone">{profile.email}</p>
-                <p className="text-xs text-stone/60 tracking-wider uppercase mt-1">
+                <p className="text-sm text-alabaster tracking-wider">{profile.email}</p>
+                <p className="text-xs text-pearl/40 tracking-wider uppercase mt-1">
                   {profile.role === 'admin' ? '管理员' : '普通用户'}
                 </p>
               </div>
@@ -84,7 +84,7 @@ export function ProfilePage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-stone tracking-wider uppercase mb-2 font-medium">
+                <label className="block text-xs text-pearl/60 tracking-wider uppercase mb-2 font-medium">
                   昵称
                 </label>
                 <div className="flex gap-3">
@@ -93,12 +93,12 @@ export function ProfilePage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="输入昵称"
-                    className="flex-1 px-4 py-2.5 border border-stone/20 rounded-sm text-sm text-obsidian bg-alabaster focus:outline-none focus:border-gold transition-colors"
+                    className="flex-1 px-4 py-2.5 border border-white/20 rounded-sm text-sm text-alabaster bg-black/40 focus:outline-none focus:border-gold transition-colors"
                   />
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-obsidian text-alabaster rounded-sm hover:bg-gold hover:text-obsidian transition-colors duration-500 text-xs tracking-wider uppercase font-medium disabled:opacity-50"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gold text-obsidian rounded-sm hover:shadow-[0_0_15px_rgba(200,160,100,0.4)] transition-all duration-500 text-xs tracking-wider uppercase font-medium disabled:opacity-50"
                   >
                     <Save className="w-3.5 h-3.5" />
                     {saving ? '保存中...' : '保存'}
@@ -111,26 +111,26 @@ export function ProfilePage() {
 
         {/* Credits */}
         <FadeIn delay={0.4}>
-          <div className="bg-alabaster border border-stone/10 rounded-sm p-6 mb-6 shadow-sm">
-            <h2 className="text-sm font-display font-medium text-obsidian tracking-wider uppercase mb-4">
+          <div className="bg-white/5 border border-white/10 rounded-sm p-6 mb-6 shadow-sm">
+            <h2 className="text-sm font-display font-medium text-alabaster tracking-wider uppercase mb-4">
               积分信息
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-stone/5 border border-stone/10 rounded-sm text-center">
+              <div className="p-4 bg-black/40 border border-white/10 rounded-sm text-center">
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <Sparkles className="w-4 h-4 text-gold" />
-                  <span className="text-xs text-stone tracking-wider uppercase">可用积分</span>
+                  <span className="text-xs text-pearl/60 tracking-wider uppercase">可用积分</span>
                 </div>
-                <span className="text-2xl font-display font-medium text-obsidian">
+                <span className="text-2xl font-display font-medium text-alabaster">
                   {profile.credits}
                 </span>
               </div>
-              <div className="p-4 bg-stone/5 border border-stone/10 rounded-sm text-center">
+              <div className="p-4 bg-black/40 border border-white/10 rounded-sm text-center">
                 <div className="flex items-center justify-center gap-1.5 mb-2">
-                  <Sparkles className="w-4 h-4 text-stone" />
-                  <span className="text-xs text-stone tracking-wider uppercase">冻结积分</span>
+                  <Sparkles className="w-4 h-4 text-pearl/40" />
+                  <span className="text-xs text-pearl/60 tracking-wider uppercase">冻结积分</span>
                 </div>
-                <span className="text-2xl font-display font-medium text-stone">
+                <span className="text-2xl font-display font-medium text-pearl/40">
                   0
                 </span>
               </div>

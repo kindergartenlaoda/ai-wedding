@@ -34,8 +34,8 @@ export function ProjectList({
 }: ProjectListProps) {
   if (loading && projects.length === 0) {
     return (
-      <div className="flex justify-center items-center py-20 bg-alabaster">
-        <Loader2 className="w-12 h-12 animate-spin text-obsidian" />
+      <div className="flex justify-center items-center py-20 bg-transparent">
+        <Loader2 className="w-12 h-12 animate-spin text-gold" />
       </div>
     );
   }
@@ -66,14 +66,14 @@ export function ProjectList({
         ))}
       </div>
       {hasMore && onLoadMore && (
-        <div className="flex justify-center py-6">
+        <div className="flex justify-center py-10">
           <button
             onClick={onLoadMore}
             disabled={loading}
-            className="flex gap-2 items-center px-6 py-3 text-xs tracking-[0.2em] font-medium rounded-sm border transition-all duration-300 bg-transparent text-obsidian hover:bg-stone/5 border-stone/20 disabled:opacity-50 uppercase"
+            className="flex gap-2 items-center px-8 py-3 text-xs tracking-[0.2em] font-medium rounded-sm border transition-all duration-300 bg-transparent text-pearl hover:text-alabaster hover:bg-white/5 border-white/10 hover:border-gold/30 disabled:opacity-50 uppercase"
           >
             {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin text-gold" />
             ) : (
               <ChevronDown className="w-4 h-4" />
             )}

@@ -97,45 +97,45 @@ export function GenerateSinglePage() {
   };
 
   return (
-    <div className="py-12 min-h-screen bg-alabaster">
+    <div className="py-12 min-h-screen bg-obsidian">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone/5 border border-stone/10 text-obsidian rounded-sm text-xs font-medium tracking-[0.2em] shadow-sm mb-6 uppercase">
-            <Wand2 className="w-4 h-4 text-gold" />
-            AI 图片生成
+          <div className="inline-flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 text-alabaster rounded-sm text-xs font-medium tracking-widest shadow-sm mb-8 uppercase">
+            <Wand2 className="w-4 h-4 text-gold opacity-80" />
+            焕影 AI
           </div>
-          <h1 className="mb-4 text-4xl font-medium md:text-5xl font-display text-obsidian uppercase tracking-widest">
+          <h1 className="mb-4 text-4xl font-medium md:text-5xl font-display text-alabaster uppercase tracking-wider">
             生成全新的
             <span className="italic text-gold font-serif"> 视觉作品</span>
           </h1>
-          <p className="mb-8 text-sm font-light tracking-widest text-stone uppercase">上传照片，选择风格，AI智能构成专属光影</p>
+          <p className="mb-8 text-sm font-light tracking-wide text-pearl/60 uppercase">上传照片，选择风格，AI智能构成专属光影</p>
 
           {/* 积分余额显示 */}
           {user && profile && (
-            <div className="inline-flex items-center gap-4 px-8 py-4 bg-stone/5 border border-stone/10 rounded-sm shadow-sm">
+            <div className="inline-flex items-center gap-4 px-8 py-4 bg-white/5 border border-white/10 rounded-sm shadow-sm backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-gold shadow-[0_0_8px_rgba(200,160,100,0.8)] animate-pulse"></div>
-                <span className="text-xs font-medium text-stone uppercase tracking-widest">
-                  当前额度: <span className={`text-lg font-bold font-display ml-1 tracking-tight ${profile.credits >= 15 ? 'text-obsidian' : 'text-red-600'}`}>{profile.credits}</span>
+                <span className="text-xs font-medium text-pearl/80 uppercase tracking-widest">
+                  当前额度: <span className={`text-lg font-bold font-display ml-1 tracking-tight ${profile.credits >= 15 ? 'text-alabaster' : 'text-red-400'}`}>{profile.credits}</span>
                 </span>
               </div>
-              <div className="w-px h-6 bg-stone/20"></div>
-              <span className="text-xs text-stone font-light tracking-wide">
-                单次生成消耗 <span className="font-medium text-obsidian mx-1">15</span> 积分
+              <div className="w-px h-6 bg-white/10"></div>
+              <span className="text-xs text-pearl/60 font-light tracking-wide">
+                单次生成消耗 <span className="font-medium text-alabaster mx-1">15</span> 积分
               </span>
             </div>
           )}
 
           {/* 积分不足警告 */}
           {user && profile && profile.credits < 15 && (
-            <div className="flex gap-4 items-start p-5 mt-6 bg-stone/5 rounded-sm border border-red-900/10 max-w-2xl mx-auto shadow-sm">
+            <div className="flex gap-4 items-start p-5 mt-6 bg-white/5 rounded-sm border border-red-500/20 max-w-2xl mx-auto shadow-sm">
               <AlertCircle className="w-5 h-5 text-gold flex-shrink-0" />
               <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-obsidian mb-2 uppercase tracking-widest">额度不足</p>
-                <p className="text-xs text-stone font-light tracking-wide leading-relaxed">
-                  您当前有 <span className="font-medium text-obsidian">{profile.credits}</span> 积分，还需要{' '}
+                <p className="text-sm font-medium text-alabaster mb-2 uppercase tracking-widest">额度不足</p>
+                <p className="text-xs text-pearl/60 font-light tracking-wide leading-relaxed">
+                  您当前有 <span className="font-medium text-alabaster">{profile.credits}</span> 积分，还需要{' '}
                   <span className="font-medium text-gold">{15 - profile.credits}</span> 积分才能生成。
-                  <a href="/pricing" className="ml-3 font-medium text-obsidian underline hover:text-gold transition-colors">
+                  <a href="/pricing" className="ml-3 font-medium text-alabaster underline hover:text-gold transition-colors">
                     前往获取额度
                   </a>
                 </p>
@@ -193,7 +193,7 @@ export function GenerateSinglePage() {
               <button
                 onClick={() => handleGenerate('openAi')}
                 disabled={!uploadState.originalImage || !getCurrentPrompt() || generationState.isGenerating || (profile ? profile.credits < 15 : false)}
-                className="flex gap-3 items-center px-10 py-5 text-xs font-medium bg-obsidian rounded-sm transition-all duration-500 text-alabaster hover:bg-gold hover:text-obsidian hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest border border-transparent"
+                className="flex gap-3 items-center px-10 py-5 text-xs font-medium bg-gold rounded-sm transition-all duration-500 text-obsidian hover:shadow-[0_0_20px_rgba(200,160,100,0.4)] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
               >
                 {generationState.isGenerating ? (
                   <>
@@ -213,7 +213,7 @@ export function GenerateSinglePage() {
               <button
                 onClick={() => handleGenerate('openRouter')}
                 disabled={!uploadState.originalImage || !getCurrentPrompt() || generationState.isGenerating || (profile ? profile.credits < 15 : false)}
-                className="flex gap-3 items-center px-10 py-5 text-xs font-medium bg-transparent border border-obsidian rounded-sm shadow-sm transition-all duration-500 text-obsidian hover:bg-obsidian hover:text-alabaster disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-[0.2em]"
+                className="flex gap-3 items-center px-10 py-5 text-xs font-medium bg-white/5 border border-white/10 rounded-sm shadow-sm transition-all duration-500 text-alabaster hover:bg-white/10 hover:border-gold/30 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
               >
                 {generationState.isGenerating ? (
                   <>
@@ -233,7 +233,7 @@ export function GenerateSinglePage() {
               <button
                 onClick={() => handleGenerate('302')}
                 disabled={!uploadState.originalImage || !getCurrentPrompt() || generationState.isGenerating || (profile ? profile.credits < 15 : false)}
-                className="flex gap-3 items-center px-10 py-5 text-xs font-medium bg-transparent border border-obsidian rounded-sm shadow-sm transition-all duration-500 text-obsidian hover:bg-obsidian hover:text-alabaster disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-[0.2em]"
+                className="flex gap-3 items-center px-10 py-5 text-xs font-medium bg-white/5 border border-white/10 rounded-sm shadow-sm transition-all duration-500 text-alabaster hover:bg-white/10 hover:border-gold/30 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
               >
                 {generationState.isGenerating ? (
                   <>
@@ -250,38 +250,38 @@ export function GenerateSinglePage() {
             )}
           </div>
           {sourcesLoading && (
-            <p className="mt-3 text-sm text-stone">
+            <p className="mt-4 text-xs font-light text-pearl/60 tracking-wider">
               正在加载可用的模型来源...
             </p>
           )}
           {!sourcesLoading && sources.length === 0 && (
-            <p className="mt-3 text-sm text-red-600">
+            <p className="mt-4 text-xs font-light text-red-400 tracking-wider">
               暂无可用的模型配置，请联系管理员
             </p>
           )}
           {!getCurrentPrompt() && uploadState.originalImage && (
-            <p className="mt-3 text-sm text-stone">
+            <p className="mt-4 text-xs font-light text-pearl/60 tracking-wider">
               请选择模板风格或输入自定义提示词
             </p>
           )}
           {profile && profile.credits < 15 && uploadState.originalImage && getCurrentPrompt() && (
-            <p className="mt-3 text-sm text-red-600 font-medium">
+            <p className="mt-4 text-xs font-medium text-red-400 tracking-wider">
               积分不足，需要 15 积分才能生成
             </p>
           )}
         </div>
 
         {error && (
-          <div className="flex gap-4 items-start p-5 mt-8 bg-stone/5 rounded-sm border border-red-900/10 shadow-sm">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-            <p className="text-sm font-light tracking-wide text-obsidian">{error}</p>
+          <div className="flex gap-4 items-start p-5 mt-8 bg-red-500/10 rounded-sm border border-red-500/20 shadow-sm max-w-2xl mx-auto">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+            <p className="text-sm font-light tracking-wide text-red-200">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="flex gap-4 items-start p-5 mt-8 bg-stone/5 rounded-sm border border-gold/20 shadow-sm">
+          <div className="flex gap-4 items-start p-5 mt-8 bg-gold/10 rounded-sm border border-gold/20 shadow-sm max-w-2xl mx-auto">
             <CheckCircle className="w-5 h-5 text-gold flex-shrink-0" />
-            <p className="text-sm font-light tracking-wide text-obsidian">{success}</p>
+            <p className="text-sm font-light tracking-wide text-amber-100">{success}</p>
           </div>
         )}
       </div>

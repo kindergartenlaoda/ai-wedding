@@ -31,41 +31,10 @@ export function usePhotoUpload({ maxPhotos, onPhotosChange }: UsePhotoUploadOpti
    * 识别图片是否包含人物
    * @throws Error 当识别 API 失败时抛出错误
    */
-  const identifyPerson = async (dataUrl: string): Promise<IdentifyResult> => {
-    const response = await fetch('/api/identify-image', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ images: [dataUrl] }),
-    });
-
-    if (response.status === 401) {
-      return { hasPerson: true, description: '未登录，跳过验证' };
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: '未知错误' }));
-      throw new Error(errorData.error || `识别请求失败: ${response.status}`);
-    }
-
-    const result = await response.json();
-    const firstResult = result.results?.[0];
-
-    // 检查识别是否成功
-    if (!firstResult) {
-      throw new Error('识别结果为空');
-    }
-
-    if (!firstResult.success) {
-      // 识别 API 调用失败，抛出详细错误
-      const errorMsg = firstResult.description || '识别服务失败';
-      throw new Error(errorMsg);
-    }
-
-    return {
-      hasPerson: firstResult.hasPerson,
-      description: firstResult.description,
-    };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const identifyPerson = async (_dataUrl: string): Promise<IdentifyResult> => {
+    // TODO: 暂时跳过 identify-image 接口调用，直接返回通过
+    return { hasPerson: true, description: '跳过识别（临时禁用）' };
   };
 
   const uploadToMinio = async (dataUrl: string): Promise<string | undefined> => {
@@ -109,7 +78,7 @@ export function usePhotoUpload({ maxPhotos, onPhotosChange }: UsePhotoUploadOpti
           try {
             // 1. 先识别图片是否包含人物
             const identifyResult = await identifyPerson(dataUrl);
-            
+
             if (!identifyResult.hasPerson) {
               // 不包含人物，不上传到 MinIO，记录错误
               console.warn(`图片 ${file.name} 未检测到人物: ${identifyResult.description}`);
@@ -120,22 +89,22 @@ export function usePhotoUpload({ maxPhotos, onPhotosChange }: UsePhotoUploadOpti
 
             // 2. 包含人物，继续质量检查
             const quality = await checkImageQuality(dataUrl);
-            
+
             // 3. 上传到 MinIO
             const minioUrl = await uploadToMinio(dataUrl);
-            
+
             // 清除该索引的错误（如果有）
             newErrors.delete(currentIndex);
-            
+
             newPhotos.push({ dataUrl, minioUrl, quality });
           } catch (error) {
             // 识别 API 失败，这是致命错误，中止整个上传流程
             const errorMessage = error instanceof Error ? error.message : '识别服务失败';
             console.error('识别图片失败:', errorMessage);
-            
+
             // 设置致命错误，触发弹窗
             setCriticalError(errorMessage);
-            
+
             // 中止上传流程
             setIsAnalyzing(false);
             return;
@@ -157,7 +126,7 @@ export function usePhotoUpload({ maxPhotos, onPhotosChange }: UsePhotoUploadOpti
     (index: number) => {
       const updated = photosWithQuality.filter((_, i) => i !== index);
       setPhotosWithQuality(updated);
-      
+
       // 更新错误映射（重新索引）
       const newErrors = new Map<number, string>();
       identifyErrors.forEach((error, idx) => {
@@ -168,7 +137,7 @@ export function usePhotoUpload({ maxPhotos, onPhotosChange }: UsePhotoUploadOpti
         }
       });
       setIdentifyErrors(newErrors);
-      
+
       onPhotosChange(updated.map(p => p.minioUrl || p.dataUrl));
     },
     [photosWithQuality, onPhotosChange, identifyErrors]

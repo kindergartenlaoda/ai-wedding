@@ -113,22 +113,22 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
   };
 
   return (
-    <div className="py-16 min-h-screen bg-gradient-to-b from-champagne via-ivory to-blush">
+    <div className="py-16 min-h-screen bg-obsidian">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {/* Header */}
         <FadeIn delay={0.1}>
           {/* Notice Banner */}
           <div className="mb-12 mx-auto max-w-3xl">
-            <div className="p-6 bg-stone/5 border border-stone/15 rounded-sm shadow-sm">
+            <div className="p-6 bg-white/5 border border-white/10 rounded-sm shadow-sm backdrop-blur-sm">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-stone/10 rounded-full flex items-center justify-center">
+                <div className="flex-shrink-0 w-10 h-10 bg-white/5 border border-white/10 rounded-sm flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-gold" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="mb-3 text-lg font-medium text-obsidian tracking-wide">
+                  <h3 className="mb-3 text-lg font-medium text-alabaster tracking-widest uppercase">
                     当前为体验模式
                   </h3>
-                  <ul className="space-y-2 text-sm text-stone font-light">
+                  <ul className="space-y-2 text-sm text-pearl/60 font-light tracking-wide">
                     <li className="flex items-start gap-2">
                       <span className="text-gold mt-0.5">•</span>
                       <span>新用户注册即可获得免费体验积分</span>
@@ -148,15 +148,15 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
           </div>
 
           <div className="mb-16 text-center">
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone/5 border border-stone/10 text-obsidian rounded-sm text-xs font-medium tracking-[0.2em] shadow-sm mb-6 uppercase">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 text-alabaster rounded-sm text-xs font-medium tracking-[0.2em] shadow-sm mb-6 uppercase">
               <Sparkles className="w-4 h-4 text-gold" />
               极简 · 透明
             </div>
-            <h1 className="mb-4 text-4xl font-medium sm:text-5xl md:text-6xl font-display text-obsidian tracking-tight">
+            <h1 className="mb-4 text-4xl font-medium sm:text-5xl md:text-6xl font-display text-alabaster tracking-tight">
               选择您的
               <span className="italic text-gold font-serif"> 艺术方案</span>
             </h1>
-            <p className="mx-auto max-w-2xl text-xl leading-relaxed text-stone font-light">
+            <p className="mx-auto max-w-2xl text-xl leading-relaxed text-pearl/60 font-light">
               新晋创作者尊享 50 免费积分。随时升阶，解锁更多殿堂级视效。
             </p>
           </div>
@@ -167,7 +167,7 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
           {plans.map((plan, index) => (
             <FadeIn key={index} delay={0.2 + index * 0.1}>
               <div
-                className={`relative bg-alabaster rounded-sm shadow-xl overflow-hidden transition-all duration-700 hover:shadow-2xl hover:-translate-y-2 ${plan.popular ? 'border border-gold shadow-[0_0_40px_rgba(200,160,100,0.15)] ring-1 ring-gold/50' : 'border border-stone/10'
+                className={`relative bg-black/40 rounded-sm shadow-xl overflow-hidden transition-all duration-700 hover:shadow-2xl hover:-translate-y-2 ${plan.popular ? 'border border-gold shadow-[0_0_40px_rgba(200,160,100,0.15)] ring-1 ring-gold/50' : 'border border-white/10'
                   }`}
               >
                 {plan.popular && (
@@ -177,22 +177,22 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                 )}
 
                 <div className={`p-10 ${plan.popular ? 'pt-14' : ''}`}>
-                  <div className="flex justify-center items-center mb-8 w-16 h-16 bg-stone/5 rounded-full border border-stone/10 mx-auto">
-                    <plan.icon className="w-6 h-6 text-obsidian" />
+                  <div className="flex justify-center items-center mb-8 w-16 h-16 bg-white/5 rounded-full border border-white/10 mx-auto">
+                    <plan.icon className="w-6 h-6 text-alabaster" />
                   </div>
 
                   <div className="text-center">
-                    <h3 className="mb-3 text-2xl font-medium font-display text-obsidian uppercase tracking-widest">{plan.name}</h3>
+                    <h3 className="mb-3 text-2xl font-medium font-display text-alabaster uppercase tracking-widest">{plan.name}</h3>
                     <div className="flex justify-center items-baseline mb-8">
-                      <span className="text-5xl font-light font-display text-obsidian">${plan.price}</span>
-                      <span className="text-xs text-stone tracking-wider uppercase ml-2 block">终身授权</span>
+                      <span className="text-5xl font-light font-display text-alabaster">${plan.price}</span>
+                      <span className="text-xs text-pearl/60 tracking-wider uppercase ml-2 block">终身授权</span>
                     </div>
                   </div>
 
-                  <div className="px-5 py-4 mb-8 bg-stone/5 rounded-sm border border-stone/10">
+                  <div className="px-5 py-4 mb-8 bg-white/5 rounded-sm border border-white/10">
                     <div className="flex justify-between items-center text-sm uppercase tracking-wider">
-                      <span className="font-medium text-stone">生成额度</span>
-                      <span className="text-2xl font-semibold font-display text-obsidian">
+                      <span className="font-medium text-pearl/60">生成额度</span>
+                      <span className="text-2xl font-semibold font-display text-alabaster">
                         {plan.credits}
                       </span>
                     </div>
@@ -201,10 +201,10 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                   <ul className="mb-10 space-y-5">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex gap-4 items-start">
-                        <div className="w-5 h-5 rounded-full bg-stone/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3 h-3 text-obsidian" />
+                        <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-alabaster" />
                         </div>
-                        <span className="leading-relaxed text-stone font-light">{feature}</span>
+                        <span className="leading-relaxed text-pearl/60 font-light">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -213,8 +213,8 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                     onClick={() => handlePurchase(index)}
                     disabled={purchasing !== null}
                     className={`w-full py-5 rounded-sm font-medium text-sm transition-all duration-500 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed tracking-widest uppercase ${plan.popular
-                        ? 'bg-obsidian text-alabaster hover:bg-gold hover:text-obsidian'
-                        : 'bg-transparent text-obsidian hover:bg-stone/5 border border-stone/20'
+                      ? 'bg-gold text-obsidian hover:shadow-[0_0_15px_rgba(200,160,100,0.4)] hover:bg-gold/90'
+                      : 'bg-transparent text-alabaster hover:bg-white/5 hover:border-gold/50 border border-white/10'
                       }`}
                   >
                     {purchasing === index ? '授权中...' : user ? '立即购买' : '开启艺术之旅'}
@@ -227,19 +227,19 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
 
         {/* 对比表格 */}
         <FadeIn delay={0.5}>
-          <div className="overflow-x-auto mb-24 border border-stone/10 rounded-sm bg-alabaster shadow-xl">
+          <div className="overflow-x-auto mb-24 border border-white/10 rounded-sm bg-black/40 shadow-2xl">
             <div className="p-10">
-              <h2 className="mb-8 text-3xl font-medium font-display text-obsidian text-center uppercase tracking-widest">方案对比</h2>
+              <h2 className="mb-8 text-3xl font-medium font-display text-alabaster text-center uppercase tracking-widest">方案对比</h2>
               <table className="min-w-full text-sm text-left">
                 <thead>
-                  <tr className="border-b border-stone/10">
-                    <th className="py-5 pr-4 text-stone uppercase tracking-widest text-xs font-medium">权益</th>
+                  <tr className="border-b border-white/10">
+                    <th className="py-5 pr-4 text-pearl/60 uppercase tracking-widest text-xs font-medium">权益</th>
                     {plans.map((p, i) => (
-                      <th key={i} className="px-6 py-5 font-medium text-obsidian uppercase tracking-wider">{p.name}</th>
+                      <th key={i} className="px-6 py-5 font-medium text-alabaster uppercase tracking-wider">{p.name}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone/5">
+                <tbody className="divide-y divide-white/10">
                   {[
                     { k: '可用模板', v: ['5 种基础模板', '全部模板', '全部模板 + 未来更新'] },
                     { k: '图片分辨率', v: ['高清 (HD)', '超高清 (4K)', '最高清 (8K)'] },
@@ -249,12 +249,12 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                     { k: '商用授权', v: ['-', '可选购买', '包含'] },
                     { k: 'API 接口', v: ['-', '可选购买', '包含'] },
                   ].map((row, rIdx) => (
-                    <tr key={rIdx} className="hover:bg-stone/5 transition-colors duration-300">
-                      <td className="py-5 pr-4 whitespace-nowrap text-stone font-light text-sm">{row.k}</td>
+                    <tr key={rIdx} className="hover:bg-white/5 transition-colors duration-300">
+                      <td className="py-5 pr-4 whitespace-nowrap text-pearl/60 font-light text-sm">{row.k}</td>
                       {row.v.map((vv, cIdx) => (
-                        <td key={cIdx} className="px-6 py-5 whitespace-nowrap text-obsidian font-light">
+                        <td key={cIdx} className="px-6 py-5 whitespace-nowrap text-alabaster font-light">
                           {vv === '-' ? (
-                            <span className="text-stone/30">--</span>
+                            <span className="text-pearl/40">--</span>
                           ) : (
                             vv
                           )}
@@ -272,8 +272,8 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
         <FadeIn delay={0.6}>
           <div className="mx-auto max-w-4xl pt-10">
             <div className="mb-12 text-center">
-              <h2 className="mb-4 text-3xl font-medium font-display text-obsidian tracking-wider">常见问题</h2>
-              <p className="text-stone font-light">关于积分和使用的常见疑问</p>
+              <h2 className="mb-4 text-3xl font-medium font-display text-alabaster tracking-wider">常见问题</h2>
+              <p className="text-pearl/60 font-light">关于积分和使用的常见疑问</p>
             </div>
 
             <div className="space-y-6">
@@ -295,9 +295,9 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                   a: '可以随时升级到更高方案，已有积分会保留并自动合并。'
                 }
               ].map((faq, i) => (
-                <div key={i} className="p-8 rounded-sm border border-stone/10 bg-alabaster hover:shadow-lg transition-all duration-500">
-                  <h3 className="mb-4 font-medium font-display text-obsidian tracking-wide text-lg">{faq.q}</h3>
-                  <p className="leading-relaxed text-stone font-light text-sm">{faq.a}</p>
+                <div key={i} className="p-8 rounded-sm border border-white/10 bg-black/40 hover:bg-white/5 hover:-translate-y-1 hover:shadow-xl hover:border-gold/30 transition-all duration-500">
+                  <h3 className="mb-4 font-medium font-display text-alabaster tracking-wide text-lg">{faq.q}</h3>
+                  <p className="leading-relaxed text-pearl/60 font-light text-sm">{faq.a}</p>
                 </div>
               ))}
             </div>

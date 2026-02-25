@@ -35,9 +35,9 @@ function ProgressBarInner() {
   if (!isLoading) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-champagne">
+    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-black/40">
       <div
-        className="h-full bg-gradient-to-r from-rose-gold to-dusty-rose transition-all duration-300 ease-out"
+        className="h-full bg-gradient-to-r from-gold to-yellow-600 transition-all duration-300 ease-out"
         style={{ width: `${progress}%` }}
       />
     </div>

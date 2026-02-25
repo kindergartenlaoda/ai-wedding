@@ -27,23 +27,23 @@ export function AnnouncementBanner() {
   };
 
   return (
-    <div className="relative bg-gradient-to-r from-navy via-forest to-navy text-ivory border-b border-rose-gold/20">
+    <div className="relative bg-gradient-to-r from-obsidian via-black to-obsidian text-alabaster border-b border-gold/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* 左侧图标 */}
           <div className="flex-shrink-0">
-            <div className="flex items-center justify-center w-8 h-8 bg-rose-gold/20 rounded-full">
-              <Megaphone className="w-4 h-4 text-rose-gold" />
+            <div className="flex items-center justify-center w-8 h-8 bg-gold/20 rounded-full">
+              <Megaphone className="w-4 h-4 text-gold" />
             </div>
           </div>
 
           {/* 中间内容 */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              <p className="text-sm sm:text-base text-ivory leading-relaxed">
+              <p className="text-sm sm:text-base text-alabaster leading-relaxed">
                 {announcement.content}
               </p>
-              <span className="text-xs text-stone/80 flex-shrink-0">
+              <span className="text-xs text-pearl/40 flex-shrink-0">
                 {formatDate(announcement.published_at)}
               </span>
             </div>
@@ -52,16 +52,16 @@ export function AnnouncementBanner() {
           {/* 右侧关闭按钮 */}
           <button
             onClick={dismissAnnouncement}
-            className="flex-shrink-0 p-1 rounded-full hover:bg-ivory/10 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-gold focus:ring-offset-2 focus:ring-offset-navy"
+            className="flex-shrink-0 p-1 rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-obsidian"
             aria-label="关闭公告"
           >
-            <X className="w-5 h-5 text-ivory/80 hover:text-ivory" />
+            <X className="w-5 h-5 text-pearl/60 hover:text-alabaster" />
           </button>
         </div>
       </div>
 
       {/* 底部装饰线 */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-rose-gold/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
     </div>
   );
 }

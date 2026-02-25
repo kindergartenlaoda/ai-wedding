@@ -24,7 +24,7 @@ export default function TestAnnouncementPage() {
           'Cache-Control': 'no-cache',
         },
       });
-      
+
       const data = await response.json();
       setPublicData({
         ...data,
@@ -46,14 +46,14 @@ export default function TestAnnouncementPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-champagne via-ivory to-blush p-8">
+    <div className="min-h-screen bg-obsidian p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* 标题 */}
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-navy mb-4">
+          <h1 className="text-4xl font-bold text-alabaster mb-4">
             🔧 系统公告测试页面
           </h1>
-          <p className="text-stone">
+          <p className="text-pearl/60">
             此页面用于诊断系统公告功能是否正常工作
           </p>
         </div>
@@ -63,7 +63,7 @@ export default function TestAnnouncementPage() {
           <button
             onClick={testPublicAPI}
             disabled={loading}
-            className="w-full px-6 py-3 bg-navy text-white rounded-lg hover:bg-navy/90 disabled:opacity-50 font-medium"
+            className="w-full px-6 py-3 bg-gold text-obsidian rounded-lg hover:bg-gold/90 disabled:opacity-50 font-medium"
           >
             {loading ? '测试中...' : '🔄 重新测试 /api/announcements'}
           </button>
@@ -72,7 +72,7 @@ export default function TestAnnouncementPage() {
         {/* 公共 API 测试结果 */}
         <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-navy">
+            <h2 className="text-2xl font-semibold text-alabaster">
               📡 公共 API 测试结果
             </h2>
             <span className="text-sm text-gray-500">
@@ -105,11 +105,10 @@ export default function TestAnnouncementPage() {
                     <tr className="border-b bg-gray-50">
                       <td className="px-4 py-2 font-semibold">状态</td>
                       <td className="px-4 py-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          publicData.announcement.is_active 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${publicData.announcement.is_active
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                          }`}>
                           {publicData.announcement.is_active ? '✓ 激活' : '未激活'}
                         </span>
                       </td>
@@ -157,7 +156,7 @@ export default function TestAnnouncementPage() {
         {/* 原始响应数据 */}
         {publicData && (
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-navy mb-4">
+            <h3 className="text-lg font-semibold text-alabaster mb-4">
               📋 原始响应数据
             </h3>
             <pre className="bg-gray-50 p-4 rounded-lg overflow-x-auto text-xs">
@@ -168,10 +167,10 @@ export default function TestAnnouncementPage() {
 
         {/* 诊断建议 */}
         <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-navy mb-4">
+          <h3 className="text-lg font-semibold text-alabaster mb-4">
             🔍 诊断步骤
           </h3>
-          
+
           <div className="space-y-3">
             <div className="border-l-4 border-blue-500 pl-4">
               <p className="font-semibold text-sm">步骤 1: 检查数据库</p>
@@ -211,15 +210,15 @@ export default function TestAnnouncementPage() {
 
         {/* 快捷链接 */}
         <div className="flex gap-4 justify-center">
-          <a 
+          <a
             href="/admin/announcements"
-            className="px-6 py-3 bg-navy text-white rounded-lg hover:bg-navy/90 font-medium"
+            className="px-6 py-3 bg-gold text-obsidian rounded-lg hover:bg-gold/90 font-medium"
           >
             📝 管理后台
           </a>
-          <a 
+          <a
             href="/"
-            className="px-6 py-3 bg-white border-2 border-navy text-navy rounded-lg hover:bg-gray-50 font-medium"
+            className="px-6 py-3 bg-transparent border-2 border-white/20 text-alabaster rounded-lg hover:bg-white/5 font-medium"
           >
             🏠 返回首页
           </a>

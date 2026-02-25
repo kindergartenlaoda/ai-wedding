@@ -30,7 +30,7 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
 
     return [
       { name: '已完成', value: stats.completed, color: '#C8A064' }, // Gold
-      { name: '失败', value: stats.failed, color: '#8B8A88' }, // Stone
+      { name: '失败', value: stats.failed, color: '#3f3f46' }, // Darker stone for failure 
     ].filter(item => item.value > 0);
   }, [projects]);
 
@@ -71,7 +71,7 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
 
   if (totalProjects === 0) {
     return (
-      <div className="text-center py-12 text-stone font-light tracking-wide text-sm">
+      <div className="text-center py-12 text-pearl/60 font-light tracking-wide text-sm">
         暂无数据可显示
       </div>
     );
@@ -80,8 +80,8 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* 状态分布饼图 */}
-      <div className="bg-stone/5 rounded-sm shadow-sm border border-stone/10 p-8">
-        <h3 className="text-lg font-medium font-display text-obsidian uppercase tracking-widest mb-6">项目状态分布</h3>
+      <div className="bg-white/5 rounded-sm shadow-sm border border-white/10 p-8">
+        <h3 className="text-lg font-medium font-display text-alabaster uppercase tracking-widest mb-6">项目状态分布</h3>
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
@@ -110,7 +110,7 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-sm font-light text-stone tracking-wide">
+              <span className="text-sm font-light text-pearl/60 tracking-wide">
                 {item.name}: {item.value}
               </span>
             </div>
@@ -119,8 +119,8 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
       </div>
 
       {/* 最近7天创建趋势 */}
-      <div className="bg-stone/5 rounded-sm shadow-sm border border-stone/10 p-8">
-        <h3 className="text-lg font-medium font-display text-obsidian uppercase tracking-widest mb-6">最近7天创建趋势</h3>
+      <div className="bg-white/5 rounded-sm shadow-sm border border-white/10 p-8">
+        <h3 className="text-lg font-medium font-display text-alabaster uppercase tracking-widest mb-6">最近7天创建趋势</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={dateStats}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -137,13 +137,13 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
             <Bar
               dataKey="count"
               name="项目数"
-              fill="#1A1A1A"
+              fill="#C8A064"
               radius={[2, 2, 0, 0]}
             />
           </BarChart>
         </ResponsiveContainer>
 
-        <div className="mt-6 text-sm font-light text-stone tracking-wide text-center">
+        <div className="mt-6 text-sm font-light text-pearl/60 tracking-wide text-center">
           总计：{totalProjects} 个项目
         </div>
       </div>

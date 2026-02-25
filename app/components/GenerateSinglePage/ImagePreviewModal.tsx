@@ -23,12 +23,12 @@ export function ImagePreviewModal({
     >
       <div className="flex relative flex-col w-full max-w-7xl h-full">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-medium font-display text-ivory">{previewTitle}</h3>
+          <h3 className="text-xl font-medium font-display text-alabaster uppercase tracking-widest">{previewTitle}</h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-full transition-colors bg-ivory/10 hover:bg-ivory/20"
+            className="p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 border border-white/10"
           >
-            <X className="w-6 h-6 text-ivory" />
+            <X className="w-6 h-6 text-alabaster" />
           </button>
         </div>
 
@@ -57,7 +57,7 @@ export function ImagePreviewModal({
               link.click();
               document.body.removeChild(link);
             }}
-            className="flex gap-2 items-center px-6 py-3 font-medium rounded-md transition-colors bg-ivory text-navy hover:bg-ivory/90"
+            className="flex gap-2 items-center px-6 py-3 font-medium rounded-sm transition-all duration-300 bg-gold text-obsidian hover:shadow-[0_0_15px_rgba(200,160,100,0.4)] text-sm tracking-widest uppercase"
           >
             <Download className="w-4 h-4" />
             下载图片
@@ -68,7 +68,7 @@ export function ImagePreviewModal({
                 e.stopPropagation();
                 onCopyBase64();
               }}
-              className="flex gap-2 items-center px-6 py-3 font-medium rounded-md transition-colors bg-ivory/20 text-ivory hover:bg-ivory/30"
+              className="flex gap-2 items-center px-6 py-3 font-medium rounded-sm transition-all duration-300 bg-white/10 text-alabaster border border-white/10 hover:bg-white/20 text-sm tracking-widest uppercase"
             >
               <Copy className="w-4 h-4" />
               复制Base64

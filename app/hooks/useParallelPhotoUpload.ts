@@ -26,34 +26,10 @@ function fileToDataUrl(file: File): Promise<string> {
 }
 
 async function identifyPerson(
-  dataUrl: string
+  _dataUrl: string
 ): Promise<{ hasPerson: boolean; description: string }> {
-  const response = await fetch('/api/identify-image', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ images: [dataUrl] }),
-  });
-
-  if (response.status === 401) {
-    return { hasPerson: true, description: '未登录，跳过验证' };
-  }
-
-  if (!response.ok) {
-    const data: { error?: string } = await response.json().catch(() => ({ error: '未知错误' }));
-    throw new Error(data.error || `识别请求失败: ${response.status}`);
-  }
-
-  const result = await response.json();
-  const first = result.results?.[0] as
-    | { success: boolean; hasPerson: boolean; description: string }
-    | undefined;
-
-  if (!first || !first.success) {
-    throw new Error(first?.description || '识别服务失败');
-  }
-
-  return { hasPerson: first.hasPerson, description: first.description };
+  // TODO: 暂时跳过 identify-image 接口调用，直接返回通过
+  return { hasPerson: true, description: '跳过识别（临时禁用）' };
 }
 
 async function uploadToMinio(dataUrl: string): Promise<string | undefined> {

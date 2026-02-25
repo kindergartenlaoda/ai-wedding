@@ -111,20 +111,19 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
   }, [projects, activeTab, filters]);
 
   return (
-    <div className="py-12 min-h-screen bg-alabaster">
+    <div className="py-12 min-h-screen bg-obsidian text-alabaster">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <DashboardHeader
           profile={profile}
-          onNavigateToPricing={() => onNavigate('pricing')}
         />
 
         <FadeIn delay={0.2}>
           <div className="flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center">
             <div>
               <div className="flex gap-3 items-center">
-                <h2 className="text-2xl font-medium font-display text-obsidian uppercase tracking-widest">我的项目</h2>
+                <h2 className="text-2xl font-medium font-display text-alabaster uppercase tracking-widest">我的项目</h2>
               </div>
-              <p className="mt-2 text-stone font-light tracking-wide text-sm">
+              <p className="mt-2 text-pearl/60 font-light tracking-wide text-sm">
                 {projects.length} 个项目总计
                 {filteredProjects.length < projects.length && (
                   <span className="text-gold">
@@ -139,7 +138,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
               <button
                 onClick={actions.handleManualRefresh}
                 disabled={loading}
-                className="flex gap-2 items-center px-4 py-3 text-xs tracking-[0.2em] font-medium rounded-sm border transition-all duration-300 bg-transparent text-obsidian hover:bg-stone/5 border-stone/20 disabled:opacity-50 uppercase"
+                className="flex gap-2 items-center px-4 py-3 text-xs tracking-[0.2em] font-medium rounded-sm border transition-all duration-300 bg-transparent text-pearl hover:text-alabaster hover:bg-white/5 border-white/10 disabled:opacity-50 uppercase"
                 title="刷新项目列表"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -147,7 +146,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
               </button>
               <button
                 onClick={() => onNavigate('create')}
-                className="flex gap-2 items-center px-6 py-3 text-xs tracking-[0.2em] font-medium bg-obsidian rounded-sm transition-all duration-500 text-alabaster hover:bg-gold hover:text-obsidian uppercase"
+                className="flex gap-2 items-center px-6 py-3 text-xs tracking-[0.2em] font-medium bg-gold text-obsidian rounded-sm transition-all duration-500 hover:-translate-y-px uppercase shadow-[0_0_15px_rgba(200,160,100,0.3)] hover:shadow-[0_0_20px_rgba(200,160,100,0.5)]"
               >
                 <Plus className="w-4 h-4" />
                 创建作品
@@ -164,7 +163,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         />
 
         <FadeIn delay={0.3}>
-          <GlassCard className="mb-6">
+          <GlassCard className="mb-6 !bg-white/5 border-white/10 backdrop-blur-md shadow-2xl">
             <DashboardTabs
               tabs={tabs}
               activeTab={activeTab}
@@ -229,22 +228,25 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
               </div>
             )}
 
-            <div className="p-10 m-8 bg-stone/5 rounded-sm border border-stone/10 shadow-sm">
-              <div className="flex flex-col gap-8 items-center md:flex-row">
-                <div className="flex flex-shrink-0 justify-center items-center w-16 h-16 bg-obsidian rounded-sm border border-stone/20 overflow-hidden shadow-lg">
-                  <Sparkles className="w-6 h-6 text-gold" />
+            <div className="p-10 m-8 bg-obsidian border border-white/10 rounded-sm shadow-xl relative overflow-hidden group">
+              {/* Decorative glow */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-gold/20 transition-colors duration-700 pointer-events-none" />
+
+              <div className="flex flex-col gap-8 items-center md:flex-row relative z-10">
+                <div className="flex flex-shrink-0 justify-center items-center w-16 h-16 bg-obsidian rounded-sm border border-gold/20 overflow-hidden shadow-[0_0_20px_rgba(200,160,100,0.15)] group-hover:border-gold/40 transition-colors duration-500">
+                  <Sparkles className="w-6 h-6 text-gold group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 <div className="flex-1 text-center md:text-left">
-                  <h3 className="mb-3 text-xl font-medium font-display text-obsidian uppercase tracking-widest">
+                  <h3 className="mb-3 text-xl font-medium font-display text-alabaster uppercase tracking-widest">
                     需要更多额度？
                   </h3>
-                  <p className="text-stone font-light text-sm tracking-wide">
-                    补充艺术创作所需的数字积分，即可无限制突破视觉边界，探索极致光影可能。
+                  <p className="text-pearl/70 font-light text-sm tracking-wide">
+                    补充艺术创作所需的暗房胶片，无限制突破视觉边界，探索极致光影的无限可能。
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('pricing')}
-                  className="px-8 py-4 font-medium whitespace-nowrap bg-transparent border border-obsidian rounded-sm shadow-sm transition-all duration-500 text-obsidian hover:bg-obsidian hover:text-alabaster uppercase tracking-[0.2em] text-xs"
+                  className="px-8 py-4 font-medium whitespace-nowrap bg-transparent border border-white/20 rounded-sm shadow-sm transition-all duration-500 text-pearl hover:bg-white/5 hover:text-alabaster hover:border-gold/50 hover:shadow-[0_0_20px_rgba(200,160,100,0.2)] uppercase tracking-[0.2em] text-xs"
                 >
                   探索方案
                 </button>

@@ -253,7 +253,7 @@ export function StepGenerate({ state, dispatch }: StepGenerateProps) {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount: state.template.price_credits }),
-        }).catch(() => {});
+        }).catch(() => { });
 
         await refreshProfile();
 
@@ -326,7 +326,7 @@ export function StepGenerate({ state, dispatch }: StepGenerateProps) {
 
   if (state.step === 'result' && showResults) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] bg-alabaster py-12 px-4">
+      <div className="min-h-[calc(100vh-4rem)] bg-obsidian py-12 px-4">
         <GenerationResults
           images={state.images}
           generationId={state.generationId}
@@ -337,7 +337,7 @@ export function StepGenerate({ state, dispatch }: StepGenerateProps) {
           <button
             type="button"
             onClick={() => dispatch({ type: 'RESET' })}
-            className="flex items-center gap-2 px-5 py-2.5 border border-stone/20 rounded-sm text-sm text-stone/70 hover:text-obsidian hover:border-stone/40 transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 border border-white/10 rounded-sm text-sm text-pearl/60 hover:text-alabaster hover:border-white/20 hover:bg-white/5 transition-colors uppercase tracking-widest"
           >
             <ArrowRight className="w-4 h-4" />
             再创作一组
@@ -345,7 +345,7 @@ export function StepGenerate({ state, dispatch }: StepGenerateProps) {
           <button
             type="button"
             onClick={() => router.push('/dashboard')}
-            className="flex items-center gap-2 px-5 py-2.5 bg-obsidian text-alabaster rounded-sm text-sm hover:bg-obsidian/90 transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gold text-obsidian rounded-sm text-sm hover:shadow-[0_0_15px_rgba(200,160,100,0.4)] transition-all duration-300 font-medium uppercase tracking-widest"
           >
             <Home className="w-4 h-4" />
             返回工作台

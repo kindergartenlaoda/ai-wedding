@@ -11,7 +11,7 @@ import { StepDomain } from './StepDomain';
 import { StepStyle } from './StepStyle';
 import { StepUpload } from './StepUpload';
 import { StepGenerate } from './StepGenerate';
-import { DOMAIN_CONFIG } from '@/types/domain';
+
 
 gsap.registerPlugin(useGSAP);
 
@@ -116,8 +116,8 @@ function StepFlowInner() {
 
       {/* LEFT PANE / FULLSCREEN */}
       <div className={`w-full transition-all duration-700 ease-in-out z-20 flex flex-col ${isFullScreenStep
-          ? 'lg:w-full lg:h-screen'
-          : 'lg:w-[450px] xl:w-[500px] lg:h-screen lg:fixed lg:left-0 lg:top-0 lg:border-r border-white/5 bg-obsidian/95 backdrop-blur-2xl shadow-2xl'
+        ? 'lg:w-full lg:h-screen'
+        : 'lg:w-[450px] xl:w-[500px] lg:h-screen lg:fixed lg:left-0 lg:top-0 lg:border-r border-white/5 bg-obsidian/95 backdrop-blur-2xl shadow-2xl'
         }`}>
 
         {!isFullScreenStep && (

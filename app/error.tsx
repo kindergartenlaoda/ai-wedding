@@ -19,32 +19,32 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-champagne to-ivory flex items-center justify-center p-4">
+    <div className="min-h-screen bg-obsidian flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-ivory rounded-xl shadow-lg p-8 border border-stone/10">
+        <div className="bg-white/5 backdrop-blur-md rounded-sm shadow-2xl p-8 border border-white/10">
           {/* 错误图标 */}
-          <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertCircle className="w-8 h-8 text-red-600" />
+          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-8 h-8 text-red-400" />
           </div>
 
           {/* 错误标题 */}
-          <h1 className="text-2xl font-display font-medium text-navy text-center mb-3">
+          <h1 className="text-2xl font-display font-medium text-alabaster tracking-wider text-center mb-3">
             出错了！
           </h1>
 
           {/* 错误描述 */}
-          <p className="text-stone text-center mb-6 leading-relaxed">
+          <p className="text-pearl/60 font-light text-center mb-6 leading-relaxed">
             {getErrorMessage(error)}
           </p>
 
           {/* 错误详情（开发环境） */}
           {process.env.NODE_ENV === 'development' && (
-            <div className="mb-6 p-4 bg-champagne rounded-lg border border-stone/10">
-              <p className="text-xs font-mono text-navy break-all">
+            <div className="mb-6 p-4 bg-black/40 rounded-sm border border-white/10">
+              <p className="text-xs font-mono text-pearl break-all">
                 {error.message}
               </p>
               {error.digest && (
-                <p className="text-xs text-stone mt-2">
+                <p className="text-xs text-pearl/40 mt-2">
                   错误ID: {error.digest}
                 </p>
               )}
@@ -55,25 +55,25 @@ export default function Error({
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={reset}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-rose-gold to-dusty-rose text-ivory rounded-md hover:shadow-glow transition-all duration-300 font-medium flex items-center justify-center gap-2 shadow-md"
+              className="flex-1 px-6 py-3 bg-gold text-obsidian rounded-sm hover:shadow-[0_0_15px_rgba(200,160,100,0.3)] transition-all duration-500 font-medium tracking-widest text-xs uppercase flex items-center justify-center gap-2"
             >
-              <RefreshCw className="w-5 h-5" />
+              <RefreshCw className="w-4 h-4" />
               重试
             </button>
             <button
               onClick={() => router.push('/')}
-              className="flex-1 px-6 py-3 bg-champagne text-navy rounded-md hover:bg-champagne/80 transition-all duration-300 font-medium flex items-center justify-center gap-2 border border-stone/10"
+              className="flex-1 px-6 py-3 bg-white/5 text-alabaster rounded-sm hover:bg-white/10 transition-all duration-500 font-medium tracking-widest text-xs uppercase flex items-center justify-center gap-2 border border-white/10"
             >
-              <Home className="w-5 h-5" />
+              <Home className="w-4 h-4" />
               返回首页
             </button>
           </div>
         </div>
 
         {/* 帮助提示 */}
-        <p className="text-center text-stone text-sm mt-6">
+        <p className="text-center text-pearl/40 font-light tracking-wide text-xs mt-8">
           如果问题持续存在，请联系
-          <a href="mailto:support@example.com" className="text-dusty-rose hover:underline ml-1">
+          <a href="mailto:support@example.com" className="text-gold hover:underline ml-1">
             客服支持
           </a>
         </p>
