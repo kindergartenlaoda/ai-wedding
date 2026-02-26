@@ -237,9 +237,26 @@ export function useStepFlow({ templates }: UseStepFlowOptions) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isInitialMount = useRef(true);
+  const hasInitializedFromUrl = useRef(false);
 
   const initialState = getInitialState(searchParams, templates);
   const [state, dispatch] = useReducer(stepFlowReducer, initialState);
+
+  // Re-initialize from URL when templates load
+  useEffect(() => {
+    if (hasInitializedFromUrl.current || templates.length === 0) return;
+
+    const legacyId = searchParams.get('templateId');
+    const templateId = legacyId || searchParams.get('template');
+
+    if (templateId && state.step === 'domain') {
+      const template = templates.find((t) => t.id === templateId);
+      if (template) {
+        hasInitializedFromUrl.current = true;
+        dispatch({ type: 'SELECT_TEMPLATE', template });
+      }
+    }
+  }, [templates, searchParams, state.step]);
 
   useEffect(() => {
     if (isInitialMount.current) {
