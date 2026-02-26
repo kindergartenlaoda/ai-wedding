@@ -6,9 +6,10 @@ const APP_PORT = process.env.PORT || 3000;
 module.exports = {
   apps: [{
     name: "ai-wedding",
-    script: "node_modules/.bin/next",
+    script: "node_modules/next/dist/bin/next",
     args: "start",
     cwd: APP_DIR,
+    interpreter: "node",
     env: {
       PORT: APP_PORT,
       NODE_ENV: "production",

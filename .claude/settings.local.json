@@ -91,7 +91,15 @@
       "Bash(source:*)",
       "Bash(NODE_ENV=production tsx:*)",
       "Bash(/tmp/final_checklist.md:*)",
-      "Bash(/tmp/implementation_complete.md:*)"
+      "Bash(/tmp/implementation_complete.md:*)",
+      "Bash(pnpm pm2:restart:*)",
+      "Bash(pnpm pm2:logs:*)",
+      "Bash(pnpm pm2:status:*)",
+      "Bash(pm2 delete:*)",
+      "Bash(/tmp/final_success_report.md:*)",
+      "Bash(/tmp/quick_test_guide.md:*)",
+      "Bash(/tmp/final_report.md:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
