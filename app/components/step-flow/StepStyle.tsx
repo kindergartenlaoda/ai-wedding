@@ -14,6 +14,7 @@ interface StepStyleProps {
   templates: Template[];
   onSelect: (template: Template) => void;
   onBack: () => void;
+  fullWidth?: boolean;
 }
 
 export function StepStyle({
@@ -21,6 +22,7 @@ export function StepStyle({
   templates,
   onSelect,
   onBack,
+  fullWidth,
 }: StepStyleProps) {
   const router = useRouter();
   const { profile } = useAuth();
@@ -47,7 +49,7 @@ export function StepStyle({
     <div className="w-full flex flex-col">
       <div className="flex-1 w-full">
 
-        <div className="grid grid-cols-2 gap-3 pb-8">
+        <div className={`grid gap-3 pb-8 ${fullWidth ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' : 'grid-cols-2'}`}>
           {templates.map((template, index) => {
             const isSelected = template.id === selectedId;
             const insufficientCredits =
@@ -111,7 +113,7 @@ export function StepStyle({
 
       {selectedTemplate && (
         <FadeIn>
-          <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-lg flex items-center justify-between">
+          <div className={`mt-4 p-4 bg-white/5 border border-white/10 rounded-lg flex items-center justify-between ${fullWidth ? 'max-w-2xl mx-auto' : ''}`}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-sm overflow-hidden relative">
                 {selectedTemplate.preview_image_url && (

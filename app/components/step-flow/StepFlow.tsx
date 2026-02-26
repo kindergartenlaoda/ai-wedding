@@ -151,21 +151,32 @@ function StepFlowInner() {
   }
 
   const isFullScreenStep = state.step === 'generate' || state.step === 'result' || state.step === 'error';
+  const isExpandedStep = state.step === 'style' || state.step === 'upload';
+  const showLeftPane = !isFullScreenStep && !isExpandedStep;
 
   return (
     <div className="h-screen w-full bg-obsidian flex font-sans overflow-hidden">
 
       {/* LEFT PANE: MAIN CANVAS */}
-      <div className={`flex-1 relative transition-all duration-700 ease-in-out bg-stone/5 ${isFullScreenStep ? 'w-full' : ''}`}>
-        <MainCanvas state={state} isFullScreenStep={isFullScreenStep} dispatch={dispatch} domains={domains} />
-      </div>
+      {showLeftPane && (
+        <div className={`flex-1 relative transition-all duration-700 ease-in-out bg-stone/5 ${isFullScreenStep ? 'w-full' : ''}`}>
+          <MainCanvas state={state} isFullScreenStep={isFullScreenStep} dispatch={dispatch} domains={domains} />
+        </div>
+      )}
+
+      {/* FULL-SCREEN STEP (generate / result / error) */}
+      {isFullScreenStep && (
+        <div className="flex-1 relative bg-stone/5">
+          <MainCanvas state={state} isFullScreenStep={isFullScreenStep} dispatch={dispatch} domains={domains} />
+        </div>
+      )}
 
       {/* RIGHT PANE: CONTROL PANEL */}
       {!isFullScreenStep && (
-        <div className="w-[400px] xl:w-[450px] h-screen flex flex-col bg-obsidian/95 backdrop-blur-2xl border-l border-white/5 z-20 shadow-[-20px_0_50px_rgba(0,0,0,0.5)]">
+        <div className={`h-screen flex flex-col bg-obsidian/95 backdrop-blur-2xl border-l border-white/5 z-20 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] transition-all duration-700 ${isExpandedStep ? 'w-full border-l-0 shadow-none' : 'w-[400px] xl:w-[450px]'}`}>
 
           <div className="flex-1 overflow-y-auto no-scrollbar relative">
-            <div className="sticky top-0 z-50 bg-obsidian/90 backdrop-blur-md pt-8 pb-4 px-6 border-b border-white/5 w-full flex justify-between items-center">
+            <div className={`sticky top-0 z-50 bg-obsidian/90 backdrop-blur-md pt-8 pb-4 border-b border-white/5 w-full flex justify-between items-center ${isExpandedStep ? 'px-8 lg:px-16 xl:px-24' : 'px-6'}`}>
               <h2 className="text-sm font-medium tracking-widest text-pearl/50 uppercase">
                 {state.step === 'domain' && '1. 选择领域'}
                 {state.step === 'style' && '2. 创作风格'}
@@ -178,7 +189,7 @@ function StepFlowInner() {
               )}
             </div>
 
-            <div className="px-6 py-6 pb-32">
+            <div className={`py-6 pb-32 ${isExpandedStep ? 'px-8 lg:px-16 xl:px-24' : 'px-6'}`}>
               {state.step === 'domain' && (
                 <StepDomain
                   onSelect={(domain) => dispatch({ type: 'SELECT_DOMAIN', domain })}
@@ -191,6 +202,7 @@ function StepFlowInner() {
                   templates={templates.filter((t) => t.domain === state.domain)}
                   onSelect={(template) => dispatch({ type: 'SELECT_TEMPLATE', template })}
                   onBack={goBack}
+                  fullWidth
                 />
               )}
 
