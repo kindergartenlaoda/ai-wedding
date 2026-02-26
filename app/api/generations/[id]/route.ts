@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import { mapGenerationWithRelations } from '@/lib/generation-mapper';
+import { invalidateCacheByPrefix } from '@/lib/server-cache';
 
 /**
  * PATCH /api/generations/[id]
@@ -20,6 +21,7 @@ export async function PATCH(
 
   const existing = await prisma.generations.findFirst({
     where: { id, user_id },
+    select: { id: true },
   });
   if (!existing) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -33,49 +35,68 @@ export async function PATCH(
   // Handle image updates - support both old and new formats
   if (body.preview_images !== undefined) {
     updateData.preview_images = body.preview_images;
-    if (Array.isArray(body.preview_images) && body.preview_images.length > 0) {
-      await prisma.generated_images.createMany({
-        data: body.preview_images.map((url: string, index: number) => ({
-          generation_id: id,
-          image_url: url,
-          image_type: 'preview',
-          image_index: index,
-        })),
-        skipDuplicates: true,
-      });
-    }
   }
 
   if (body.high_res_images !== undefined) {
     updateData.high_res_images = body.high_res_images;
-    if (Array.isArray(body.high_res_images) && body.high_res_images.length > 0) {
-      await prisma.generated_images.createMany({
-        data: body.high_res_images.map((url: string, index: number) => ({
-          generation_id: id,
-          image_url: url,
-          image_type: 'high_res',
-          image_index: index,
-        })),
-        skipDuplicates: true,
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (body.preview_images !== undefined) {
+      await tx.generated_images.deleteMany({
+        where: { generation_id: id, image_type: 'preview' },
       });
+      if (Array.isArray(body.preview_images) && body.preview_images.length > 0) {
+        await tx.generated_images.createMany({
+          data: body.preview_images.map((url: string, index: number) => ({
+            generation_id: id,
+            image_url: url,
+            image_type: 'preview',
+            image_index: index,
+          })),
+          skipDuplicates: true,
+        });
+      }
     }
-  }
 
-  // Handle new format: generated_images array
-  if (body.generated_images !== undefined && Array.isArray(body.generated_images)) {
-    await prisma.generated_images.deleteMany({ where: { generation_id: id } });
-    await prisma.generated_images.createMany({
-      data: body.generated_images.map((img: { image_url: string; image_type: string; image_index: number; metadata?: object }) => ({
-        generation_id: id,
-        image_url: img.image_url,
-        image_type: img.image_type,
-        image_index: img.image_index,
-        metadata: img.metadata || null,
-      })),
-    });
-  }
+    if (body.high_res_images !== undefined) {
+      await tx.generated_images.deleteMany({
+        where: { generation_id: id, image_type: 'high_res' },
+      });
+      if (Array.isArray(body.high_res_images) && body.high_res_images.length > 0) {
+        await tx.generated_images.createMany({
+          data: body.high_res_images.map((url: string, index: number) => ({
+            generation_id: id,
+            image_url: url,
+            image_type: 'high_res',
+            image_index: index,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
 
-  await prisma.generations.update({ where: { id }, data: updateData });
+    // Handle new format: generated_images array
+    if (body.generated_images !== undefined && Array.isArray(body.generated_images)) {
+      await tx.generated_images.deleteMany({ where: { generation_id: id } });
+      if (body.generated_images.length > 0) {
+        await tx.generated_images.createMany({
+          data: body.generated_images.map((img: { image_url: string; image_type: string; image_index: number; metadata?: object }) => ({
+            generation_id: id,
+            image_url: img.image_url,
+            image_type: img.image_type,
+            image_index: img.image_index,
+            metadata: img.metadata || null,
+          })),
+        });
+      }
+    }
+
+    await tx.generations.update({ where: { id }, data: updateData });
+  });
+
+  invalidateCacheByPrefix(`generations:${user_id}:`);
+  invalidateCacheByPrefix(`projects:${user_id}:`);
 
   return NextResponse.json({ success: true });
 }
@@ -133,5 +154,9 @@ export async function DELETE(
   }
 
   await prisma.generations.delete({ where: { id } });
+
+  invalidateCacheByPrefix(`generations:${user_id}:`);
+  invalidateCacheByPrefix(`projects:${user_id}:`);
+
   return NextResponse.json({ success: true });
 }

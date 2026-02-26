@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Download, Heart, Share2, ArrowLeft, Sparkles, Lock, Check, X, Repeat, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+import { Download, Heart, Share2, ArrowLeft, Sparkles, Check, X, Repeat, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,8 +8,10 @@ import { useImageLikes } from '@/hooks/useImageLikes';
 import { ImageCompareSlider } from './ImageCompareSlider';
 import { rateImages } from '@/lib/image-rating';
 import { FadeIn, GlassCard } from '@/components/react-bits';
-import { ShareModal } from './ShareModal';
 import type { GenerationWithRelations } from '@/types/database';
+
+// Lazy load heavy components
+const ShareModal = dynamic(() => import('./ShareModal').then(mod => ({ default: mod.ShareModal })), { ssr: false });
 
 interface ResultsPageProps {
   onNavigate: (page: string) => void;
@@ -74,21 +77,23 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
   const resultsHigh = generation?.high_res_images || [];
   const currentImages = tab === 'preview' ? resultsPreview : resultsHigh;
 
-  const imageRatings = rateImages(currentImages);
+  const imageRatings = useMemo(() => rateImages(currentImages), [currentImages]);
 
-  const toggleImageSelection = (index: number) => {
-    const newSelection = new Set(selectedImages);
-    if (newSelection.has(index)) {
-      newSelection.delete(index);
-    } else {
-      newSelection.add(index);
-    }
-    setSelectedImages(newSelection);
-  };
+  const toggleImageSelection = useCallback((index: number) => {
+    setSelectedImages(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  }, []);
 
-  const handlePurchase = () => {
+  const handlePurchase = useCallback(() => {
     onNavigate('pricing');
-  };
+  }, [onNavigate]);
 
   if (loading) {
     return (

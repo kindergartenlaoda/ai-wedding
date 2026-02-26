@@ -69,7 +69,8 @@
       "Bash(pnpm eslint:*)",
       "Bash(git:*)",
       "Bash(pnpm prisma:*)",
-      "Bash(perl:*)"
+      "Bash(perl:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

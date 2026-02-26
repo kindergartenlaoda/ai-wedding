@@ -80,8 +80,15 @@ const SOURCE_MAP: Record<string, 'openRouter' | 'openAi'> = {
   openAi: 'openAi',
 };
 
+const MODEL_CONFIG_CACHE_TTL_MS = Number(process.env.MODEL_CONFIG_CACHE_TTL_MS || '30000');
+type ModelConfigCacheEntry = {
+  value: ModelConfig | null;
+  expiresAt: number;
+};
+const modelConfigCache = new Map<string, ModelConfigCacheEntry>();
+
 /**
- * 从数据库获取激活的模型配置
+ * 从数据库获取激活的模型配置（带缓存）
  *
  * @param log - Pino logger 实例
  * @param type - 模型配置类型（默认 generate_image）
@@ -92,33 +99,51 @@ export async function getActiveModelConfig(
   type: ModelConfigType = ModelConfigType.generate_image,
   source?: string,
 ): Promise<ModelConfig | null> {
+  const prismaSource = source ? SOURCE_MAP[source] : undefined;
+  const cacheKey = `${type}:${prismaSource ?? 'all'}`;
+  const now = Date.now();
+  const cached = modelConfigCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
+  }
+  if (cached) modelConfigCache.delete(cacheKey);
+
   try {
-    const prismaSource = source ? SOURCE_MAP[source] : undefined;
     const config = await prisma.model_configs.findFirst({
       where: {
         type,
         status: 'active',
         ...(prismaSource && { source: prismaSource }),
       },
+      orderBy: { updated_at: 'desc' },
     });
-    if (!config) return null;
-    return {
-      id: config.id,
-      type: config.type as ModelConfig['type'],
-      name: config.name,
-      api_base_url: config.api_base_url,
-      api_key: config.api_key,
-      model_name: config.model_name,
-      status: config.status as ModelConfig['status'],
-      source: config.source as ModelConfig['source'],
-      description: config.description ?? undefined,
-      created_at: config.created_at.toISOString(),
-      updated_at: config.updated_at.toISOString(),
-      created_by: config.created_by ?? undefined,
-    };
+
+    const normalized = config
+      ? {
+          id: config.id,
+          type: config.type as ModelConfig['type'],
+          name: config.name,
+          api_base_url: config.api_base_url,
+          api_key: config.api_key,
+          model_name: config.model_name,
+          status: config.status as ModelConfig['status'],
+          source: config.source as ModelConfig['source'],
+          description: config.description ?? undefined,
+          created_at: config.created_at.toISOString(),
+          updated_at: config.updated_at.toISOString(),
+          created_by: config.created_by ?? undefined,
+        }
+      : null;
+
+    modelConfigCache.set(cacheKey, {
+      value: normalized,
+      expiresAt: now + MODEL_CONFIG_CACHE_TTL_MS,
+    });
+    return normalized;
   } catch (err) {
     log.error({ error: err }, '获取激活配置异常');
-    return null;
+    return cached?.value ?? null;
   }
 }
 

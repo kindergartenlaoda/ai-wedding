@@ -3,6 +3,23 @@ import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import { deductCreditsForGeneration } from '@/lib/credit-service';
 import { mapGeneration } from '@/lib/generation-mapper';
+import { getCache, invalidateCacheByPrefix, setCache } from '@/lib/server-cache';
+
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 50;
+const GENERATIONS_CACHE_TTL_MS = 10_000;
+
+function parsePagination(searchParams: URLSearchParams) {
+  const rawPage = Number.parseInt(searchParams.get('page') ?? '0', 10);
+  const rawPageSize = Number.parseInt(searchParams.get('pageSize') ?? String(DEFAULT_PAGE_SIZE), 10);
+
+  const page = Number.isFinite(rawPage) && rawPage >= 0 ? rawPage : 0;
+  const pageSize = Number.isFinite(rawPageSize)
+    ? Math.min(Math.max(rawPageSize, 1), MAX_PAGE_SIZE)
+    : DEFAULT_PAGE_SIZE;
+
+  return { page, pageSize, skip: page * pageSize };
+}
 
 /**
  * POST /api/generations
@@ -53,18 +70,21 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const profile = await prisma.profiles.findUnique({
-    where: { user_id },
-    select: { credits: true },
-  });
+  const [profile, project] = await Promise.all([
+    prisma.profiles.findUnique({
+      where: { user_id },
+      select: { credits: true },
+    }),
+    generation_type === 'batch' && project_id
+      ? prisma.projects.findFirst({ where: { id: project_id, user_id }, select: { id: true } })
+      : Promise.resolve(null),
+  ]);
+
   if (!profile || profile.credits < (credits_used || 0)) {
     return NextResponse.json({ error: '积分不足' }, { status: 402 });
   }
 
   if (generation_type === 'batch' && project_id) {
-    const project = await prisma.projects.findFirst({
-      where: { id: project_id, user_id },
-    });
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
@@ -93,6 +113,9 @@ export async function POST(req: NextRequest) {
     `${generation_type === 'batch' ? '批量' : '单图'}生成消费积分`
   );
 
+  invalidateCacheByPrefix(`generations:${user_id}:`);
+  invalidateCacheByPrefix(`projects:${user_id}:`);
+
   return NextResponse.json({
     id: generation.id,
     status: generation.status,
@@ -112,9 +135,14 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type') as 'batch' | 'single' | null;
-  const page = parseInt(searchParams.get('page') || '0');
-  const pageSize = parseInt(searchParams.get('pageSize') || '20');
-  const skip = page * pageSize;
+  const { page, pageSize, skip } = parsePagination(searchParams);
+  const typeKey = type || 'all';
+  const cacheKey = `generations:${user_id}:${typeKey}:${page}:${pageSize}`;
+
+  const cached = getCache<{ data: unknown[]; total: number; hasMore: boolean }>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
+  }
 
   const where: { user_id: string; generation_type?: 'batch' | 'single' } = { user_id };
   if (type) where.generation_type = type;
@@ -134,9 +162,12 @@ export async function GET(req: NextRequest) {
     prisma.generations.count({ where }),
   ]);
 
-  return NextResponse.json({
+  const responseBody = {
     data: generations.map(mapGeneration),
     total,
     hasMore: skip + pageSize < total,
-  });
+  };
+
+  setCache(cacheKey, responseBody, GENERATIONS_CACHE_TTL_MS);
+  return NextResponse.json(responseBody);
 }

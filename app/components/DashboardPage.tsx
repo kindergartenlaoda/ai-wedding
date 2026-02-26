@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { Plus, RefreshCw, Sparkles } from 'lucide-react';
 import { Template, generationToSingleGeneration } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,12 +10,7 @@ import { useDashboardModals } from '@/hooks/useDashboardModals';
 import { ProjectFilters } from './ProjectFilters';
 import type { FilterState } from '@/types/filters';
 import { FadeIn, GlassCard } from '@/components/react-bits';
-import { ConfirmDialog } from './ConfirmDialog';
 import { Toast } from './Toast';
-import { ProjectDetailModal } from './ProjectDetailModal';
-import { ProjectEditModal } from './ProjectEditModal';
-import { SingleGenerationDetailModal } from './SingleGenerationDetailModal';
-import { OnboardingModal, useShowOnboarding } from './OnboardingModal';
 import { InvitePanel } from './InvitePanel';
 import {
   DashboardHeader,
@@ -22,6 +18,16 @@ import {
   SingleGenerationList,
   ProjectList,
 } from './Dashboard';
+
+// Code split modals
+const ConfirmDialog = dynamic(() => import('./ConfirmDialog').then(m => ({ default: m.ConfirmDialog })));
+const ProjectDetailModal = dynamic(() => import('./ProjectDetailModal').then(m => ({ default: m.ProjectDetailModal })));
+const ProjectEditModal = dynamic(() => import('./ProjectEditModal').then(m => ({ default: m.ProjectEditModal })));
+const SingleGenerationDetailModal = dynamic(() => import('./SingleGenerationDetailModal').then(m => ({ default: m.SingleGenerationDetailModal })));
+const OnboardingModal = dynamic(() => import('./OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+
+// Import hook separately
+import { useShowOnboarding } from './OnboardingModal';
 
 interface DashboardPageProps {
   onNavigate: (page: string, template?: Template, generationId?: string) => void;

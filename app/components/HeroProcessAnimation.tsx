@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import Image from 'next/image';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import {
@@ -121,10 +122,12 @@ export function HeroProcessAnimation() {
       <UploadBox ref={uploadBoxRef} />
 
       <div ref={originalImageRef} className="absolute inset-0">
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1554151228-14d9def656e4?q=80&w=800&auto=format&fit=crop"
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
           alt="Original portrait"
+          sizes="360px"
         />
         <div className="absolute inset-0 bg-obsidian/30" />
       </div>
@@ -132,10 +135,12 @@ export function HeroProcessAnimation() {
       <StyleTagPanel ref={styleTagsRef} tags={HERO_STYLE_TAGS} />
 
       <div ref={finalImageRef} className="absolute inset-0">
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop"
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
           alt="Cinematic masterpiece"
+          sizes="360px"
         />
       </div>
 

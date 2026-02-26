@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import type { ProjectWithTemplate } from '@/types/database';
+import { getCache, invalidateCacheByPrefix, setCache } from '@/lib/server-cache';
+
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 50;
+const PROJECTS_CACHE_TTL_MS = 15_000;
+
+function parsePagination(searchParams: URLSearchParams) {
+  const rawPage = Number.parseInt(searchParams.get('page') ?? '0', 10);
+  const rawPageSize = Number.parseInt(searchParams.get('pageSize') ?? String(DEFAULT_PAGE_SIZE), 10);
+
+  const page = Number.isFinite(rawPage) && rawPage >= 0 ? rawPage : 0;
+  const pageSize = Number.isFinite(rawPageSize)
+    ? Math.min(Math.max(rawPageSize, 1), MAX_PAGE_SIZE)
+    : DEFAULT_PAGE_SIZE;
+
+  return { page, pageSize, skip: page * pageSize };
+}
 
 /**
  * POST /api/projects
@@ -28,6 +45,8 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  invalidateCacheByPrefix(`projects:${user_id}:`);
+
   return NextResponse.json({
     id: project.id,
     name: project.name,
@@ -47,21 +66,28 @@ export async function GET(req: NextRequest) {
   const user_id = authResult.user.id;
 
   const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get('page') || '0');
-  const pageSize = parseInt(searchParams.get('pageSize') || '20');
-  const skip = page * pageSize;
+  const { page, pageSize, skip } = parsePagination(searchParams);
+  const cacheKey = `projects:${user_id}:${page}:${pageSize}`;
+
+  const cached = getCache<{
+    data: ProjectWithTemplate[];
+    total: number;
+    hasMore: boolean;
+  }>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
+  }
 
   const [projects, total] = await Promise.all([
     prisma.projects.findMany({
       where: { user_id },
-      include: {
-        generations: {
-          include: {
-            templates: { select: { id: true, name: true, preview_image_url: true } },
-          },
-          orderBy: { created_at: 'desc' },
-          take: 1,
-        },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        uploaded_photos: true,
+        created_at: true,
+        updated_at: true,
       },
       orderBy: { created_at: 'desc' },
       skip,
@@ -70,8 +96,32 @@ export async function GET(req: NextRequest) {
     prisma.projects.count({ where: { user_id } }),
   ]);
 
+  const projectIds = projects.map((p) => p.id);
+  const latestGenerations = projectIds.length > 0
+    ? await prisma.generations.findMany({
+        where: { project_id: { in: projectIds } },
+        orderBy: [{ project_id: 'asc' }, { created_at: 'desc' }],
+        distinct: ['project_id'],
+        select: {
+          project_id: true,
+          id: true,
+          status: true,
+          preview_images: true,
+          high_res_images: true,
+          is_shared_to_gallery: true,
+          completed_at: true,
+          templates: { select: { id: true, name: true, preview_image_url: true } },
+        },
+      })
+    : [];
+
+  const latestByProject = new Map<string, (typeof latestGenerations)[number]>();
+  for (const gen of latestGenerations) {
+    if (gen.project_id) latestByProject.set(gen.project_id, gen);
+  }
+
   const formatted: ProjectWithTemplate[] = projects.map((p) => {
-    const latestGen = p.generations[0];
+    const latestGen = latestByProject.get(p.id);
     const template = latestGen?.templates;
     return {
       id: p.id,
@@ -100,9 +150,13 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  return NextResponse.json({
+  const responseBody = {
     data: formatted,
     total,
     hasMore: skip + pageSize < total,
-  });
+  };
+
+  setCache(cacheKey, responseBody, PROJECTS_CACHE_TTL_MS);
+
+  return NextResponse.json(responseBody);
 }
