@@ -1,0 +1,7 @@
+# 忽略导出文件
+exports/*.json
+exports/*.csv
+exports/*.html
+
+# 保留目录结构
+!exports/.gitkeep
