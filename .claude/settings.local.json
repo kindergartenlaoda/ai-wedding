@@ -70,7 +70,9 @@
       "Bash(git:*)",
       "Bash(pnpm prisma:*)",
       "Bash(perl:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(command:*)",
+      "Bash(/Users/zhangyanhua/.claude/bin/codeagent-wrapper:*)"
     ],
     "deny": [],
     "ask": []
