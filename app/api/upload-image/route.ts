@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const contentType = req.headers.get('content-type') || '';
 
     if (contentType.includes('application/json')) {
-      // JSON 格式：包含 base64 或 dataURL
+      // JSON 格式：包含 base64、dataURL 或 URL
       const body = await req.json();
       log.debug('收到 JSON 格式上传请求');
 
@@ -38,8 +38,16 @@ export async function POST(req: Request) {
         );
       }
 
-      // 上传到 OSS
-      const result = await uploadDataUrlImage(image, folder || 'uploads');
+      // 判断是 URL 还是 base64
+      let result;
+      if (image.startsWith('http://') || image.startsWith('https://')) {
+        log.debug('检测到 URL 格式，从远程下载');
+        const { uploadFromUrl } = await import('@/lib/oss-client');
+        result = await uploadFromUrl(image, folder || 'uploads');
+      } else {
+        log.debug('检测到 base64/dataURL 格式');
+        result = await uploadDataUrlImage(image, folder || 'uploads');
+      }
 
       log.info({ url: result.url }, '图片上传成功');
 

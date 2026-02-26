@@ -195,6 +195,39 @@ export async function uploadDataUrlImage(
     return uploadBase64Image(dataUrl, { folder });
 }
 
+// ── 从 URL 下载并上传 ─────────────────────────────────────────
+
+export async function uploadFromUrl(
+    imageUrl: string,
+    folder?: string
+): Promise<UploadImageResult> {
+    try {
+        // 下载图片
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+            throw new Error(`下载图片失败: ${response.status} ${response.statusText}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        // 从 URL 提取文件名和 Content-Type
+        const contentType = response.headers.get('content-type') || 'image/png';
+        const urlPath = new URL(imageUrl).pathname;
+        const originalName = urlPath.split('/').pop() || 'image.png';
+
+        return uploadImage({
+            buffer,
+            contentType,
+            originalName,
+            folder,
+        });
+    } catch (error) {
+        console.error('❌ 从 URL 上传图片失败:', error);
+        throw error;
+    }
+}
+
 // ── 删除图片 ─────────────────────────────────────────────────
 
 export async function deleteImage(objectName: string): Promise<void> {
