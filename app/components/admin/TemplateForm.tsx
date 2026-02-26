@@ -19,6 +19,7 @@ import type { TemplateFormInput } from '@/types/admin';
 import { ImageUploadField } from './ImageUploadField';
 import { PromptConfigEditor } from './PromptConfigEditor';
 import { PromptListEditor } from './PromptListEditor';
+import { useDomains } from '@/hooks/useDomains';
 
 interface TemplateFormProps {
   template?: Template;
@@ -35,10 +36,13 @@ const CATEGORIES = [
 ] as const;
 
 export function TemplateForm({ template, onSubmit, onCancel }: TemplateFormProps) {
+  const { domains, loading: domainsLoading } = useDomains();
+
   const [formData, setFormData] = useState<TemplateFormInput>({
     name: template?.name || '',
     description: template?.description || '',
     category: template?.category || 'location',
+    domain: template?.domain || 'wedding',
     preview_image_url: template?.preview_image_url || '',
     prompt_config: template?.prompt_config || {
       basePrompt: '',
@@ -119,6 +123,32 @@ export function TemplateForm({ template, onSubmit, onCancel }: TemplateFormProps
               {CATEGORIES.map((cat) => (
                 <SelectItem key={cat.value} value={cat.value}>
                   {cat.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="domain">
+            归属域 <span className="text-red-500">*</span>
+          </Label>
+          <Select
+            value={formData.domain}
+            onValueChange={(value: string) =>
+              updateFormData({
+                domain: value,
+              })
+            }
+            disabled={domainsLoading}
+          >
+            <SelectTrigger id="domain">
+              <SelectValue placeholder={domainsLoading ? "加载中..." : "选择归属域"} />
+            </SelectTrigger>
+            <SelectContent>
+              {domains.map((domain) => (
+                <SelectItem key={domain.slug} value={domain.slug}>
+                  {domain.name}
                 </SelectItem>
               ))}
             </SelectContent>

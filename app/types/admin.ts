@@ -7,6 +7,7 @@ export interface TemplateFormInput {
   name: string;
   description: string;
   category: string;
+  domain: string;
   preview_image_url: string;
   prompt_config: PromptConfig;
   // 新增：多提示词（可选）
@@ -23,6 +24,7 @@ export interface CreateTemplatePayload {
   name: string;
   description: string;
   category: string;
+  domain: string;
   preview_image_url: string;
   prompt_config: PromptConfig;
   prompt_list?: string[];

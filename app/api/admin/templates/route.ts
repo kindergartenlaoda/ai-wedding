@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-admin';
 import { prisma } from '@/lib/prisma';
-import type { CreateTemplatePayload } from '@/types/admin';
+import { z } from 'zod';
+
+const createTemplateSchema = z.object({
+  name: z.string().trim().min(1),
+  description: z.string().optional(),
+  category: z.string().trim().min(1),
+  domain: z.string().trim().min(1),
+  preview_image_url: z.string().trim().min(1),
+  prompt_config: z.object({}).passthrough().optional(),
+  prompt_list: z.array(z.string()).optional(),
+  price_credits: z.number().int().min(0).optional(),
+  is_active: z.boolean().optional(),
+  sort_order: z.number().int().optional(),
+});
 
 /**
  * GET /api/admin/templates
@@ -41,17 +54,31 @@ export async function POST(req: NextRequest) {
   const authResult = await requireAdmin(req);
   if (authResult instanceof Response) return authResult;
 
-  const body = (await req.json()) as CreateTemplatePayload;
-
-  if (!body.name || !body.category || !body.preview_image_url) {
+  const parsed = createTemplateSchema.safeParse(await req.json());
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: 'Missing required fields: name, category, preview_image_url' },
+      { error: 'Invalid request payload', details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const body = parsed.data;
+
+  // Verify domain exists
+  const domain = await prisma.domains.findUnique({
+    where: { slug: body.domain },
+    select: { id: true },
+  });
+  if (!domain) {
+    return NextResponse.json(
+      { error: `Domain "${body.domain}" does not exist` },
       { status: 400 }
     );
   }
 
   const template = await prisma.templates.create({
     data: {
+      domain: body.domain,
       name: body.name,
       description: body.description || '',
       category: body.category,
@@ -69,6 +96,7 @@ export async function POST(req: NextRequest) {
       id: template.id,
       name: template.name,
       description: template.description,
+      domain: template.domain,
       category: template.category,
       preview_image_url: template.preview_image_url,
       prompt_config: template.prompt_config,

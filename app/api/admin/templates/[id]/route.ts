@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-admin';
 import { prisma } from '@/lib/prisma';
-import type { UpdateTemplatePayload } from '@/types/admin';
+import { z } from 'zod';
+
+const updateTemplateSchema = z.object({
+  name: z.string().trim().min(1).optional(),
+  description: z.string().optional(),
+  category: z.string().trim().min(1).optional(),
+  domain: z.string().trim().min(1).optional(),
+  preview_image_url: z.string().trim().min(1).optional(),
+  prompt_config: z.object({}).passthrough().optional(),
+  prompt_list: z.array(z.string()).optional(),
+  price_credits: z.number().int().min(0).optional(),
+  is_active: z.boolean().optional(),
+  sort_order: z.number().int().optional(),
+});
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -16,9 +29,32 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   if (authResult instanceof Response) return authResult;
 
   const { id } = await context.params;
-  const body = (await req.json()) as UpdateTemplatePayload;
+
+  const parsed = updateTemplateSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Invalid request payload', details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const body = parsed.data;
+
+  // Verify domain exists if domain is being updated
+  if (body.domain !== undefined) {
+    const domain = await prisma.domains.findUnique({
+      where: { slug: body.domain },
+      select: { id: true },
+    });
+    if (!domain) {
+      return NextResponse.json(
+        { error: `Domain "${body.domain}" does not exist` },
+        { status: 400 }
+      );
+    }
+  }
 
   const updateData: Record<string, unknown> = {};
+  if (body.domain !== undefined) updateData.domain = body.domain;
   if (body.name !== undefined) updateData.name = body.name;
   if (body.description !== undefined) updateData.description = body.description;
   if (body.category !== undefined) updateData.category = body.category;
@@ -43,6 +79,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         id: template.id,
         name: template.name,
         description: template.description,
+        domain: template.domain,
         category: template.category,
         preview_image_url: template.preview_image_url,
         prompt_config: template.prompt_config,
