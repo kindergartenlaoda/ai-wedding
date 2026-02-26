@@ -70,13 +70,19 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const [profile, project] = await Promise.all([
+  const [profile, project, template] = await Promise.all([
     prisma.profiles.findUnique({
       where: { user_id },
       select: { credits: true },
     }),
     generation_type === 'batch' && project_id
-      ? prisma.projects.findFirst({ where: { id: project_id, user_id }, select: { id: true } })
+      ? prisma.projects.findFirst({ where: { id: project_id, user_id }, select: { id: true, uploaded_photos: true } })
+      : Promise.resolve(null),
+    template_id
+      ? prisma.templates.findUnique({
+          where: { id: template_id },
+          select: { id: true, domain: true },
+        })
       : Promise.resolve(null),
   ]);
 
@@ -87,6 +93,29 @@ export async function POST(req: NextRequest) {
   if (generation_type === 'batch' && project_id) {
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+  }
+
+  // 后端强制校验：如果 domain 要求人脸识别，验证照片是否已通过识别
+  if (generation_type === 'batch' && template && project) {
+    const domainSlug = template.domain || domain || 'wedding';
+    const domainConfig = await prisma.domains.findUnique({
+      where: { slug: domainSlug },
+      select: { require_face_detection: true },
+    });
+
+    if (domainConfig?.require_face_detection) {
+      // 检查 project 的 uploaded_photos 是否为空
+      const uploadedPhotos = project.uploaded_photos as string[] | null;
+      if (!uploadedPhotos || uploadedPhotos.length === 0) {
+        return NextResponse.json(
+          { error: '该领域要求上传照片并通过人脸识别验证' },
+          { status: 400 }
+        );
+      }
+
+      // 注意：这里假设前端已经过滤了无效照片，只上传了通过识别的照片
+      // 如果需要更严格的验证，可以在这里调用识别接口再次验证
     }
   }
 

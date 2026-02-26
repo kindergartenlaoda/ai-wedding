@@ -21,6 +21,7 @@ interface StepUploadProps {
   photos: PhotoState[];
   dispatch: React.Dispatch<StepFlowAction>;
   onBack: () => void;
+  requireFaceDetection: boolean;
 }
 
 const MAX_PHOTOS = 6;
@@ -29,6 +30,7 @@ export function StepUpload({
   template,
   photos,
   dispatch,
+  requireFaceDetection,
 }: StepUploadProps) {
   const router = useRouter();
   const { user, profile } = useAuth();
@@ -86,6 +88,7 @@ export function StepUpload({
     maxPhotos: MAX_PHOTOS,
     dispatch,
     currentPhotos: photos,
+    requireFaceDetection,
   });
 
   const validPhotos = photos.filter(
@@ -104,19 +107,30 @@ export function StepUpload({
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
+      // 如果需要人脸识别且未登录，提示先登录
+      if (requireFaceDetection && !user) {
+        setShowAuthModal(true);
+        return;
+      }
       handleFiles(Array.from(e.dataTransfer.files));
     },
-    [handleFiles]
+    [handleFiles, requireFaceDetection, user]
   );
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
+        // 如果需要人脸识别且未登录，提示先登录
+        if (requireFaceDetection && !user) {
+          setShowAuthModal(true);
+          e.target.value = '';
+          return;
+        }
         handleFiles(Array.from(e.target.files));
         e.target.value = '';
       }
     },
-    [handleFiles]
+    [handleFiles, requireFaceDetection, user]
   );
 
   const handleStartGenerate = async () => {

@@ -8,6 +8,7 @@ interface UseParallelPhotoUploadOptions {
   maxPhotos: number;
   dispatch: React.Dispatch<StepFlowAction>;
   currentPhotos: PhotoState[];
+  requireFaceDetection: boolean;
 }
 
 let photoCounter = 0;
@@ -26,10 +27,40 @@ function fileToDataUrl(file: File): Promise<string> {
 }
 
 async function identifyPerson(
-  _dataUrl: string
+  dataUrl: string
 ): Promise<{ hasPerson: boolean; description: string }> {
-  // TODO: 暂时跳过 identify-image 接口调用，直接返回通过
-  return { hasPerson: true, description: '跳过识别（临时禁用）' };
+  const res = await fetch('/api/identify-image', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ images: [dataUrl] }),
+  });
+
+  if (!res.ok) {
+    const data: { error?: string } = await res.json().catch(() => ({}));
+    throw new Error(data.error || '识别服务异常');
+  }
+
+  const data: {
+    success?: boolean;
+    results?: Array<{
+      success: boolean;
+      hasPerson: boolean;
+      description: string
+    }>
+  } = await res.json();
+
+  const result = data.results?.[0];
+
+  // 如果单张图片识别失败（success=false），抛出错误而非返回 hasPerson=false
+  if (result && !result.success) {
+    throw new Error(result.description || '识别服务失败');
+  }
+
+  return {
+    hasPerson: result?.hasPerson ?? false,
+    description: result?.description ?? '识别失败',
+  };
 }
 
 async function uploadToMinio(dataUrl: string): Promise<string | undefined> {
@@ -52,6 +83,7 @@ export function useParallelPhotoUpload({
   maxPhotos,
   dispatch,
   currentPhotos,
+  requireFaceDetection,
 }: UseParallelPhotoUploadOptions) {
   const abortRef = useRef(false);
 
@@ -84,6 +116,17 @@ export function useParallelPhotoUpload({
         if (abortRef.current) break;
 
         const identifyPromise = (async () => {
+          // 如果不需要人脸识别，直接标记为 valid
+          if (!requireFaceDetection) {
+            dispatch({
+              type: 'UPDATE_PHOTO',
+              photoId: photo.id,
+              updates: { identifyStatus: 'valid' },
+            });
+            return;
+          }
+
+          // 需要人脸识别，执行真实 API 调用
           dispatch({
             type: 'UPDATE_PHOTO',
             photoId: photo.id,
@@ -139,7 +182,7 @@ export function useParallelPhotoUpload({
         void Promise.all([identifyPromise, uploadPromise]);
       }
     },
-    [maxPhotos, currentPhotos, dispatch]
+    [maxPhotos, currentPhotos, dispatch, requireFaceDetection]
   );
 
   const removePhoto = useCallback(

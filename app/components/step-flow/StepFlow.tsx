@@ -126,6 +126,7 @@ function StepFlowInner() {
   });
 
   const loading = templatesLoading || domainsLoading;
+  const currentDomain = domains.find((d) => d.slug === state.domain);
 
   if (loading) {
     return (
@@ -199,6 +200,7 @@ function StepFlowInner() {
                   photos={state.photos}
                   dispatch={dispatch}
                   onBack={goBack}
+                  requireFaceDetection={currentDomain?.require_face_detection ?? false}
                 />
               )}
             </div>
