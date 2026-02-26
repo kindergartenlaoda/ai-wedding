@@ -71,45 +71,7 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
       return;
     }
 
-    const plan = plans[planIndex];
-    setPurchasing(planIndex);
-
-    try {
-      const createRes = await fetch('/api/orders/create', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: plan.name }),
-      });
-      const createJson = await createRes.json();
-      if (!createRes.ok) throw new Error(createJson?.error || '创建订单失败');
-
-      const payment_intent_id: string | undefined = createJson?.payment_intent_id;
-      const checkout_url: string | undefined = createJson?.checkout_url;
-      if (!payment_intent_id && !checkout_url) throw new Error('缺少支付信息');
-
-      if (checkout_url) {
-        window.location.href = checkout_url;
-        return;
-      } else {
-        const confirmRes = await fetch('/api/orders/mock/confirm', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payment_intent_id }),
-        });
-        const confirmJson = await confirmRes.json();
-        if (!confirmRes.ok) throw new Error(confirmJson?.error || '确认支付失败');
-      }
-
-      await refreshProfile();
-      setToast({ message: `购买成功！已添加 ${plan.credits} 积分到您的账户`, type: 'success' });
-      setPurchasing(null);
-    } catch (error) {
-      console.error('购买失败:', error);
-      setToast({ message: '购买失败，请重试', type: 'error' });
-      setPurchasing(null);
-    }
+    setToast({ message: '当前支付功能尚未开放，请联系管理员开通', type: 'error' });
   };
 
   return (
