@@ -253,6 +253,20 @@ ai-wedding/
 │   ├── lib/                      # 工具函数
 │   ├── types/                    # TypeScript 类型
 │   └── page.tsx                  # 页面入口
+├── prisma/                       # 数据库
+│   ├── schema.prisma             # 数据库模型定义
+│   ├── migrations/               # 数据库迁移
+│   └── seed.ts                   # 初始数据种子
+├── scripts/                      # 数据管理脚本
+│   ├── README.md                 # 脚本使用指南
+│   ├── WORK_SUMMARY.md           # 工作总结报告
+│   ├── QUICK_START.md            # 快速启动指南
+│   ├── query-data.ts             # 数据查询
+│   ├── summary-report.ts         # 数据总览报告
+│   ├── compare-domains.ts        # 跨 domain 对比
+│   ├── export-data.ts            # 数据导出备份
+│   ├── generate-visualization.ts # 可视化报告生成
+│   └── exports/                  # 导出文件目录
 ├── docs/                         # 项目文档
 ├── init.sql                      # 数据库初始化脚本
 ├── package.json                  # 项目依赖
@@ -325,6 +339,19 @@ pnpm start
 # 代码检查
 pnpm lint
 
+# 数据库管理
+pnpm prisma migrate deploy   # 应用数据库迁移
+pnpm prisma db seed          # 填充初始数据
+pnpm prisma studio           # 打开数据库管理界面
+
+# 数据管理脚本（在 scripts/ 目录下）
+cd scripts
+pnpm run summary             # 查看数据总览
+pnpm run compare             # 跨 domain 对比分析
+pnpm run export              # 导出数据备份
+pnpm run visualize           # 生成可视化报告
+pnpm run all-reports         # 运行所有报告
+
 # PM2 部署（方式一：直接使用 PM2）
 pm2 start ecosystem.config.js   # 启动
 pm2 stop ai-wedding              # 停止
@@ -370,6 +397,28 @@ pnpm pm2:logs           # 查看日志
 
 - [调试指南](docs/DEBUG_GUIDE.md) - 问题排查
 - [MinIO 配置](docs/MINIO_403_FIX.md) - 对象存储配置
+
+### 数据管理文档
+
+- [数据管理脚本使用指南](scripts/README.md) - 完整的脚本使用文档
+- [数据完善工作总结](scripts/WORK_SUMMARY.md) - 详细的工作总结报告
+- [快速启动指南](scripts/QUICK_START.md) - 数据管理快速上手
+
+**数据管理功能**:
+- 📊 数据查询与分析 - 查看 domains 和 templates 数据状态
+- 🔧 数据操作与修复 - 自动修复数据问题，生成种子数据
+- 💾 数据导出与可视化 - 导出 JSON/CSV/HTML 格式报告
+- 📈 数据质量监控 - 定期检查数据健康状况
+
+**快速使用**:
+```bash
+cd scripts
+pnpm run summary      # 查看数据总览
+pnpm run compare      # 跨 domain 对比
+pnpm run visualize    # 生成可视化报告
+```
+
+详见 [scripts/README.md](scripts/README.md)
 
 ---
 
@@ -426,6 +475,28 @@ A: 进入 `/admin/model-configs`，创建新配置并点击"激活"。
 ### Q: MinIO 出现 403 错误？
 
 A: 运行 `pnpm fix-minio` 或参考 [MinIO 配置文档](docs/MINIO_403_FIX.md)。
+
+### Q: 如何查看数据库数据状态？
+
+A: 使用数据管理脚本：
+```bash
+cd scripts
+pnpm run summary      # 查看数据总览
+pnpm run compare      # 跨 domain 对比分析
+pnpm run visualize    # 生成可视化报告
+```
+
+详见 [scripts/README.md](scripts/README.md)
+
+### Q: 如何备份数据？
+
+A: 使用数据导出脚本：
+```bash
+cd scripts
+pnpm run export       # 导出 JSON + Markdown 报告
+```
+
+导出文件位于 `scripts/exports/` 目录。
 
 ---
 
