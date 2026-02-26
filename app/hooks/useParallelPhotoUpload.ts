@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 import { checkImageQuality } from '@/lib/image-quality-checker';
+import { compressDataUrl } from '@/lib/image-compress';
 import type { PhotoState, StepFlowAction } from '@/types/step-flow';
 
 interface UseParallelPhotoUploadOptions {
@@ -133,7 +134,15 @@ export function useParallelPhotoUpload({
             updates: { identifyStatus: 'identifying' },
           });
           try {
-            const result = await identifyPerson(photo.dataUrl);
+            // 压缩图片用于识别（降低分辨率和质量以减少传输时间和成本）
+            const compressedDataUrl = await compressDataUrl(photo.dataUrl, {
+              maxWidth: 1024,
+              maxHeight: 1024,
+              quality: 0.7,
+              mimeType: 'image/jpeg',
+            });
+
+            const result = await identifyPerson(compressedDataUrl);
             dispatch({
               type: 'UPDATE_PHOTO',
               photoId: photo.id,
