@@ -1,4 +1,4 @@
-import { Check, Sparkles, Zap, Crown } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown, X } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Toast } from './Toast';
@@ -12,6 +12,7 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
   const { user, profile, refreshProfile } = useAuth();
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   const plans = [
     {
@@ -66,12 +67,58 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
 
   const handlePurchase = async (planIndex: number) => {
     if (!user || !profile) {
-      setToast({ message: '请先登录', type: 'error' });
+      setToast({ message: '请先登录后再购买', type: 'error' });
       onNavigate('home');
       return;
     }
 
-    setToast({ message: '当前支付功能尚未开放，请联系管理员开通', type: 'error' });
+    const plan = plans[planIndex];
+    setPurchasing(planIndex);
+
+    try {
+      const res = await fetch('/api/orders/create', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: plan.name }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 501) {
+          setShowContactModal(true);
+          return;
+        }
+        throw new Error(data.error || '创建订单失败');
+      }
+
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+        return;
+      }
+
+      if (data.order_id && !data.checkout_url) {
+        const confirmRes = await fetch('/api/orders/mock/confirm', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_intent_id: data.payment_intent_id }),
+        });
+
+        if (confirmRes.ok) {
+          await refreshProfile();
+          setToast({ message: `成功购买 ${plan.credits} 积分！`, type: 'success' });
+        } else {
+          throw new Error('确认支付失败');
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '购买失败';
+      setToast({ message: msg, type: 'error' });
+    } finally {
+      setPurchasing(null);
+    }
   };
 
   return (
@@ -179,7 +226,7 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
                       : 'bg-transparent text-alabaster hover:bg-white/5 hover:border-gold/50 border border-white/10'
                       }`}
                   >
-                    {purchasing === index ? '授权中...' : user ? '立即购买' : '开启艺术之旅'}
+                    {purchasing === index ? '处理中...' : user ? '立即购买' : '开启艺术之旅'}
                   </button>
                 </div>
               </div>
@@ -266,6 +313,44 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
           </div>
         </FadeIn>
       </div>
+
+      {showContactModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-md rounded-sm border border-white/10 bg-obsidian p-8 shadow-2xl">
+            <button
+              onClick={() => setShowContactModal(false)}
+              className="absolute right-4 top-4 text-pearl/40 hover:text-alabaster transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="text-center">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gold/10 border border-gold/20">
+                <Sparkles className="h-7 w-7 text-gold" />
+              </div>
+              <h3 className="mb-2 text-xl font-medium font-display text-alabaster tracking-wider">
+                联系客服购买
+              </h3>
+              <p className="mb-6 text-sm text-pearl/60 font-light leading-relaxed">
+                添加微信客服，即刻为您开通积分套餐
+              </p>
+              <div className="mb-6 rounded-sm border border-gold/20 bg-gold/5 px-6 py-4">
+                <p className="text-xs text-pearl/40 uppercase tracking-widest mb-1">微信号</p>
+                <p className="text-lg font-medium text-gold tracking-wider">ZYH11ZYH</p>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('ZYH11ZYH');
+                  setToast({ message: '微信号已复制到剪贴板', type: 'success' });
+                  setShowContactModal(false);
+                }}
+                className="w-full rounded-sm bg-gold py-3 text-sm font-medium text-obsidian tracking-widest uppercase hover:bg-gold/90 transition-colors"
+              >
+                复制微信号
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <Toast

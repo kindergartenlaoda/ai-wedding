@@ -136,12 +136,21 @@ pnpm fix-minio:urls      # Refresh MinIO image URLs
    - `IMAGE_CHAT_MODEL` - Model for `chat` mode (e.g., `gemini-2.5-flash-image`)
    - Fallback: If `IMAGE_*` not set, uses legacy `OPENAI_*` variables
 
-   **MinIO Storage (Optional)**:
+   **Object Storage (Required)**:
+   - `STORAGE_PROVIDER` - Storage provider: `minio` (default, self-hosted) or `oss` (Aliyun OSS)
+
+   **MinIO Storage (when STORAGE_PROVIDER=minio)**:
    - `MINIO_ENDPOINT` - MinIO server endpoint (e.g., `http://localhost:9000`)
    - `MINIO_ACCESS_KEY` - Access key
    - `MINIO_SECRET_KEY` - Secret key
    - `MINIO_BUCKET_NAME` - Bucket name (e.g., `ai-images`)
    - `MINIO_USE_SSL` - `true` or `false`
+
+   **Aliyun OSS Storage (when STORAGE_PROVIDER=oss)**:
+   - `ALI_OSS_REGION` - OSS region (e.g., `oss-cn-hangzhou`)
+   - `ALI_OSS_ACCESS_KEY_ID` - Access key ID
+   - `ALI_OSS_ACCESS_KEY_SECRET` - Access key secret
+   - `ALI_OSS_BUCKET` - Bucket name
 
    **Payment (Optional)**:
    - `STRIPE_WEBHOOK_SECRET` - For Stripe webhook signature verification
@@ -186,7 +195,7 @@ pnpm fix-minio:urls      # Refresh MinIO image URLs
 
 **Prisma + PostgreSQL**:
 - `app/lib/prisma.ts` - PrismaClient singleton with PrismaPg adapter
-- `prisma/schema.prisma` - Database schema (13 models)
+- `prisma/schema.prisma` - Database schema (15 models)
 - `generated/prisma/` - Generated Prisma client (do not edit)
 
 **Custom Hooks** (in `app/hooks/`):
@@ -201,7 +210,7 @@ pnpm fix-minio:urls      # Refresh MinIO image URLs
 - `useEngagementStats` - Aggregate likes + downloads stats
 - `usePhotoUpload` - Handle photo uploads
 - `usePhotoSelection` - Manage photo selection state
-- `useImageUpload` - Image upload to MinIO
+- `useImageUpload` - Image upload to object storage (MinIO/OSS)
 - `useImageIdentification` - AI image identification
 - `useSingleGenerations` - Single generation history
 - `usePromptGeneration` - Prompt generation flow
@@ -210,13 +219,15 @@ pnpm fix-minio:urls      # Refresh MinIO image URLs
 - `useDashboardActions` - Dashboard action handlers
 - `useDashboardModals` - Dashboard modal state management
 
-**Database Schema** (see `prisma/schema.prisma`) -- 13 models:
+**Database Schema** (see `prisma/schema.prisma`) -- 15 models:
 - `users` - NextAuth users (email, passwordHash)
-- `profiles` - User profiles with credits and invite system
+- `profiles` - User profiles with credits (incl. frozen), invite system, role
 - `templates` - AI generation templates (categories, prompts, pricing, domain)
 - `projects` - User photo projects (domain-aware)
-- `generations` - AI generation jobs (status, images, credits used)
-- `single_generations` - Single image generation records
+- `generations` - AI generation jobs — unified batch + single via `generation_type`
+- `generated_images` - Generated images per generation (preview / high_res)
+- `credit_transactions` - Credit transaction history
+- `domains` - Domain configuration (slug, name, icon, require_face_detection)
 - `orders` - Payment orders
 - `favorites` - User-template favorites
 - `image_likes` - Image engagement tracking
@@ -239,7 +250,7 @@ pnpm fix-minio:urls      # Refresh MinIO image URLs
    - `app/api/identify-image/route.ts` - AI image identification
 
 2. **Storage**:
-   - `app/api/upload-image/route.ts` - Upload images to MinIO storage
+   - `app/api/upload-image/route.ts` - Upload images to object storage (MinIO/OSS)
 
 3. **CRUD**:
    - `app/api/projects/route.ts` - Project list/create

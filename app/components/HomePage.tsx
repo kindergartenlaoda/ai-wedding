@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { FadeIn } from '@/components/react-bits';
 import { getDomainIcon } from '@/types/domain';
 import dynamic from 'next/dynamic';
+import { ShowcaseCarousel } from './ShowcaseCarousel';
 
 interface DomainFromApi {
   id: string;
@@ -74,7 +75,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
   };
 
   const handleGetStarted = () => {
-    try { localStorage.removeItem('step-flow-draft'); } catch {}
+    try { localStorage.removeItem('step-flow-draft'); } catch { /* localStorage may be unavailable */ }
     router.push('/create');
   };
 
@@ -186,6 +187,25 @@ export function HomePage({ onNavigate }: HomePageProps) {
               })
             )}
           </div>
+        </div>
+      </section>
+
+      {/* Before / After Showcase */}
+      <section className="py-32 bg-obsidian text-alabaster relative border-t border-white/5">
+        <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <FadeIn>
+            <div className="mb-20 text-center space-y-6">
+              <h2 className="text-xs font-medium tracking-[0.4em] text-gold uppercase">真实效果</h2>
+              <p className="text-4xl md:text-5xl font-display text-alabaster tracking-tight">
+                看看 AI 的 <span className="italic text-gold/80 font-serif">魔法</span>
+              </p>
+              <p className="text-pearl/60 font-light max-w-xl mx-auto">
+                以下均为真实用户上传日常照片后，AI 生成的效果对比
+              </p>
+            </div>
+          </FadeIn>
+
+          <ShowcaseCarousel />
         </div>
       </section>
 

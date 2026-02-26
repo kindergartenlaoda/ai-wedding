@@ -181,7 +181,6 @@ Please focus your modifications ONLY on the user's specific requirements while s
         body: JSON.stringify({
           prompt: enhancedPrompt,
           image_inputs: [originalImage],
-          model: 'gemini-2.5-flash-image',
           source: source,
           temperature: temperature,
           top_p: topP,

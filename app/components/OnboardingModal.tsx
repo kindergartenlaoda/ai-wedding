@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Upload, Palette, Sparkles, ArrowRight } from 'lucide-react';
+import { X, Upload, Palette, Sparkles, ArrowRight, Gift, Users } from 'lucide-react';
 
 const ONBOARDING_KEY = 'ai-wedding-onboarding-done';
 
@@ -9,9 +9,16 @@ interface OnboardingStep {
   icon: typeof Upload;
   title: string;
   description: string;
+  highlight?: string;
 }
 
 const STEPS: OnboardingStep[] = [
+  {
+    icon: Gift,
+    title: '欢迎！您已获得 50 免费积分',
+    description: '注册即赠 50 积分，足够体验多种 AI 写真效果。每次生成消耗 10-20 积分。',
+    highlight: '50 积分',
+  },
   {
     icon: Palette,
     title: '选择领域和风格',
@@ -26,6 +33,12 @@ const STEPS: OnboardingStep[] = [
     icon: Sparkles,
     title: '生成 AI 作品',
     description: '点击生成，等待片刻即可获得精美的 AI 写真作品。',
+  },
+  {
+    icon: Users,
+    title: '邀请好友，双方得积分',
+    description: '分享您的邀请码给朋友，对方注册后您获得 30 积分，好友获得 70 积分。',
+    highlight: '双方得积分',
   },
 ];
 
@@ -122,6 +135,12 @@ export function OnboardingModal({ onClose }: OnboardingModalProps) {
           <p className="text-pearl/60 font-light leading-relaxed text-sm">
             {step.description}
           </p>
+          {step.highlight && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-gold/10 border border-gold/20">
+              <Sparkles className="w-4 h-4 text-gold" />
+              <span className="text-sm font-medium text-gold tracking-wider">{step.highlight}</span>
+            </div>
+          )}
 
           {/* Progress dots */}
           <div className="flex items-center justify-center gap-2 mt-8">

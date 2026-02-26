@@ -1,0 +1,49 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build output
+.next
+out
+dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+.cursor
+*.swp
+*.swo
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Env files (mount at runtime)
+.env
+.env.local
+.env.production
+
+# Docs & scripts not needed in image
+docs/
+*.md
+!README.md
+LICENSE
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated (rebuilt in Docker)
+generated/
+
+# Agent transcripts
+agent-transcripts/

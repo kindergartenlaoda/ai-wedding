@@ -108,7 +108,6 @@ export async function generateAsAuthenticated(
           body: JSON.stringify({
             prompt: rawPrompt,
             image_inputs: input.photos.length > 0 ? [input.photos[0]] : undefined,
-            model: 'gemini-2.5-flash-image',
           }),
         });
 

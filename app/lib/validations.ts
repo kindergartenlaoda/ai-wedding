@@ -31,7 +31,7 @@ export const CreateProjectSchema = z.object({
     .string()
     .min(1, '项目名称不能为空')
     .max(100, '项目名称不能超过100个字符'),
-  templateId: z.string().uuid('无效的模板ID'),
+  templateId: z.string().min(1, '无效的模板ID'),
   uploadedPhotos: z
     .array(z.string().url('无效的图片URL'))
     .min(1, '至少需要上传1张照片')
@@ -68,7 +68,7 @@ export const CreateOrderSchema = z.object({
   plan: z.enum(['Starter', 'Popular', 'Premium'], {
     message: '无效的套餐类型',
   }),
-  generationId: z.string().uuid().optional(),
+  generationId: z.string().min(1).optional(),
   selectedImages: z.array(z.number().int().min(0)).optional(),
 });
 
@@ -76,7 +76,7 @@ export const CreateOrderSchema = z.object({
  * 图片下载追踪验证
  */
 export const TrackDownloadSchema = z.object({
-  generation_id: z.string().uuid('无效的生成ID'),
+  generation_id: z.string().min(1, '无效的生成ID'),
   index: z.number().int().min(0, '无效的图片索引'),
   image_type: z.enum(['preview', 'high_res']).default('preview'),
 });

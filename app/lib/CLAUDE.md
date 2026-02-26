@@ -43,7 +43,9 @@ Shared utility functions, service modules, and business logic used across API ro
 ### Storage
 | File | Description |
 |------|-------------|
-| `minio-client.ts` | MinIO S3-compatible storage client |
+| `storage-client.ts` | Unified storage client with dynamic provider switching (MinIO/OSS) |
+| `minio-client.ts` | MinIO S3-compatible storage implementation |
+| `oss-client.ts` | Aliyun OSS storage implementation |
 | `image-compress.ts` | Client-side image compression (before upload) |
 
 ### Image Quality

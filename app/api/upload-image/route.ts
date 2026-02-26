@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { uploadDataUrlImage, uploadImage } from '@/lib/oss-client';
+import { uploadDataUrlImage, uploadImage } from '@/lib/storage-client';
 import { getSessionUser } from '@/lib/auth-api';
 import { createRequestLogger } from '@/lib/logger';
 
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       let result;
       if (image.startsWith('http://') || image.startsWith('https://')) {
         log.debug('检测到 URL 格式，从远程下载');
-        const { uploadFromUrl } = await import('@/lib/oss-client');
+        const { uploadFromUrl } = await import('@/lib/storage-client');
         result = await uploadFromUrl(image, folder || 'uploads');
       } else {
         log.debug('检测到 base64/dataURL 格式');

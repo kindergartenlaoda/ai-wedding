@@ -4,10 +4,9 @@
 
 set -e
 
-echo "检查构建文件..."
-if [ ! -f ".next/prerender-manifest.json" ]; then
+if [ ! -d ".next" ]; then
   echo "错误：未找到构建文件，请先运行部署脚本："
-  echo "  bash scripts/deploy.sh"
+  echo "  pnpm deploy"
   exit 1
 fi
 
@@ -24,19 +23,7 @@ pm2 start ecosystem.config.js
 echo "保存 PM2 配置..."
 pm2 save
 
-echo "✓ 启动成功！"
+echo "启动成功！"
 echo ""
 echo "查看日志: pm2 logs ai-wedding"
 echo "查看状态: pm2 status"
-
-
-
-
-
-
-
-
-
-
-
-

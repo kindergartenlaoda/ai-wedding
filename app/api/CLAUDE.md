@@ -3,6 +3,7 @@
 # API Routes Module
 
 > 变更记录 (Changelog)
+> - **2026-02-26** -- 同步更新：移除已废弃的 single-generations 路由引用，新增 credits/domains 路由。
 > - **2026-02-24T14:27:17** -- 初始化扫描，识别 41 个 API route handler。
 
 ## Module Responsibilities
@@ -33,22 +34,19 @@ Server-side API route handlers for the ai-wedding platform. All routes run exclu
 | `profile/route.ts` | GET | requireAuth | User profile fetch |
 | `invite/claim/route.ts` | POST | requireAuth | Claim invite code |
 
-### CRUD (11 routes)
+### CRUD (8 routes)
 | Route | Methods | Auth | Description |
 |-------|---------|------|-------------|
 | `projects/route.ts` | GET, POST | requireAuth | Project list/create |
 | `projects/[id]/route.ts` | GET, PATCH, DELETE | requireAuth | Project detail |
-| `generations/route.ts` | GET, POST | requireAuth | Generation list/create |
-| `generations/[id]/route.ts` | GET, PATCH | requireAuth | Generation detail/update |
+| `generations/route.ts` | GET, POST | requireAuth | Generation list/create (unified batch + single) |
+| `generations/[id]/route.ts` | GET, PATCH, DELETE | requireAuth | Generation detail/update |
 | `generations/[id]/share/route.ts` | POST | requireAuth | Share to gallery |
 | `templates/route.ts` | GET | public | Template listing |
 | `favorites/route.ts` | GET, POST, DELETE | requireAuth | Favorites |
 | `gallery/route.ts` | GET | public | Public gallery |
-| `single-generations/route.ts` | POST | requireAuth | Create single gen |
-| `single-generations/list/route.ts` | GET | requireAuth | List single gens |
-| `single-generations/[id]/route.ts` | GET, DELETE | requireAuth | Single gen detail |
 
-### Orders/Payments (4 routes)
+### Orders/Payments & Credits (6 routes)
 | Route | Methods | Auth | Description |
 |-------|---------|------|-------------|
 | `orders/create/route.ts` | POST | requireAuth | Create order |
@@ -56,8 +54,11 @@ Server-side API route handlers for the ai-wedding platform. All routes run exclu
 | `orders/mock/confirm/route.ts` | POST | requireAuth | Mock payment (dev) |
 | `orders/webhook/stripe/route.ts` | POST | webhook-secret | Stripe webhook |
 | `credits/refund/route.ts` | POST | requireAuth | Credit refund |
+| `credits/deduct/route.ts` | POST | requireAuth | Credit deduction |
+| `credits/freeze/route.ts` | POST | requireAuth | Freeze credits before generation |
+| `credits/unfreeze/route.ts` | POST | requireAuth | Unfreeze credits on failure |
 
-### Admin (6 routes)
+### Admin (8 routes)
 | Route | Methods | Auth | Description |
 |-------|---------|------|-------------|
 | `admin/templates/route.ts` | GET, POST | requireAdmin | Template CRUD |
@@ -66,16 +67,20 @@ Server-side API route handlers for the ai-wedding platform. All routes run exclu
 | `admin/model-configs/[id]/route.ts` | GET, PATCH, DELETE | requireAdmin | Model config detail |
 | `admin/announcements/route.ts` | GET, POST, PATCH | requireAdmin | Announcements |
 | `admin/upload-template-image/route.ts` | POST | requireAdmin | Template image upload |
+| `admin/domains/route.ts` | GET, POST | requireAdmin | Domain list/create |
+| `admin/domains/[id]/route.ts` | GET, PATCH, DELETE | requireAdmin | Domain detail |
 
-### Public/Analytics (6 routes)
+### Public/Analytics (8 routes)
 | Route | Methods | Auth | Description |
 |-------|---------|------|-------------|
-| `model-configs/active/route.ts` | GET | public | Active model configs |
+| `model-configs/active/route.ts` | GET | requireAuth | Active model configs |
 | `model-sources/available/route.ts` | GET | public | Available sources |
+| `domains/route.ts` | GET | public | Public domain list |
 | `image-likes/route.ts` | GET, POST, DELETE | requireAuth | Image likes |
 | `engagement-stats/route.ts` | GET | requireAuth | Engagement stats |
 | `images/track-download/route.ts` | POST | requireAuth | Download tracking |
 | `announcements/route.ts` | GET | public | Public announcements |
+| `upload-image/route.ts` | POST | requireAuth | Upload images to storage |
 
 ## Key Dependencies
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-admin';
-import { uploadImage } from '@/lib/oss-client';
+import { uploadImage } from '@/lib/storage-client';
 import { logger } from '@/lib/logger';
 
 /**

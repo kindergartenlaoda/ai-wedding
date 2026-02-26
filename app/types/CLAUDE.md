@@ -13,7 +13,7 @@ Centralized TypeScript type definitions shared across the application. All busin
 
 | File | Key Types | Description |
 |------|-----------|-------------|
-| `database.ts` | `Profile`, `Template`, `PromptConfig`, `Project`, `Generation`, `Order`, `Favorite`, `ProjectWithTemplate`, `GenerationWithRelations`, `GalleryItem`, `SingleGeneration`, `SystemAnnouncement` | Core database entity types for client-side use |
+| `database.ts` | `Profile`, `Template`, `PromptConfig`, `Project`, `Generation`, `Order`, `Favorite`, `ProjectWithTemplate`, `GenerationWithRelations`, `GalleryItem`, `SystemAnnouncement` | Core database entity types for client-side use |
 | `domain.ts` | `GenerationDomain`, `DomainInfo`, `DOMAIN_CONFIG`, `GENERATION_DOMAINS` | Domain system: 8 domains with icons, colors, descriptions |
 | `generation.ts` | `GenerationInput`, `GenerationProgress`, `GenerationResult` | Generation flow types |
 | `status.ts` | `ProjectStatus`, `GenerationStatus` | Status enums |

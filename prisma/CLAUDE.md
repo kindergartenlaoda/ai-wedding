@@ -18,17 +18,19 @@ Database schema definition, migrations, and seed data for the PostgreSQL databas
 | `seed.ts` | Database seed script (initial templates) |
 | `sync-wedding-templates.ts` | Wedding template sync utility |
 
-## Data Models (13)
+## Data Models (15)
 
 ### Core Models
 | Model | Table | Description |
 |-------|-------|-------------|
 | `User` | `users` | NextAuth users (email, passwordHash) |
-| `Profile` | `profiles` | User profile with credits, invite system, role |
+| `Profile` | `profiles` | User profile with credits (incl. frozen), invite system, role |
 | `Template` | `templates` | AI generation templates (name, category, domain, prompts, pricing) |
 | `Project` | `projects` | User photo projects (domain-aware) |
-| `Generation` | `generations` | AI generation jobs (status, images, credits) |
-| `SingleGeneration` | `single_generations` | Single image generation records |
+| `Generation` | `generations` | AI generation jobs — unified batch + single via `generation_type` field |
+| `GeneratedImage` | `generated_images` | Generated images per generation (preview / high_res) |
+| `CreditTransaction` | `credit_transactions` | Credit transaction history (purchase, generation, refund, etc.) |
+| `Domain` | `domains` | Domain configuration (slug, name, icon, require_face_detection) |
 
 ### Payment & Commerce
 | Model | Table | Description |
@@ -52,18 +54,24 @@ Database schema definition, migrations, and seed data for the PostgreSQL databas
 ### Enums
 | Enum | Values | Description |
 |------|--------|-------------|
-| `ModelConfigType` | generate-image, identify-image, generate-prompts, other | Model capability type |
+| `CreditTransactionType` | purchase, generation, refund, invite_reward, system_grant, admin_adjust | Credit tx type |
+| `CreditTransactionStatus` | pending, completed, failed, cancelled | Credit tx status |
+| `GenerationType` | batch, single | Generation mode |
+| `ImageType` | preview, high_res | Generated image quality |
+| `ModelConfigType` | generate_image, identify_image, generate_prompts, other | Model capability type |
 | `ModelConfigStatus` | active, inactive | Model enable/disable |
-| `ModelConfigSource` | openRouter, openAi, 302 | AI service provider |
+| `ModelConfigSource` | openRouter, openAi | AI service provider |
 
 ## Key Relationships
 
 ```
 User 1--1 Profile
 User 1--N Project 1--N Generation
-User 1--N SingleGeneration
+User 1--N Generation (single type, no project)
 User 1--N Order
+User 1--N CreditTransaction
 Generation N--1 Template
+Generation 1--N GeneratedImage
 Generation 1--N ImageDownload, ImageLike
 User 1--N Favorite N--1 Template
 User 1--N InviteEvent (as inviter/invitee)
