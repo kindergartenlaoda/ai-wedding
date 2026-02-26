@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -434,26 +435,10 @@ export default function AdminDomainsPage() {
                         </div>
 
                         {/* Cover Image */}
-                        <div className="space-y-2">
-                            <Label htmlFor="cover_image">封面图 URL</Label>
-                            <Input
-                                id="cover_image"
-                                placeholder="https://..."
-                                value={form.cover_image}
-                                onChange={(e) => setForm({ ...form, cover_image: e.target.value })}
-                            />
-                            {form.cover_image && (
-                                <div className="relative w-full h-32 rounded overflow-hidden bg-muted">
-                                    <Image
-                                        src={form.cover_image}
-                                        alt="封面预览"
-                                        fill
-                                        className="object-cover"
-                                        sizes="400px"
-                                    />
-                                </div>
-                            )}
-                        </div>
+                        <ImageUploadField
+                            currentUrl={form.cover_image}
+                            onUrlChange={(url) => setForm({ ...form, cover_image: url })}
+                        />
 
                         {/* Sort Order */}
                         <div className="space-y-2">
