@@ -95,6 +95,25 @@ module.exports = {
       scale: {
         '98': '0.98',
         '102': '1.02',
+      },
+      animation: {
+        'shimmer': 'shimmer 3s infinite linear',
+        'float-slow': 'float 8s ease-in-out infinite',
+        'glow-pulse': 'glow 4s ease-in-out infinite',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { backgroundPosition: '200% center' },
+          '100%': { backgroundPosition: '-200% center' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-15px)' },
+        },
+        glow: {
+          '0%, 100%': { opacity: '0.3' },
+          '50%': { opacity: '0.7' },
+        }
       }
     }
   },

@@ -77,7 +77,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
     fetch('/api/stats/public')
       .then((res) => res.json())
       .then((data: PlatformStats) => setStats(data))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const navigate = (page: string) => {
@@ -95,10 +95,11 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
   return (
     <div className="min-h-screen bg-obsidian text-alabaster selection:bg-gold/30">
+      <div className="film-grain" />
       {/* Hero Section - Cinematic Dark */}
       <section className="relative px-4 pt-32 pb-24 lg:pt-40 lg:pb-32 mx-auto sm:px-6 lg:px-8 bg-obsidian text-alabaster overflow-hidden min-h-[90vh] flex items-center">
         {/* Subtle background glow */}
-        <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[120px] pointer-events-none animate-glow-pulse" />
 
         <div className="relative z-10 max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-12 items-center">
@@ -114,7 +115,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
               <FadeIn delay={0.2}>
                 <h1 className="text-5xl font-light tracking-tight leading-tight font-display sm:text-6xl md:text-7xl">
                   上传照片，AI 生成 <br />
-                  <span className="italic text-gold font-serif">专业写真</span>
+                  <span className="italic font-serif bg-gradient-to-r from-gold via-white to-gold bg-[length:200%_auto] text-transparent bg-clip-text animate-shimmer">专业写真</span>
                 </h1>
               </FadeIn>
 
@@ -128,14 +129,14 @@ export function HomePage({ onNavigate }: HomePageProps) {
                 <div className="flex flex-col gap-5 justify-center lg:justify-start sm:flex-row pt-4">
                   <button
                     onClick={handleGetStarted}
-                    className="px-10 py-4 bg-gold text-obsidian rounded-sm hover:-translate-y-px transition-all duration-700 text-sm tracking-[0.15em] uppercase font-medium flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(200,160,100,0.2)] hover:shadow-[0_0_30px_rgba(200,160,100,0.4)]"
+                    className="px-10 py-4 bg-gold text-obsidian rounded-sm hover:-translate-y-px transition-all duration-500 text-sm tracking-[0.15em] uppercase font-medium flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(200,160,100,0.2)] hover:shadow-[0_0_30px_rgba(200,160,100,0.4)]"
                   >
                     <Camera className="w-5 h-5" />
                     免费试用
                   </button>
                   <button
                     onClick={() => navigate('gallery')}
-                    className="px-10 py-4 border border-white/20 text-alabaster rounded-sm hover:bg-white/5 transition-colors duration-700 text-sm tracking-[0.15em] uppercase font-medium flex items-center justify-center gap-3"
+                    className="px-10 py-4 border border-white/20 text-alabaster rounded-sm hover:bg-white/5 transition-colors duration-500 text-sm tracking-[0.15em] uppercase font-medium flex items-center justify-center gap-3"
                   >
                     <ImageIcon className="w-5 h-5" />
                     查看效果
@@ -265,7 +266,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
       {/* The Craft (Features) - Editorial Overlapping Layout */}
       <section className="py-32 bg-obsidian text-alabaster border-t border-white/5 relative overflow-hidden">
         {/* Subtle background glow for depth */}
-        <div className="absolute right-0 top-1/4 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[100px] pointer-events-none translate-x-1/3" />
+        <div className="absolute right-0 top-1/4 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[100px] pointer-events-none translate-x-1/3 animate-glow-pulse" />
 
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -317,7 +318,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1200&auto=format&fit=crop"
                   alt="极致的摄影匠心"
                   fill
-                  className="object-cover transition-transform duration-2000 hover:scale-105 ease-out"
+                  className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 60vw"
                 />
                 {/* Vintage grain overlay */}
