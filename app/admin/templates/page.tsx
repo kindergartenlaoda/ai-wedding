@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Plus, Edit, Trash2, Eye, EyeOff, Copy } from 'lucide-react';
-import type { Template } from '@/types/database';
+import type { AdminTemplate } from '@/types/database';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -23,10 +23,12 @@ import {
 
 export default function AdminTemplatesPage() {
   const router = useRouter();
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState<AdminTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [selectedDomain, setSelectedDomain] = useState<string>('all');
+  const [domains, setDomains] = useState<Array<{ slug: string; name: string }>>([]);
 
   const loadTemplates = useCallback(async () => {
     try {
@@ -64,6 +66,21 @@ export default function AdminTemplatesPage() {
     loadTemplates();
   }, [loadTemplates]);
 
+  useEffect(() => {
+    const loadDomains = async () => {
+      try {
+        const response = await fetch('/api/domains');
+        if (response.ok) {
+          const data = await response.json();
+          setDomains(data.data || []);
+        }
+      } catch (err) {
+        console.error('加载域列表失败:', err);
+      }
+    };
+    loadDomains();
+  }, []);
+
   const toggleExpand = (id: string) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -96,7 +113,7 @@ export default function AdminTemplatesPage() {
     }
   };
 
-  const toggleActive = async (template: Template) => {
+  const toggleActive = async (template: AdminTemplate) => {
     try {
       const response = await fetch(`/api/admin/templates/${template.id}`, {
         method: 'PUT',
@@ -122,7 +139,7 @@ export default function AdminTemplatesPage() {
   };
 
   // 复制模板：创建一份副本并跳转到编辑页
-  const duplicateTemplate = async (template: Template) => {
+  const duplicateTemplate = async (template: AdminTemplate) => {
     try {
       const response = await fetch('/api/admin/templates', {
         method: 'POST',
@@ -133,8 +150,8 @@ export default function AdminTemplatesPage() {
           description: template.description || '',
           category: template.category,
           preview_image_url: template.preview_image_url,
-          prompt_config: template.prompt_config || {},
-          prompt_list: template.prompt_list || [],
+          prompt_config: template.prompt_config,
+          prompt_list: template.prompt_list,
           price_credits: template.price_credits,
           is_active: false,
           sort_order: template.sort_order,
@@ -164,12 +181,9 @@ export default function AdminTemplatesPage() {
   };
 
   // 计算提示词数量（仅展示用）
-  const getPromptCount = (t: Template) => {
-    const list: string[] = Array.isArray((t as { prompt_list?: string[] })?.prompt_list)
-      ? (t as { prompt_list: string[] }).prompt_list
-      : [];
-    if (list.length > 0) return list.length;
-    if (t.prompt_config?.basePrompt && t.prompt_config.basePrompt.trim().length > 0) return 1;
+  const getPromptCount = (t: AdminTemplate) => {
+    if (t.prompt_list.length > 0) return t.prompt_list.length;
+    if (t.prompt_config.basePrompt?.trim().length) return 1;
     return 1;
   };
 
@@ -191,6 +205,11 @@ export default function AdminTemplatesPage() {
     classic: '经典',
   };
 
+  // 根据选中的域过滤模板
+  const filteredTemplates = selectedDomain === 'all'
+    ? templates
+    : templates.filter(t => t.domain === selectedDomain);
+
   return (
     <AdminLayout>
       <div className="p-4 space-y-8">
@@ -205,6 +224,34 @@ export default function AdminTemplatesPage() {
               新建模板
             </Button>
           </Link>
+        </div>
+
+        {/* 域筛选器 */}
+        <div className="flex items-center gap-3">
+          <label htmlFor="domain-filter" className="text-sm font-medium">
+            筛选域：
+          </label>
+          <select
+            id="domain-filter"
+            value={selectedDomain}
+            onChange={(e) => setSelectedDomain(e.target.value)}
+            className="px-3 py-2 border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="all">全部域 ({templates.length})</option>
+            {domains.map((domain) => {
+              const count = templates.filter(t => t.domain === domain.slug).length;
+              return (
+                <option key={domain.slug} value={domain.slug}>
+                  {domain.name} ({count})
+                </option>
+              );
+            })}
+          </select>
+          {selectedDomain !== 'all' && (
+            <span className="text-sm text-muted-foreground">
+              显示 {filteredTemplates.length} 个模板
+            </span>
+          )}
         </div>
 
         {isLoading ? (
@@ -224,9 +271,16 @@ export default function AdminTemplatesPage() {
               </div>
             </div>
           </div>
+        ) : filteredTemplates.length === 0 ? (
+          <div className="py-16 text-center">
+            <div className="mx-auto max-w-md space-y-4">
+              <h3 className="text-xl font-semibold">没有找到模板</h3>
+              <p className="text-muted-foreground">当前筛选条件下没有模板，请尝试其他筛选条件。</p>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 2xl:grid-cols-3">
-            {templates.map((template) => (
+            {filteredTemplates.map((template) => (
               <div
                 key={template.id}
                 role="button"

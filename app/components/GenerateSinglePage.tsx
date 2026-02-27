@@ -48,7 +48,8 @@ export function GenerateSinglePage() {
     handleTemplateSelect,
     setSelectedPromptIndex,
     handleCustomPromptChange,
-    getCurrentPrompt,
+    getGenerateParams,
+    hasValidParams,
   } = useTemplateSelection();
 
   // 从 URL 参数中获取提示词并自动填充
@@ -71,15 +72,14 @@ export function GenerateSinglePage() {
       return;
     }
 
-    const currentPrompt = getCurrentPrompt();
-    if (!uploadState.originalImage || !currentPrompt) {
+    const params = getGenerateParams();
+    if (!uploadState.originalImage || !params) {
       setError('请上传图片并选择模板/提示词或输入自定义提示词！');
       return;
     }
 
-    // 优先使用 MinIO URL，如果不存在则使用 base64（兼容性回退）
     const imageToUse = uploadState.uploadedImageUrl || uploadState.originalImage;
-    await generateImage(imageToUse, currentPrompt, settings, source);
+    await generateImage(imageToUse, params, settings, source);
   };
 
   const viewImage = (imageUrl: string, title: string): void => {
@@ -192,7 +192,7 @@ export function GenerateSinglePage() {
             {sources.includes('openAi') && (
               <button
                 onClick={() => handleGenerate('openAi')}
-                disabled={!uploadState.originalImage || !getCurrentPrompt() || generationState.isGenerating || (profile ? profile.credits < 15 : false)}
+                disabled={!uploadState.originalImage || !hasValidParams() || generationState.isGenerating || (profile ? profile.credits < 15 : false)}
                 className="flex gap-3 items-center px-10 py-5 text-xs font-medium bg-gold rounded-sm transition-all duration-500 text-obsidian hover:shadow-[0_0_20px_rgba(200,160,100,0.4)] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
               >
                 {generationState.isGenerating ? (
@@ -212,7 +212,7 @@ export function GenerateSinglePage() {
             {sources.includes('openRouter') && (
               <button
                 onClick={() => handleGenerate('openRouter')}
-                disabled={!uploadState.originalImage || !getCurrentPrompt() || generationState.isGenerating || (profile ? profile.credits < 15 : false)}
+                disabled={!uploadState.originalImage || !hasValidParams() || generationState.isGenerating || (profile ? profile.credits < 15 : false)}
                 className="flex gap-3 items-center px-10 py-5 text-xs font-medium bg-white/5 border border-white/10 rounded-sm shadow-sm transition-all duration-500 text-alabaster hover:bg-white/10 hover:border-gold/30 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
               >
                 {generationState.isGenerating ? (
@@ -232,7 +232,7 @@ export function GenerateSinglePage() {
             {sources.includes('302') && (
               <button
                 onClick={() => handleGenerate('302')}
-                disabled={!uploadState.originalImage || !getCurrentPrompt() || generationState.isGenerating || (profile ? profile.credits < 15 : false)}
+                disabled={!uploadState.originalImage || !hasValidParams() || generationState.isGenerating || (profile ? profile.credits < 15 : false)}
                 className="flex gap-3 items-center px-10 py-5 text-xs font-medium bg-white/5 border border-white/10 rounded-sm shadow-sm transition-all duration-500 text-alabaster hover:bg-white/10 hover:border-gold/30 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
               >
                 {generationState.isGenerating ? (
@@ -259,12 +259,12 @@ export function GenerateSinglePage() {
               暂无可用的模型配置，请联系管理员
             </p>
           )}
-          {!getCurrentPrompt() && uploadState.originalImage && (
+          {!hasValidParams() && uploadState.originalImage && (
             <p className="mt-4 text-xs font-light text-pearl/60 tracking-wider">
               请选择模板风格或输入自定义提示词
             </p>
           )}
-          {profile && profile.credits < 15 && uploadState.originalImage && getCurrentPrompt() && (
+          {profile && profile.credits < 15 && uploadState.originalImage && hasValidParams() && (
             <p className="mt-4 text-xs font-medium text-red-400 tracking-wider">
               积分不足，需要 15 积分才能生成
             </p>

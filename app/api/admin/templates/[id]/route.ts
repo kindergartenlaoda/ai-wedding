@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-admin';
 import { prisma } from '@/lib/prisma';
+import { clearTemplateCache } from '@/lib/generation-shared';
 import { z } from 'zod';
 
 const updateTemplateSchema = z.object({
@@ -11,10 +12,27 @@ const updateTemplateSchema = z.object({
   preview_image_url: z.string().trim().min(1).optional(),
   prompt_config: z.object({}).passthrough().optional(),
   prompt_list: z.array(z.string()).optional(),
+  prompt_descriptions: z.array(z.string()).optional(),
   price_credits: z.number().int().min(0).optional(),
   is_active: z.boolean().optional(),
   sort_order: z.number().int().optional(),
-});
+}).refine(
+  (data) => {
+    // 如果提供了 prompt_descriptions，必须同时提供 prompt_list
+    if (data.prompt_descriptions && data.prompt_descriptions.length > 0) {
+      if (!data.prompt_list || data.prompt_list.length === 0) {
+        return false;
+      }
+      // 长度必须一致
+      return data.prompt_descriptions.length === data.prompt_list.length;
+    }
+    return true;
+  },
+  {
+    message: 'prompt_descriptions 必须与 prompt_list 同时提供且长度一致',
+    path: ['prompt_descriptions'],
+  }
+);
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -61,6 +79,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   if (body.preview_image_url !== undefined) updateData.preview_image_url = body.preview_image_url;
   if (body.prompt_config !== undefined) updateData.prompt_config = body.prompt_config;
   if (body.prompt_list !== undefined) updateData.prompt_list = body.prompt_list;
+  if (body.prompt_descriptions !== undefined) updateData.prompt_descriptions = body.prompt_descriptions;
   if (body.price_credits !== undefined) updateData.price_credits = body.price_credits;
   if (body.is_active !== undefined) updateData.is_active = body.is_active;
   if (body.sort_order !== undefined) updateData.sort_order = body.sort_order;
@@ -74,6 +93,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       where: { id },
       data: updateData as Parameters<typeof prisma.templates.update>[0]['data'],
     });
+
+    // 清除缓存，确保更新立即生效
+    clearTemplateCache(id);
+
     return NextResponse.json({
       template: {
         id: template.id,
@@ -84,6 +107,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         preview_image_url: template.preview_image_url,
         prompt_config: template.prompt_config,
         prompt_list: template.prompt_list,
+        prompt_descriptions: template.prompt_descriptions,
         price_credits: template.price_credits,
         is_active: template.is_active,
         sort_order: template.sort_order,
@@ -110,6 +134,10 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
 
   try {
     await prisma.templates.delete({ where: { id } });
+
+    // 清除缓存
+    clearTemplateCache(id);
+
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (e) {
     if ((e as { code?: string })?.code === 'P2025') {

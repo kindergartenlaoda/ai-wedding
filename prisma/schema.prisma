@@ -259,9 +259,10 @@ model templates {
   category          String
   domain            String        @default("wedding")
   preview_image_url String?
-  prompt_config     Json          @default("{}")
-  prompt_list       Json          @default("[]")
-  price_credits     Int           @default(10)
+  prompt_config        Json          @default("{}")
+  prompt_list          Json          @default("[]")
+  prompt_descriptions  Json          @default("[]")
+  price_credits        Int           @default(10)
   is_active         Boolean       @default(true)
   sort_order        Int           @default(0)
   created_at        DateTime      @default(now())

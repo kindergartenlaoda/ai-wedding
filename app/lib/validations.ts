@@ -39,6 +39,31 @@ export const CreateProjectSchema = z.object({
 });
 
 /**
+ * URL 格式验证（用于 image_inputs）
+ * 只允许 http/https 协议，拒绝 file:// 等协议
+ * data URL 限制大小为 10MB
+ */
+const imageUrlSchema = z.string().refine(
+  (url) => {
+    if (url.startsWith('data:')) {
+      // 限制 data URL 大小为 10MB
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (url.length > maxSize) {
+        return false;
+      }
+      return true;
+    }
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  },
+  { message: '无效的图片URL格式或data URL超过10MB限制' }
+);
+
+/**
  * AI图片生成验证
  */
 export const GenerateImageSchema = z.object({
@@ -51,7 +76,7 @@ export const GenerateImageSchema = z.object({
   response_format: z.enum(['url', 'b64_json']).default('url'),
   model: z.string().optional(),
   // 可选：图像输入（data URL），用于 chat/completions 图像编辑/条件生成
-  image_inputs: z.array(z.string()).max(3).optional(),
+  image_inputs: z.array(imageUrlSchema).max(3).optional(),
   // 可选：模型来源
   source: z.enum(['openRouter', '302', 'openAi']).optional(),
   // 可选：创意程度参数
@@ -60,6 +85,35 @@ export const GenerateImageSchema = z.object({
   // 可选：领域（wedding, children, id_photo 等），默认 wedding
   domain: z.string().optional(),
 });
+
+/**
+ * 图片生成验证 V2（提示词后端化）
+ * 支持两种模式：模板模式（template_id + prompt_index）和自定义模式（custom_prompt）
+ */
+const generateCommonFields = {
+  image_inputs: z.array(imageUrlSchema).max(3).optional(),
+  source: z.enum(['openRouter', '302', 'openAi']).optional(),
+  face_preservation: z.enum(['high', 'medium', 'low']).default('high'),
+  creativity_level: z.enum(['conservative', 'balanced', 'creative']).default('conservative'),
+};
+
+/**
+ * 图片生成验证 V2（提示词后端化）
+ * 使用 discriminatedUnion 确保模板模式和自定义模式互斥
+ */
+export const GenerateImageV2Schema = z.discriminatedUnion('mode', [
+  z.object({
+    mode: z.literal('template'),
+    template_id: z.string().min(1, '模板ID不能为空'),
+    prompt_index: z.number().int().min(0).default(0),
+    ...generateCommonFields,
+  }).strict(),
+  z.object({
+    mode: z.literal('custom'),
+    custom_prompt: z.string().min(1, '提示词不能为空').max(1500, '提示词不能超过1500个字符'),
+    ...generateCommonFields,
+  }).strict(),
+]);
 
 /**
  * 订单创建验证
@@ -153,6 +207,7 @@ export type SignUpInput = z.infer<typeof SignUpSchema>;
 export type SignInInput = z.infer<typeof SignInSchema>;
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
 export type GenerateImageInput = z.infer<typeof GenerateImageSchema>;
+export type GenerateImageV2Input = z.infer<typeof GenerateImageV2Schema>;
 export type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
 export type TrackDownloadInput = z.infer<typeof TrackDownloadSchema>;
 export type PaginationInput = z.infer<typeof PaginationSchema>;

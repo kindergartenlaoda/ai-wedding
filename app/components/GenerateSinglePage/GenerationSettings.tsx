@@ -42,7 +42,7 @@ export function GenerationSettings({
             <Sparkles className="w-5 h-5 text-gold flex-shrink-0" />
             <p className="text-xs text-alabaster tracking-wide font-light">
               当前选用影像风格: <span className="font-medium uppercase tracking-widest ml-2">{selectedTemplate.name}</span>
-              {selectedTemplate.prompt_list && selectedTemplate.prompt_list.length > 0 && (
+              {selectedTemplate.prompt_count > 1 && (
                 <span className="ml-2">— 光影方案 {selectedPromptIndex + 1}</span>
               )}
             </p>

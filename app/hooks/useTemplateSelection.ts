@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Template } from '@/types/database';
+import { Template, GenerateParams } from '@/types/database';
 
 export function useTemplateSelection() {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -20,17 +20,25 @@ export function useTemplateSelection() {
     }
   };
 
-  const getCurrentPrompt = (): string => {
+  const getGenerateParams = (): GenerateParams | null => {
     if (selectedTemplate) {
-      if (selectedTemplate.prompt_list && selectedTemplate.prompt_list.length > 0) {
-        return selectedTemplate.prompt_list[selectedPromptIndex] || selectedTemplate.prompt_list[0];
-      }
-      const promptConfig = typeof selectedTemplate.prompt_config === 'string'
-        ? JSON.parse(selectedTemplate.prompt_config)
-        : selectedTemplate.prompt_config;
-      return promptConfig.basePrompt || '';
+      return {
+        mode: 'template',
+        templateId: selectedTemplate.id,
+        promptIndex: selectedPromptIndex,
+      };
     }
-    return customPrompt.trim();
+    if (customPrompt.trim()) {
+      return {
+        mode: 'custom',
+        customPrompt: customPrompt.trim(),
+      };
+    }
+    return null;
+  };
+
+  const hasValidParams = (): boolean => {
+    return getGenerateParams() !== null;
   };
 
   return {
@@ -40,6 +48,7 @@ export function useTemplateSelection() {
     handleTemplateSelect,
     setSelectedPromptIndex,
     handleCustomPromptChange,
-    getCurrentPrompt,
+    getGenerateParams,
+    hasValidParams,
   };
 }

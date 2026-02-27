@@ -1,4 +1,4 @@
-import { GenerateImageSchema, validateData } from '@/lib/validations';
+import { GenerateImageV2Schema, validateData } from '@/lib/validations';
 import { requireAuth } from '@/lib/auth-api';
 import { createRequestLogger, sanitize } from '@/lib/logger';
 import {
@@ -7,9 +7,11 @@ import {
   RL_LIMIT,
   getActiveModelConfig,
   convertUrlToBase64,
-  composePrompt,
+  resolvePromptFromTemplate,
+  enhancePromptWithSettings,
+  mapCreativityToParams,
 } from '@/lib/generation-shared';
-import type { ChatContentItem } from '@/lib/generation-shared';
+import type { ChatContentItem, FacePreservationLevel, CreativityLevel } from '@/lib/generation-shared';
 
 export const runtime = 'nodejs';
 
@@ -31,41 +33,7 @@ export async function POST(req: Request) {
     const userId = authResult.user.id;
     log.info({ userId }, '用户认证成功');
 
-    // 2) 获取模型配置（优先从数据库，回退到环境变量）
-    const dbConfig = await getActiveModelConfig(log);
-
-    let IMAGE_API_BASE_URL: string;
-    let IMAGE_API_KEY: string;
-    let IMAGE_CHAT_MODEL: string;
-
-    if (dbConfig) {
-      log.info({ configName: dbConfig.name, configId: dbConfig.id }, '使用数据库配置');
-      IMAGE_API_BASE_URL = dbConfig.api_base_url;
-      IMAGE_API_KEY = dbConfig.api_key;
-      IMAGE_CHAT_MODEL = dbConfig.model_name;
-    } else {
-      log.warn('未找到激活的数据库配置，使用环境变量回退');
-      IMAGE_API_BASE_URL = ENV_IMAGE_API_BASE_URL || '';
-      IMAGE_API_KEY = ENV_IMAGE_API_KEY || '';
-      IMAGE_CHAT_MODEL = ENV_IMAGE_CHAT_MODEL;
-    }
-
-    log.debug({
-      source: dbConfig ? 'database' : 'environment',
-      baseUrl: IMAGE_API_BASE_URL,
-      apiKey: sanitize.apiKey(IMAGE_API_KEY),
-      model: IMAGE_CHAT_MODEL,
-    }, '配置检查');
-
-    if (!IMAGE_API_KEY) {
-      log.error('IMAGE_API_KEY 未配置');
-      return new Response(
-        JSON.stringify({ error: 'Server misconfigured: IMAGE_API_KEY is missing' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // 3) 速率限制
+    // 2) 速率限制
     const rl = checkRateLimit(userId);
     if (!rl.allowed) {
       log.warn({ userId, count: rl.count, limit: RL_LIMIT }, '速率限制超过');
@@ -73,9 +41,9 @@ export async function POST(req: Request) {
     }
     log.debug({ count: rl.count, limit: RL_LIMIT }, '速率限制检查通过');
 
-    // 4) 参数验证
+    // 4) 参数验证（V2：支持 template_id 模式和 custom_prompt 模式）
     const body = await req.json();
-    const validation = validateData(GenerateImageSchema, body);
+    const validation = validateData(GenerateImageV2Schema, body);
     if (!validation.success) {
       log.error({ error: validation.error }, '参数验证失败');
       return new Response(
@@ -84,15 +52,41 @@ export async function POST(req: Request) {
       );
     }
 
-    const { prompt, image_inputs, model } = validation.data;
+    const data = validation.data;
+    const image_inputs = data.image_inputs;
+    const source = data.source;
+    const facePreservation = (data.face_preservation || 'high') as FacePreservationLevel;
+    const creativityLevel = (data.creativity_level || 'conservative') as CreativityLevel;
+
+    // 5) 解析提示词（服务端完成）
+    let rawPrompt: string;
+    if ('template_id' in data) {
+      try {
+        rawPrompt = await resolvePromptFromTemplate(data.template_id, data.prompt_index);
+        log.info({ templateId: data.template_id, promptIndex: data.prompt_index }, '从模板解析提示词');
+      } catch (resolveErr) {
+        log.error({ error: resolveErr }, '模板提示词解析失败');
+        return new Response(
+          JSON.stringify({ error: resolveErr instanceof Error ? resolveErr.message : '模板提示词解析失败' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      rawPrompt = data.custom_prompt;
+      log.info({ promptLength: rawPrompt.length }, '使用自定义提示词');
+    }
+
+    const composedPrompt = enhancePromptWithSettings(rawPrompt, facePreservation);
+    const { temperature: _mappedTemp, topP: _mappedTopP } = mapCreativityToParams(creativityLevel);
+
     log.info({
-      promptLength: prompt.length,
-      model: model || IMAGE_CHAT_MODEL,
+      promptLength: composedPrompt.length,
       imageInputsCount: image_inputs?.length || 0,
+      facePreservation,
+      creativityLevel,
     }, '参数验证通过');
 
-    // 5) 构建请求内容
-    const composedPrompt = composePrompt(prompt);
+    // 6) 构建请求内容
     const chatContent: ChatContentItem[] = [{ type: 'text', text: composedPrompt }];
 
     if (Array.isArray(image_inputs)) {
@@ -115,17 +109,44 @@ export async function POST(req: Request) {
       }
     }
 
-    // 6) 调用上游 API
+    // 7) 获取模型配置
+    const dbConfig = await getActiveModelConfig(log, undefined, source);
+
+    let apiBaseUrl: string;
+    let apiKey: string;
+    let chatModel: string;
+
+    if (dbConfig) {
+      log.info({ configName: dbConfig.name, configId: dbConfig.id }, '使用数据库配置');
+      apiBaseUrl = dbConfig.api_base_url;
+      apiKey = dbConfig.api_key;
+      chatModel = dbConfig.model_name;
+    } else {
+      log.warn('未找到激活的数据库配置，使用环境变量回退');
+      apiBaseUrl = ENV_IMAGE_API_BASE_URL || '';
+      apiKey = ENV_IMAGE_API_KEY || '';
+      chatModel = ENV_IMAGE_CHAT_MODEL;
+    }
+
+    if (!apiKey) {
+      log.error('IMAGE_API_KEY 未配置');
+      return new Response(
+        JSON.stringify({ error: 'Server misconfigured: IMAGE_API_KEY is missing' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 8) 调用上游 API
     const requestData = {
-      model: model || IMAGE_CHAT_MODEL,
-      temperature: 0.2,
-      top_p: 0.7,
+      model: chatModel,
+      temperature: _mappedTemp,
+      top_p: _mappedTopP,
       messages: [{ role: 'user', content: chatContent }],
       stream: true,
       stream_options: { include_usage: true },
     };
 
-    const endpoint = `${IMAGE_API_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`;
+    const endpoint = `${apiBaseUrl.replace(/\/$/, '')}/v1/chat/completions`;
 
     log.info({
       model: requestData.model,
@@ -139,7 +160,7 @@ export async function POST(req: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${IMAGE_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify(requestData),
     });
@@ -149,9 +170,9 @@ export async function POST(req: Request) {
 
     if (!upstreamResponse.ok) {
       const errorData = await upstreamResponse.text();
-      log.error({ status: upstreamResponse.status, error: errorData }, '上游 API 返回错误');
+      log.error({ status: upstreamResponse.status, error: sanitize.errorMessage(errorData) }, '上游 API 返回错误');
       return new Response(
-        JSON.stringify({ error: `API请求失败: ${upstreamResponse.status} ${errorData}` }),
+        JSON.stringify({ error: `图片生成失败，请稍后重试` }),
         { status: upstreamResponse.status, headers: { 'Content-Type': 'application/json' } }
       );
     }

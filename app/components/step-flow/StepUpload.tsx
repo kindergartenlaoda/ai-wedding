@@ -41,7 +41,7 @@ export function StepUpload({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // 生成数量选择
-  const maxImages = template.prompt_list?.length || 1;
+  const maxImages = template.prompt_count || 1;
 
   // 从 localStorage 读取用户上次选择的数量
   const [imageCount, setImageCount] = useState(() => {
@@ -413,22 +413,25 @@ export function StepUpload({
                 <span className="text-pearl/50">{maxImages} 张</span>
               </div>
 
-              {template.prompt_list && template.prompt_list.length > 1 && (
+              {template.prompt_count > 1 && (
                 <div className="pt-4 mt-4 border-t border-white/10">
                   <p className="mb-2 text-xs text-pearl/60">包含风格：</p>
                   <div className="flex flex-wrap gap-2">
-                    {template.prompt_list.slice(0, imageCount).map((_, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex gap-1 items-center px-2 py-1 text-xs rounded border bg-gold/10 border-gold/30 text-gold"
-                      >
-                        <CheckCircle className="w-3 h-3" />
-                        风格 {index + 1}
-                      </span>
-                    ))}
-                    {imageCount < template.prompt_list.length && (
+                    {Array.from({ length: imageCount }).map((_, index: number) => {
+                      const desc = template.prompt_descriptions?.[index];
+                      return (
+                        <span
+                          key={index}
+                          className="inline-flex gap-1 items-center px-2 py-1 text-xs rounded border bg-gold/10 border-gold/30 text-gold"
+                        >
+                          <CheckCircle className="w-3 h-3" />
+                          {desc || `方案 ${index + 1}`}
+                        </span>
+                      );
+                    })}
+                    {imageCount < template.prompt_count && (
                       <span className="inline-flex gap-1 items-center px-2 py-1 text-xs rounded border bg-white/5 border-white/10 text-pearl/40">
-                        +{template.prompt_list.length - imageCount} 个未选
+                        +{template.prompt_count - imageCount} 个未选
                       </span>
                     )}
                   </div>

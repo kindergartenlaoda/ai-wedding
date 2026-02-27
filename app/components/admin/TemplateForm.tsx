@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Loader2 } from 'lucide-react';
-import type { Template, PromptConfig } from '@/types/database';
+import type { AdminTemplate, PromptConfig } from '@/types/database';
 import type { TemplateFormInput } from '@/types/admin';
 import { ImageUploadField } from './ImageUploadField';
 import { PromptConfigEditor } from './PromptConfigEditor';
@@ -22,7 +22,7 @@ import { PromptListEditor } from './PromptListEditor';
 import { useDomains } from '@/hooks/useDomains';
 
 interface TemplateFormProps {
-  template?: Template;
+  template?: AdminTemplate;
   onSubmit: (data: TemplateFormInput) => Promise<void>;
   onCancel: () => void;
 }
@@ -44,12 +44,13 @@ export function TemplateForm({ template, onSubmit, onCancel }: TemplateFormProps
     category: template?.category || 'location',
     domain: template?.domain || 'wedding',
     preview_image_url: template?.preview_image_url || '',
-    prompt_config: template?.prompt_config || {
+    prompt_config: template?.prompt_config ?? {
       basePrompt: '',
       styleModifiers: [],
       negativePrompt: '',
     },
-    prompt_list: template?.prompt_list || [],
+    prompt_list: template?.prompt_list ?? [],
+    prompt_descriptions: template?.prompt_descriptions ?? [],
     price_credits: template?.price_credits || 10,
     is_active: template?.is_active !== undefined ? template.is_active : true,
     sort_order: template?.sort_order || 0,
@@ -84,8 +85,12 @@ export function TemplateForm({ template, onSubmit, onCancel }: TemplateFormProps
     setFormData((prev) => ({ ...prev, prompt_config: config }));
   };
 
-  const updatePromptList = (list: string[]) => {
-    setFormData((prev) => ({ ...prev, prompt_list: list }));
+  const updatePromptListAndDescriptions = (list: string[], descriptions: string[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      prompt_list: list,
+      prompt_descriptions: descriptions,
+    }));
   };
 
   return (
@@ -179,7 +184,8 @@ export function TemplateForm({ template, onSubmit, onCancel }: TemplateFormProps
 
       <PromptListEditor
         value={formData.prompt_list || []}
-        onChange={updatePromptList}
+        descriptions={formData.prompt_descriptions || []}
+        onChange={updatePromptListAndDescriptions}
       />
 
       <div className="grid gap-6 md:grid-cols-3">

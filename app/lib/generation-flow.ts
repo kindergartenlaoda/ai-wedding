@@ -153,10 +153,11 @@ async function createGeneration(
 }
 
 /**
- * 流式生成单张图片
+ * 流式生成单张图片（通过 template_id + prompt_index）
  */
 async function generateSingleImage(
-  prompt: string,
+  templateId: string,
+  promptIndex: number,
   photoUrls: string[]
 ): Promise<string | null> {
   const res = await fetch('/api/generate-stream', {
@@ -164,7 +165,9 @@ async function generateSingleImage(
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      prompt,
+      mode: 'template',
+      template_id: templateId,
+      prompt_index: promptIndex,
       image_inputs: photoUrls,
     }),
   });
@@ -307,14 +310,8 @@ export async function startGeneration(
   const { domain, template, photos, imageCount } = params;
   const photoUrls = photos.map(p => p.minioUrl).filter(Boolean);
 
-  // 根据用户选择的数量截取 prompts
-  const allPrompts = template.prompt_list?.length
-    ? template.prompt_list
-    : [template.prompt_config.basePrompt];
-
-  const prompts = imageCount
-    ? allPrompts.slice(0, imageCount)
-    : allPrompts;
+  const promptCount = template.prompt_count || 1;
+  const count = imageCount ? Math.min(imageCount, promptCount) : promptCount;
 
   let projectId: string | null = null;
   let generationId: string | null = null;
@@ -372,8 +369,8 @@ export async function startGeneration(
 
     const allImages: string[] = [];
 
-    for (const prompt of prompts) {
-      const imageDataUrl = await generateSingleImage(prompt, photoUrls);
+    for (let i = 0; i < count; i++) {
+      const imageDataUrl = await generateSingleImage(template.id, i, photoUrls);
 
       if (imageDataUrl) {
         allImages.push(imageDataUrl);

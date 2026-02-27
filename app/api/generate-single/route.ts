@@ -1,4 +1,4 @@
-import { GenerateImageSchema, validateData } from '@/lib/validations';
+import { GenerateImageV2Schema, validateData } from '@/lib/validations';
 import { requireAuth } from '@/lib/auth-api';
 import { createRequestLogger, sanitize } from '@/lib/logger';
 import {
@@ -7,7 +7,9 @@ import {
   RL_LIMIT,
   getActiveModelConfig,
   convertUrlToBase64,
-  composePrompt,
+  resolvePromptFromTemplate,
+  enhancePromptWithSettings,
+  mapCreativityToParams,
   filterSensitiveData,
 } from '@/lib/generation-shared';
 import {
@@ -15,7 +17,7 @@ import {
   refundCreditsForGeneration,
   getUserCreditBalance,
 } from '@/lib/credit-service';
-import type { ChatContentItem } from '@/lib/generation-shared';
+import type { ChatContentItem, FacePreservationLevel, CreativityLevel } from '@/lib/generation-shared';
 
 export const runtime = 'nodejs';
 
@@ -85,18 +87,41 @@ export async function POST(req: Request) {
     originalCredits = currentBalance;
     log.info({ deducted: CREDITS_PER_GENERATION, remaining: currentBalance - CREDITS_PER_GENERATION }, '成功扣除积分');
 
-    // 4) 参数验证
+    // 4) 参数验证（V2：支持 template_id 模式和 custom_prompt 模式）
     const body = await req.json();
-    const validation = validateData(GenerateImageSchema, body);
+    const validation = validateData(GenerateImageV2Schema, body);
     if (!validation.success) {
       log.error({ error: validation.error }, '参数验证失败');
       await refundCredits(userId, originalCredits, log);
       return jsonError(validation.error, 400);
     }
 
-    const { prompt, image_inputs, model, source, temperature, top_p } = validation.data;
+    const data = validation.data;
+    const image_inputs = data.image_inputs;
+    const source = data.source;
+    const facePreservation = (data.face_preservation || 'high') as FacePreservationLevel;
+    const creativityLevel = (data.creativity_level || 'conservative') as CreativityLevel;
 
-    // 5) 获取模型配置
+    // 5) 解析提示词（服务端完成，不依赖前端传入 prompt）
+    let rawPrompt: string;
+    if ('template_id' in data) {
+      try {
+        rawPrompt = await resolvePromptFromTemplate(data.template_id, data.prompt_index);
+        log.info({ templateId: data.template_id, promptIndex: data.prompt_index }, '从模板解析提示词');
+      } catch (resolveErr) {
+        log.error({ error: resolveErr }, '模板提示词解析失败');
+        await refundCredits(userId, originalCredits, log);
+        return jsonError(resolveErr instanceof Error ? resolveErr.message : '模板提示词解析失败', 400);
+      }
+    } else {
+      rawPrompt = data.custom_prompt;
+      log.info({ promptLength: rawPrompt.length }, '使用自定义提示词');
+    }
+
+    const composedPrompt = enhancePromptWithSettings(rawPrompt, facePreservation);
+    const { temperature, topP: top_p } = mapCreativityToParams(creativityLevel);
+
+    // 6) 获取模型配置
     const dbConfig = await getActiveModelConfig(log, undefined, source);
 
     let apiBaseUrl: string;
@@ -116,12 +141,14 @@ export async function POST(req: Request) {
     }
 
     log.info({
-      promptLength: prompt.length,
+      promptLength: composedPrompt.length,
       finalModel: chatModel,
       source: source || 'default',
       imageCount: image_inputs?.length || 0,
-      temperature: temperature ?? 0.2,
-      topP: top_p ?? 0.7,
+      facePreservation,
+      creativityLevel,
+      temperature,
+      topP: top_p,
     }, '参数验证通过');
 
     if (!apiKey) {
@@ -130,8 +157,7 @@ export async function POST(req: Request) {
       return jsonError('Server misconfigured: IMAGE_API_KEY is missing', 500);
     }
 
-    // 6) 根据 source 决定请求格式
-    const composedPrompt = composePrompt(prompt);
+    // 7) 根据 source 决定请求格式
     const is302AI = source === '302' || apiBaseUrl.includes('302.ai');
 
     if (is302AI) {
@@ -344,9 +370,9 @@ async function handleOpenAICompat(
 
   if (!upstreamResponse.ok) {
     const errorData = await upstreamResponse.text();
-    log.error({ status: upstreamResponse.status, error: errorData }, '上游 API 返回错误');
+    log.error({ status: upstreamResponse.status, error: sanitize.errorMessage(errorData) }, '上游 API 返回错误');
     await refundCredits(userId, originalCredits, log);
-    return jsonError(`API请求失败: ${upstreamResponse.status} ${errorData}`, upstreamResponse.status);
+    return jsonError(`图片生成失败，请稍后重试`, upstreamResponse.status);
   }
 
   log.info('开始转发流式响应');

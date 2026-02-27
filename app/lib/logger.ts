@@ -110,6 +110,19 @@ export const sanitize = {
     if (text.length <= maxLength) return text;
     return `${text.substring(0, maxLength)}... [${text.length} 字符]`;
   },
+
+  /**
+   * 脱敏错误信息（移除敏感路径、API keys等）
+   */
+  errorMessage: (message: string): string => {
+    // 移除可能的 API keys
+    let sanitized = message.replace(/[a-zA-Z0-9_-]{20,}/g, '[REDACTED]');
+    // 移除文件路径
+    sanitized = sanitized.replace(/\/[^\s]+/g, '[PATH]');
+    // 移除 IP 地址
+    sanitized = sanitized.replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '[IP]');
+    return sanitized;
+  },
 };
 
 /**

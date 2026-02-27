@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ImageGenerationSettings, GenerationState } from '@/components/GenerateSinglePage/types';
 import type { ModelConfigSource } from '@/types/model-config';
+import type { GenerateParams } from '@/types/database';
 
 interface UseStreamImageGenerationProps {
   onError: (message: string) => void;
@@ -16,35 +17,10 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
     streamingContent: '',
   });
 
-  const buildFacePreservationPrompt = (level: ImageGenerationSettings['facePreservation']): string => {
-    switch (level) {
-      case 'high':
-        return `STRICT REQUIREMENTS:
-1. ABSOLUTELY preserve all facial features, facial contours, eye shape, nose shape, mouth shape, and all key characteristics from the original image
-2. Maintain the person's basic facial structure and proportions COMPLETELY unchanged
-3. Ensure the person in the edited image is 100% recognizable as the same individual
-4. NO changes to any facial details including skin texture, moles, scars, or other distinctive features
-5. If style conversion is involved, MUST maintain facial realism and accuracy
-6. Focus ONLY on non-facial modifications as requested`;
-      case 'medium':
-        return `REQUIREMENTS:
-1. Preserve the main facial features and facial contours from the original image
-2. Maintain the person's basic facial structure and proportions
-3. Ensure the person in the edited image is recognizable as the same individual
-4. Allow minor facial detail adjustments but do not change overall characteristics
-5. Prioritize facial preservation over stylistic changes`;
-      case 'low':
-        return `BASIC REQUIREMENTS:
-1. Try to preserve the main facial features from the original image
-2. Maintain the basic facial contours of the person
-3. Allow some degree of facial adjustment and stylization while keeping general likeness`;
-    }
-  };
-
   const uploadGeneratedImageToMinio = async (
     imageDataUrl: string,
     originalImage: string,
-    prompt: string,
+    params: GenerateParams,
     settings: ImageGenerationSettings
   ): Promise<void> => {
     try {
@@ -98,12 +74,16 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
             }
           }
 
+          const promptForSave = params.mode === 'template'
+            ? `[template:${params.templateId}:${params.promptIndex}]`
+            : params.customPrompt;
+
           const saveRes = await fetch('/api/single-generations', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              prompt,
+              prompt: promptForSave,
               original_image: originalImageUrl,
               result_image: resultImageUrl,
               settings: {
@@ -134,7 +114,7 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
 
   const generateImage = async (
     originalImage: string,
-    prompt: string,
+    params: GenerateParams,
     settings: ImageGenerationSettings,
     source?: ModelConfigSource
   ): Promise<void> => {
@@ -147,44 +127,30 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
     });
 
     try {
-      const facePreservationText = buildFacePreservationPrompt(settings.facePreservation);
-
-      let enhancedPrompt = prompt;
-      if (settings.facePreservation !== 'low') {
-        enhancedPrompt = `Please edit the provided original image based on the following guidelines:
-
-${facePreservationText}
-
-SPECIFIC EDITING REQUEST: ${prompt}
-
-Please focus your modifications ONLY on the user's specific requirements while strictly following the face preservation guidelines above. Generate a high-quality edited image that maintains facial identity.`;
-      }
-
-      // 根据创意程度映射 temperature 和 top_p 参数
-      let temperature = 0.2;
-      let topP = 0.7;
-      switch (settings.creativityLevel) {
-        case 'balanced':
-          temperature = 0.5;
-          topP = 0.85;
-          break;
-        case 'creative':
-          temperature = 0.8;
-          topP = 0.95;
-          break;
-      }
+      const requestBody = params.mode === 'template'
+        ? {
+            mode: 'template' as const,
+            template_id: params.templateId,
+            prompt_index: params.promptIndex,
+            image_inputs: [originalImage],
+            source,
+            face_preservation: settings.facePreservation,
+            creativity_level: settings.creativityLevel,
+          }
+        : {
+            mode: 'custom' as const,
+            custom_prompt: params.customPrompt,
+            image_inputs: [originalImage],
+            source,
+            face_preservation: settings.facePreservation,
+            creativity_level: settings.creativityLevel,
+          };
 
       const response = await fetch('/api/generate-single', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: enhancedPrompt,
-          image_inputs: [originalImage],
-          source: source,
-          temperature: temperature,
-          top_p: topP,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -382,7 +348,7 @@ Please focus your modifications ONLY on the user's specific requirements while s
 
           // 只对 data URL 上传到 MinIO，HTTP URL 跳过
           if (imageDataUrl.startsWith('data:')) {
-            await uploadGeneratedImageToMinio(imageDataUrl, originalImage, prompt, settings);
+            await uploadGeneratedImageToMinio(imageDataUrl, originalImage, params, settings);
           } else {
             console.log('跳过 HTTP URL 图片的 MinIO 上传:', imageDataUrl);
           }

@@ -10,16 +10,6 @@
 import { mockGenerateImages } from '@/lib/mock-generator';
 import { parseImageFromContent } from '@/lib/image-stream';
 import type { GenerationInput, GenerationProgress, GenerationResult } from '@/types/generation';
-import type { Template } from '@/types/database';
-
-function getPromptsFromTemplate(template: Template): string[] {
-  const list = Array.isArray(template.prompt_list) ? template.prompt_list.filter(Boolean) : [];
-  if (list.length > 0) return list;
-  const base = template.prompt_config?.basePrompt?.trim();
-  if (base) return [base];
-  const fallback = (template.description || template.name || '').trim();
-  return fallback ? [fallback] : ['beautiful wedding portrait'];
-}
 
 /**
  * 游客模式生成 - 本地模拟
@@ -32,10 +22,10 @@ export async function generateAsGuest(
   await new Promise((resolve) => setTimeout(resolve, 500));
   onProgress({ stage: 'analyzing', progress: 25 });
 
-  const prompts = getPromptsFromTemplate(input.template);
+  const promptCount = input.template.prompt_count || 1;
   const images = await mockGenerateImages({
     input: input.photos[0],
-    variants: Math.max(1, Math.min(8, prompts.length)),
+    variants: Math.max(1, Math.min(8, promptCount)),
   });
 
   onProgress({ stage: 'generating', progress: 80 });
@@ -91,34 +81,33 @@ export async function generateAsAuthenticated(
 
   onProgress({ stage: 'analyzing', progress: 20 });
 
-  const prompts = getPromptsFromTemplate(input.template);
-  const total = Math.max(1, Math.min(8, prompts.length));
+  const promptCount = input.template.prompt_count || 1;
+  const total = Math.max(1, Math.min(8, promptCount));
   const storedUrls: string[] = [];
 
   try {
     for (let i = 0; i < total; i++) {
       try {
-        const variantPrompt = prompts[i] || (input.template.description || input.template.name || 'wedding');
-        const rawPrompt = variantPrompt;
-
         const response = await fetch('/api/generate-stream', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            prompt: rawPrompt,
+            mode: 'template',
+            template_id: input.template.id,
+            prompt_index: i,
             image_inputs: input.photos.length > 0 ? [input.photos[0]] : undefined,
           }),
         });
 
         if (!response.ok) {
-          console.warn(`第 ${i + 1} 条提示词生成失败: ${response.statusText}`);
+          console.warn(`第 ${i + 1} 张图片生成失败: ${response.statusText}`);
           continue;
         }
 
         const reader = response.body?.getReader();
         if (!reader) {
-          console.warn(`第 ${i + 1} 条提示词生成失败：无法获取响应流`);
+          console.warn(`第 ${i + 1} 张图片生成失败：无法获取响应流`);
           continue;
         }
 
@@ -171,7 +160,7 @@ export async function generateAsAuthenticated(
         } else if (parsedUrl) {
           imageUrl = parsedUrl;
         } else {
-          console.warn(`第 ${i + 1} 条提示词：未在AI响应中找到图片，使用上传的照片作为占位`);
+          console.warn(`第 ${i + 1} 张图片：未在AI响应中找到图片，使用上传的照片作为占位`);
           imageUrl = input.photos[0];
         }
 
@@ -194,16 +183,16 @@ export async function generateAsAuthenticated(
               const payload = await uploadRes.json();
               storedUrl = payload.presignedUrl || payload.url || imageUrl;
             } else {
-              console.warn(`第 ${i + 1} 条提示词上传失败，使用 dataURL 回退:`, await uploadRes.text());
+              console.warn(`第 ${i + 1} 张图片上传失败，使用 dataURL 回退:`, await uploadRes.text());
             }
           } catch (e) {
-            console.warn(`第 ${i + 1} 条提示词调用上传接口异常，使用 dataURL 回退:`, e);
+            console.warn(`第 ${i + 1} 张图片调用上传接口异常，使用 dataURL 回退:`, e);
           }
         }
 
         storedUrls.push(storedUrl);
       } catch (e) {
-        console.warn(`第 ${i + 1} 条提示词生成异常，已跳过:`, e);
+        console.warn(`第 ${i + 1} 张图片生成异常，已跳过:`, e);
       } finally {
         const ratio = Math.min(1, (i + 1) / total);
         const prog = 60 + Math.floor(ratio * 30);
@@ -212,7 +201,7 @@ export async function generateAsAuthenticated(
     }
 
     if (storedUrls.length === 0) {
-      throw new Error('所有提示词均生成失败');
+      throw new Error('所有图片均生成失败');
     }
 
     const updateRes = await fetch(`/api/generations/${generationId}`, {

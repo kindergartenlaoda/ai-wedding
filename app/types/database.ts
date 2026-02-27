@@ -26,7 +26,8 @@ export interface Profile {
 }
 
 /**
- * AI 生成提示词配置
+ * AI 生成提示词配置（仅服务端 + 管理端使用，前端不应依赖此类型）
+ * @server-only
  */
 export interface PromptConfig {
   basePrompt: string;
@@ -43,9 +44,10 @@ export interface Template {
   description: string;
   category: string;
   preview_image_url: string;
-  prompt_config: PromptConfig;
-  // 多提示词（可选），为空时按单提示词处理
-  prompt_list?: string[];
+  /** 可用提示词数量（服务端计算，前端不接触原始 prompt） */
+  prompt_count: number;
+  /** 提示词的中文描述，供前端展示 */
+  prompt_descriptions: string[];
   price_credits: number;
   is_active: boolean;
   sort_order: number;
@@ -53,6 +55,23 @@ export interface Template {
   /** 领域：wedding/children/id_photo 等，API 返回 */
   domain?: string;
 }
+
+/**
+ * 管理端模板类型（包含完整 prompt 数据，仅管理端使用）
+ */
+export interface AdminTemplate extends Omit<Template, 'prompt_count' | 'prompt_descriptions'> {
+  prompt_config: PromptConfig;
+  prompt_list: string[];
+  prompt_descriptions: string[];
+  prompt_count: number;
+}
+
+/**
+ * 前端生成参数：模板模式 vs 自定义模式
+ */
+export type GenerateParams =
+  | { mode: 'template'; templateId: string; promptIndex: number }
+  | { mode: 'custom'; customPrompt: string };
 
 export interface Project {
   id: string;

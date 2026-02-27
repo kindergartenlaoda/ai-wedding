@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { TemplateForm } from '@/components/admin/TemplateForm';
-import type { Template } from '@/types/database';
+import type { AdminTemplate } from '@/types/database';
 import type { TemplateFormInput } from '@/types/admin';
 
 export default function EditTemplatePage() {
@@ -12,7 +12,7 @@ export default function EditTemplatePage() {
   const params = useParams();
   const templateId = params.id as string;
 
-  const [template, setTemplate] = useState<Template | null>(null);
+  const [template, setTemplate] = useState<AdminTemplate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +35,7 @@ export default function EditTemplatePage() {
       }
 
       const data = await response.json();
-      const foundTemplate = data.templates.find((t: Template) => t.id === templateId);
+      const foundTemplate = data.templates.find((t: AdminTemplate) => t.id === templateId);
 
       if (!foundTemplate) {
         setError('未找到模板');
