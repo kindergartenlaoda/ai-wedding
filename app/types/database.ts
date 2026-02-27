@@ -5,18 +5,22 @@
 
 import type { ProjectStatus, GenerationStatus } from '@/types/status';
 
+/**
+ * 用户档案类型（统一定义，供 API 和 Context 使用）
+ */
 export interface Profile {
   id: string;
+  user_id: string;
   email: string;
   full_name?: string;
   avatar_url?: string;
   credits: number;
-  frozen_credits?: number;
+  frozen_credits: number;
   role: 'user' | 'admin';
-  invite_code?: string;
-  invited_by?: string | null;
-  invite_count?: number;
-  reward_credits?: number;
+  invite_code: string | null;
+  invited_by: string | null;
+  invite_count: number;
+  reward_credits: number;
   created_at: string;
   updated_at: string;
 }
@@ -236,6 +240,8 @@ export interface GalleryItem {
   generated_images?: GeneratedImage[];
   project_name?: string;
   template_name?: string;
+  template_id?: string;
+  domain?: string;
   user_name: string;
   created_at: string;
 }

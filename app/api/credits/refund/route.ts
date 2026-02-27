@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
+import { refundCreditsForGeneration } from '@/lib/credit-service';
 
 /**
  * POST /api/credits/refund
- * Refund credits and optionally mark generation as failed
+ * Refund credits and optionally mark generation as failed.
+ * All credit changes go through credit-service for audit trail.
  * Body: { credits, generation_id?, error_message? }
  */
 export async function POST(req: NextRequest) {
@@ -23,33 +25,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid credits' }, { status: 400 });
   }
 
-  const profile = await prisma.profiles.findUnique({
-    where: { user_id },
-    select: { credits: true },
-  });
-  if (!profile) {
-    return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
-  }
+  try {
+    // 使用事务确保退款和状态更新的原子性
+    await prisma.$transaction(async (tx) => {
+      // 1. 退款积分
+      await refundCreditsForGeneration(
+        user_id,
+        generation_id ?? '',
+        credits,
+        generation_id ? `生成失败退款 ${credits} 积分` : `退款 ${credits} 积分`
+      );
 
-  await prisma.profiles.update({
-    where: { user_id },
-    data: { credits: profile.credits + credits },
-  });
-
-  if (generation_id) {
-    const gen = await prisma.generations.findFirst({
-      where: { id: generation_id, user_id },
+      // 2. 如果有 generation_id，更新生成状态
+      if (generation_id) {
+        const gen = await tx.generations.findFirst({
+          where: { id: generation_id, user_id },
+        });
+        if (gen) {
+          await tx.generations.update({
+            where: { id: generation_id },
+            data: {
+              status: 'failed',
+              error_message: error_message || '生成失败',
+            },
+          });
+        }
+      }
     });
-    if (gen) {
-      await prisma.generations.update({
-        where: { id: generation_id },
-        data: {
-          status: 'failed',
-          error_message: error_message || '生成失败',
-        },
-      });
-    }
-  }
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Refund failed';
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }

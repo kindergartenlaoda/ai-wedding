@@ -24,7 +24,7 @@ export function ShareModal({
   const { profile } = useAuth();
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const inviteCode = profile?.invite_code ?? profile?.inviteCode ?? undefined;
+  const inviteCode = profile?.invite_code ?? undefined;
 
   const finalShareUrl = useMemo(() => {
     if (!shareUrl) return shareUrl;

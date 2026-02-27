@@ -8,9 +8,9 @@ import { useImageLikes } from '@/hooks/useImageLikes';
 import { ImageCompareSlider } from './ImageCompareSlider';
 import { rateImages } from '@/lib/image-rating';
 import { FadeIn, GlassCard } from '@/components/react-bits';
+import { GenerationFeedback } from './GenerationFeedback';
 import type { GenerationWithRelations } from '@/types/database';
 
-// Lazy load heavy components
 const ShareModal = dynamic(() => import('./ShareModal').then(mod => ({ default: mod.ShareModal })), { ssr: false });
 
 interface ResultsPageProps {
@@ -39,7 +39,6 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
     }
     (async () => {
       try {
-        console.log('正在加载生成结果，ID:', generationId);
         const res = await fetch(`/api/generations/${generationId}`, {
           credentials: 'include',
         });
@@ -50,13 +49,6 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
           throw new Error('未找到生成记录');
         }
 
-        console.log('生成结果数据:', {
-          id: data.id,
-          status: data.status,
-          preview_images_count: data.preview_images?.length || 0,
-          high_res_images_count: data.high_res_images?.length || 0,
-        });
-
         setGeneration({
           ...data,
           project: data.project || { name: '', uploaded_photos: [] },
@@ -64,7 +56,6 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
         });
         setError(null);
       } catch (err) {
-        console.error('获取生成结果失败:', err);
         setError(err instanceof Error ? err.message : '加载失败');
       } finally {
         setLoading(false);
@@ -490,6 +481,15 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
           imageType={tab}
           originalPhotos={generation?.project?.uploaded_photos || []}
         />
+      )}
+
+      {/* 满意度反馈 */}
+      {generationId && generation?.status === 'completed' && currentImages.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <FadeIn delay={0.5}>
+            <GenerationFeedback generationId={generationId} />
+          </FadeIn>
+        </div>
       )}
 
       {/* 分享弹窗 */}

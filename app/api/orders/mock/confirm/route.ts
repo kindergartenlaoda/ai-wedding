@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
+import { addCreditsForPurchase } from '@/lib/credit-service';
 
 export const runtime = 'nodejs';
 
@@ -10,7 +11,20 @@ const CREDITS_BY_AMOUNT: Record<string, number> = {
   '99.99': 400,
 };
 
+/**
+ * POST /api/orders/mock/confirm
+ * Mock payment confirmation endpoint (dev/test only).
+ * Body: { payment_intent_id: string }
+ */
 export async function POST(req: Request) {
+  // 环境保护：仅在 mock 模式下可用
+  const paymentProvider = process.env.PAYMENT_PROVIDER || 'mock';
+  if (paymentProvider !== 'mock') {
+    return NextResponse.json(
+      { error: 'Mock payment is not available in production. Please contact support.' },
+      { status: 501 }
+    );
+  }
   try {
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
@@ -20,7 +34,6 @@ export async function POST(req: Request) {
     const pid = body?.payment_intent_id;
     if (!pid) return NextResponse.json({ error: 'Missing payment_intent_id' }, { status: 400 });
 
-    // 1) 读取订单并校验归属
     const order = await prisma.orders.findFirst({
       where: { payment_intent_id: pid },
     });
@@ -35,26 +48,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, message: 'Already completed' }, { status: 200 });
     }
 
-    // 2) 标记订单完成
     await prisma.orders.update({
       where: { id: order.id },
       data: { status: 'completed' },
     });
 
-    // 3) 按金额映射增加积分
     const amountStr = String(order.amount);
     const creditsToAdd = CREDITS_BY_AMOUNT[amountStr] || 0;
     if (creditsToAdd > 0) {
-      const profile = await prisma.profiles.findUnique({
-        where: { user_id: order.user_id },
-      });
-      if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 500 });
-
-      const newCredits = profile.credits + creditsToAdd;
-      await prisma.profiles.update({
-        where: { user_id: order.user_id },
-        data: { credits: newCredits },
-      });
+      await addCreditsForPurchase(
+        order.user_id,
+        order.id,
+        creditsToAdd,
+        `购买积分 (Mock 支付, ${creditsToAdd} 积分)`
+      );
     }
 
     return NextResponse.json({ ok: true, creditsAdded: creditsToAdd });

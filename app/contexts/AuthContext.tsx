@@ -2,29 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
-
-/** Profile shape compatible with database.Profile for component compatibility */
-interface Profile {
-  id: string;
-  userId: string;
-  credits: number;
-  inviteCode: string | null;
-  invitedBy: string | null;
-  inviteCount: number;
-  rewardCredits: number;
-  role: 'user' | 'admin';
-  createdAt: string;
-  updatedAt: string;
-  /** From user, for display */
-  email: string;
-  full_name?: string;
-  invite_code?: string;
-  invited_by?: string | null;
-  invite_count?: number;
-  reward_credits?: number;
-  created_at: string;
-  updated_at: string;
-}
+import type { Profile } from '@/types/database';
 
 interface AuthUser {
   id: string;
@@ -79,23 +57,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await fetch('/api/profile');
       if (res.ok) {
         const data = await res.json();
-        const email = session.user.email ?? '';
-        const name = session.user.name ?? null;
-        const inviteCodeVal = data.inviteCode ?? data.invite_code ?? undefined;
-        const createdAtVal = data.createdAt ?? data.created_at ?? '';
-        const updatedAtVal = data.updatedAt ?? data.updated_at ?? '';
-        const roleVal = data.role === 'admin' ? 'admin' : 'user';
+        // 统一使用 snake_case 字段（与 database.ts 的 Profile 类型一致）
         setProfile({
-          ...data,
-          email,
-          full_name: name ?? undefined,
-          invite_code: inviteCodeVal,
-          invited_by: data.invitedBy ?? data.invited_by ?? undefined,
-          invite_count: data.inviteCount ?? data.invite_count ?? 0,
-          reward_credits: data.rewardCredits ?? data.reward_credits ?? 0,
-          created_at: createdAtVal,
-          updated_at: updatedAtVal,
-          role: roleVal,
+          id: data.id,
+          user_id: data.user_id || data.userId || session.user.id,
+          email: session.user.email ?? '',
+          full_name: session.user.name ?? data.full_name ?? undefined,
+          credits: data.credits ?? 0,
+          frozen_credits: data.frozen_credits ?? data.frozenCredits ?? 0,
+          role: data.role === 'admin' ? 'admin' : 'user',
+          invite_code: data.invite_code ?? data.inviteCode ?? null,
+          invited_by: data.invited_by ?? data.invitedBy ?? null,
+          invite_count: data.invite_count ?? data.inviteCount ?? 0,
+          reward_credits: data.reward_credits ?? data.rewardCredits ?? 0,
+          created_at: data.created_at ?? data.createdAt ?? new Date().toISOString(),
+          updated_at: data.updated_at ?? data.updatedAt ?? new Date().toISOString(),
         });
       }
     } catch (err) {
@@ -103,17 +79,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session?.user?.id, session?.user?.email, session?.user?.name]);
 
+  const claimInviteReward = useCallback(async () => {
+    try {
+      if (typeof window === 'undefined') return;
+      const refCode = localStorage.getItem('referrer_code');
+      if (!refCode) return;
+
+      // 新的 API 不再需要传 invitee_id，由服务端从 session 获取
+      await fetch('/api/invite/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ ref_code: refCode }),
+      });
+
+      localStorage.removeItem('referrer_code');
+    } catch {
+      // Silently ignore claim errors to avoid blocking auth flow
+    }
+  }, []);
+
+  const inviteClaimedRef = useRef(false);
+
   useEffect(() => {
     if (session?.user?.id) {
       if (!profileFetchedRef.current) {
         profileFetchedRef.current = true;
         loadProfile();
       }
+      if (!inviteClaimedRef.current) {
+        inviteClaimedRef.current = true;
+        claimInviteReward();
+      }
     } else {
       profileFetchedRef.current = false;
+      inviteClaimedRef.current = false;
       setProfile(null);
     }
-  }, [session?.user?.id, loadProfile]);
+  }, [session?.user?.id, loadProfile, claimInviteReward]);
 
   const signIn = async (email: string, password: string) => {
     const result = await nextAuthSignIn('credentials', {
@@ -138,7 +141,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error || '注册失败');
     }
 
-    // Auto sign in after registration
     await signIn(email, password);
   };
 
