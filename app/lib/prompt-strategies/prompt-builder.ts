@@ -102,6 +102,39 @@ const DEFAULT_CONFIGS: Record<string, DomainPromptConfig> = {
       '返回JSON格式',
     ],
   },
+  maternity: {
+    role: '孕妇摄影风格分析师',
+    photoType: '孕妇照片',
+    requirements: [
+      '保持人物五官特征不变',
+      '温馨柔和的场景（室内、户外花园、海边等）',
+      '突出孕期美感和母性光辉',
+      '5个提示词风格各异（温馨、艺术、自然等）',
+      '返回JSON格式',
+    ],
+  },
+  graduation: {
+    role: '毕业照摄影风格分析师',
+    photoType: '毕业照片',
+    requirements: [
+      '保持人物五官特征不变',
+      '学士服或校园场景（图书馆、操场、教学楼等）',
+      '青春活力的氛围，展现毕业喜悦',
+      '5个提示词风格各异（正式、活泼、怀旧等）',
+      '返回JSON格式',
+    ],
+  },
+  couple: {
+    role: '情侣摄影风格分析师',
+    photoType: '情侣照片',
+    requirements: [
+      '保持双方人物五官特征不变',
+      '浪漫甜蜜的场景（约会地点、旅行景点、咖啡馆等）',
+      '互动姿势自然（牵手、拥抱、对视等）',
+      '5个提示词风格各异（浪漫、文艺、活泼等）',
+      '返回JSON格式',
+    ],
+  },
 };
 
 /**
@@ -109,9 +142,13 @@ const DEFAULT_CONFIGS: Record<string, DomainPromptConfig> = {
  * Replaces 8 separate strategy files with a single configurable builder
  */
 export class PromptBuilder {
+  private domain: string;
   private config: DomainPromptConfig;
 
   constructor(domain: string, customConfig?: Partial<DomainPromptConfig>) {
+    // Store domain explicitly
+    this.domain = domain;
+
     // Get default config or use fallback
     const defaultConfig = DEFAULT_CONFIGS[domain] || DEFAULT_CONFIGS.wedding;
 
@@ -154,10 +191,6 @@ JSON格式：
    * Get style description based on domain
    */
   private getStyleDescription(): string {
-    const domain = Object.keys(DEFAULT_CONFIGS).find(
-      key => DEFAULT_CONFIGS[key] === this.config
-    );
-
     const styleMap: Record<string, string> = {
       wedding: '同类型',
       children: '可爱童趣风格',
@@ -167,9 +200,12 @@ JSON格式：
       anime: '动漫风格',
       landscape: '不同风格的风景',
       product: '专业商品展示风格',
+      maternity: '温馨孕妇照风格',
+      graduation: '毕业纪念照风格',
+      couple: '浪漫情侣照风格',
     };
 
-    return styleMap[domain || 'wedding'] || '同类型';
+    return styleMap[this.domain] || '同类型';
   }
 
   /**

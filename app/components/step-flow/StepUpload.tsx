@@ -9,6 +9,7 @@ import {
   AlertCircle,
   AlertTriangle,
   Loader2,
+  Info,
 } from 'lucide-react';
 import type { Template } from '@/types/database';
 import type { PhotoState, StepFlowAction, ValidatedPhoto } from '@/types/step-flow';
@@ -283,6 +284,19 @@ export function StepUpload({
               onChange={handleFileChange}
             />
           </div>
+
+          {/* Couple Domain Special Tip */}
+          {template.domain === 'couple' && photos.length === 0 && (
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 mb-6">
+              <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-blue-200 font-medium mb-1">情侣照拍摄建议</p>
+                <p className="text-xs text-blue-300/80 leading-relaxed">
+                  建议上传包含两人的合照，以获得最佳生成效果。照片中应清晰展现双方面部特征，避免遮挡。
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Mobile-only Guidelines (hidden on lg+) */}
           {photos.length === 0 && (

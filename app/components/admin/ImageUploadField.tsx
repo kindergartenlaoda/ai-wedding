@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, X, ImagePlus } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { UPLOAD_CONFIG, validateFile } from '@/lib/upload-config';
 
 interface ImageUploadFieldProps {
   currentUrl: string;
@@ -21,6 +22,16 @@ export function ImageUploadField({ currentUrl, onUrlChange }: ImageUploadFieldPr
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validate file before upload
+    const validation = validateFile(file);
+    if (!validation.valid) {
+      setUploadError(validation.error || '文件验证失败');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
 
     setIsUploading(true);
     setUploadError(null);
@@ -127,7 +138,7 @@ export function ImageUploadField({ currentUrl, onUrlChange }: ImageUploadFieldPr
                 </div>
                 <div className="text-center space-y-1.5">
                   <p className="text-sm font-medium text-foreground">点击上传预览图片</p>
-                  <p className="text-xs">支持 JPG, PNG, WEBP</p>
+                  <p className="text-xs">支持 {UPLOAD_CONFIG.ALLOWED_TYPES_TEXT}，最大 {UPLOAD_CONFIG.MAX_SIZE_TEXT}</p>
                 </div>
               </>
             )}
