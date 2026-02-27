@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { FileImage, ArrowLeft, Megaphone, Settings, Globe } from 'lucide-react';
+import { FileImage, ArrowLeft, Megaphone, Settings, Globe, BarChart3 } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -30,6 +30,11 @@ const NAV_ITEMS = [
     href: '/admin/announcements',
     label: '系统公告',
     icon: Megaphone,
+  },
+  {
+    href: '/admin/analytics',
+    label: '数据分析',
+    icon: BarChart3,
   },
 ];
 

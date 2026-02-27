@@ -8,7 +8,9 @@ import {
   Palette,
   Camera,
   Heart,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Users,
+  Layers
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -18,6 +20,12 @@ import { FadeIn } from '@/components/react-bits';
 import { getDomainIcon } from '@/types/domain';
 import dynamic from 'next/dynamic';
 import { ShowcaseCarousel } from './ShowcaseCarousel';
+
+interface PlatformStats {
+  users: number;
+  generations: number;
+  gallery: number;
+}
 
 interface DomainFromApi {
   id: string;
@@ -57,6 +65,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
   const router = useRouter();
   const [domains, setDomains] = useState<DomainFromApi[]>([]);
   const [domainsLoading, setDomainsLoading] = useState(true);
+  const [stats, setStats] = useState<PlatformStats | null>(null);
 
   useEffect(() => {
     fetch('/api/domains', { credentials: 'include' })
@@ -64,6 +73,11 @@ export function HomePage({ onNavigate }: HomePageProps) {
       .then((data) => setDomains(data.data ?? []))
       .catch(() => setDomains([]))
       .finally(() => setDomainsLoading(false));
+
+    fetch('/api/stats/public')
+      .then((res) => res.json())
+      .then((data: PlatformStats) => setStats(data))
+      .catch(() => {});
   }, []);
 
   const navigate = (page: string) => {
@@ -137,6 +151,45 @@ export function HomePage({ onNavigate }: HomePageProps) {
           </div>
         </div>
       </section>
+
+      {/* Social Proof Stats */}
+      {stats && (stats.users > 0 || stats.generations > 0) && (
+        <section className="py-16 bg-obsidian border-t border-white/5">
+          <div className="px-4 mx-auto max-w-5xl sm:px-6 lg:px-8">
+            <FadeIn delay={0.1}>
+              <div className="grid grid-cols-3 gap-8 text-center">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Users className="w-4 h-4 text-gold/70" />
+                  </div>
+                  <p className="text-3xl md:text-4xl font-display font-light text-alabaster tracking-tight">
+                    {stats.users.toLocaleString()}+
+                  </p>
+                  <p className="text-xs text-pearl/50 tracking-[0.2em] uppercase font-medium">注册用户</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Layers className="w-4 h-4 text-gold/70" />
+                  </div>
+                  <p className="text-3xl md:text-4xl font-display font-light text-alabaster tracking-tight">
+                    {stats.generations.toLocaleString()}+
+                  </p>
+                  <p className="text-xs text-pearl/50 tracking-[0.2em] uppercase font-medium">生成作品</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <ImageIcon className="w-4 h-4 text-gold/70" />
+                  </div>
+                  <p className="text-3xl md:text-4xl font-display font-light text-alabaster tracking-tight">
+                    {stats.gallery.toLocaleString()}+
+                  </p>
+                  <p className="text-xs text-pearl/50 tracking-[0.2em] uppercase font-medium">画廊展示</p>
+                </div>
+              </div>
+            </FadeIn>
+          </div>
+        </section>
+      )}
 
       {/* The Portfolio (Domains) - Cinematic Dark Series */}
       <section className="py-32 bg-obsidian text-alabaster relative border-t border-white/5">

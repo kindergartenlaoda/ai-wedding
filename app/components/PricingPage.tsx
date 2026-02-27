@@ -1,8 +1,10 @@
-import { Check, Sparkles, Zap, Crown, X } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown, X, CalendarDays, Repeat } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Toast } from './Toast';
 import { FadeIn } from '@/components/react-bits';
+
+type PricingTab = 'oneTime' | 'subscription';
 
 interface PricingPageProps {
   onNavigate: (page: string) => void;
@@ -11,8 +13,10 @@ interface PricingPageProps {
 export function PricingPage({ onNavigate }: PricingPageProps) {
   const { user, profile, refreshProfile } = useAuth();
   const [purchasing, setPurchasing] = useState<number | null>(null);
+  const [subscribing, setSubscribing] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<PricingTab>('oneTime');
 
   const plans = [
     {
@@ -171,8 +175,179 @@ export function PricingPage({ onNavigate }: PricingPageProps) {
           </div>
         </FadeIn>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 gap-8 mb-24 md:grid-cols-3">
+        {/* Tab Switcher */}
+        <FadeIn delay={0.15}>
+          <div className="flex justify-center mb-16">
+            <div className="inline-flex bg-white/5 border border-white/10 rounded-sm p-1">
+              <button
+                onClick={() => setActiveTab('oneTime')}
+                className={`px-8 py-3 text-xs tracking-widest uppercase font-medium rounded-sm transition-all duration-300 ${
+                  activeTab === 'oneTime'
+                    ? 'bg-gold text-obsidian'
+                    : 'text-pearl/60 hover:text-alabaster'
+                }`}
+              >
+                积分充值
+              </button>
+              <button
+                onClick={() => setActiveTab('subscription')}
+                className={`px-8 py-3 text-xs tracking-widest uppercase font-medium rounded-sm transition-all duration-300 flex items-center gap-2 ${
+                  activeTab === 'subscription'
+                    ? 'bg-gold text-obsidian'
+                    : 'text-pearl/60 hover:text-alabaster'
+                }`}
+              >
+                <Repeat className="w-3.5 h-3.5" />
+                订阅会员
+              </button>
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* Subscription Cards */}
+        {activeTab === 'subscription' && (
+          <div className="grid grid-cols-1 gap-8 mb-24 md:grid-cols-2 max-w-4xl mx-auto">
+            {[
+              {
+                id: 'monthly',
+                name: '月度会员',
+                price: 29.99,
+                period: '/月',
+                credits: 100,
+                icon: CalendarDays,
+                features: [
+                  '每月 100 生成积分',
+                  '所有模板风格',
+                  '4K 高清下载',
+                  '优先生成队列',
+                  '专属会员模板',
+                  '随时取消',
+                ],
+              },
+              {
+                id: 'yearly',
+                name: '年度会员',
+                price: 199.99,
+                period: '/年',
+                credits: 150,
+                icon: Crown,
+                popular: true,
+                features: [
+                  '每月 150 生成积分',
+                  '全部模板 + 新模板',
+                  '8K 顶级下载',
+                  '优先生成队列',
+                  '专属会员模板',
+                  '商业授权',
+                  '年省 $159.89',
+                ],
+              },
+            ].map((sub) => (
+              <FadeIn key={sub.id} delay={0.2}>
+                <div
+                  className={`relative bg-black/40 rounded-sm shadow-xl overflow-hidden transition-all duration-700 hover:shadow-2xl hover:-translate-y-2 ${
+                    sub.popular
+                      ? 'border border-gold shadow-[0_0_40px_rgba(200,160,100,0.15)] ring-1 ring-gold/50'
+                      : 'border border-white/10'
+                  }`}
+                >
+                  {sub.popular && (
+                    <div className="absolute top-0 left-0 right-0 bg-gold text-obsidian text-center py-2 text-xs font-medium tracking-[0.2em] uppercase">
+                      最划算
+                    </div>
+                  )}
+
+                  <div className={`p-10 ${sub.popular ? 'pt-14' : ''}`}>
+                    <div className="flex justify-center items-center mb-8 w-16 h-16 bg-white/5 rounded-full border border-white/10 mx-auto">
+                      <sub.icon className="w-6 h-6 text-alabaster" />
+                    </div>
+
+                    <div className="text-center">
+                      <h3 className="mb-3 text-2xl font-medium font-display text-alabaster uppercase tracking-widest">
+                        {sub.name}
+                      </h3>
+                      <div className="flex justify-center items-baseline mb-2">
+                        <span className="text-5xl font-light font-display text-alabaster">
+                          ${sub.price}
+                        </span>
+                        <span className="text-xs text-pearl/60 tracking-wider uppercase ml-2">
+                          {sub.period}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gold tracking-wider mb-8">
+                        每月 {sub.credits} 积分自动到账
+                      </p>
+                    </div>
+
+                    <ul className="mb-10 space-y-5">
+                      {sub.features.map((feature, i) => (
+                        <li key={i} className="flex gap-4 items-start">
+                          <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-alabaster" />
+                          </div>
+                          <span className="leading-relaxed text-pearl/60 font-light">
+                            {feature}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <button
+                      onClick={async () => {
+                        if (!user || !profile) {
+                          setToast({ message: '请先登录后再订阅', type: 'error' });
+                          return;
+                        }
+                        setSubscribing(sub.id);
+                        try {
+                          const res = await fetch('/api/subscriptions', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ plan: sub.id }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) {
+                            if (res.status === 501) {
+                              setShowContactModal(true);
+                              return;
+                            }
+                            throw new Error(data.error || '订阅失败');
+                          }
+                          await refreshProfile();
+                          setToast({
+                            message: `成功订阅${sub.name}，${sub.credits} 积分已到账！`,
+                            type: 'success',
+                          });
+                        } catch (err) {
+                          const msg = err instanceof Error ? err.message : '订阅失败';
+                          setToast({ message: msg, type: 'error' });
+                        } finally {
+                          setSubscribing(null);
+                        }
+                      }}
+                      disabled={subscribing !== null}
+                      className={`w-full py-5 rounded-sm font-medium text-sm transition-all duration-500 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed tracking-widest uppercase ${
+                        sub.popular
+                          ? 'bg-gold text-obsidian hover:shadow-[0_0_15px_rgba(200,160,100,0.4)] hover:bg-gold/90'
+                          : 'bg-transparent text-alabaster hover:bg-white/5 hover:border-gold/50 border border-white/10'
+                      }`}
+                    >
+                      {subscribing === sub.id
+                        ? '处理中...'
+                        : user
+                          ? '立即订阅'
+                          : '开启会员之旅'}
+                    </button>
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        )}
+
+        {/* One-Time Pricing Cards */}
+        <div className={`grid grid-cols-1 gap-8 mb-24 md:grid-cols-3 ${activeTab !== 'oneTime' ? 'hidden' : ''}`}>
           {plans.map((plan, index) => (
             <FadeIn key={index} delay={0.2 + index * 0.1}>
               <div

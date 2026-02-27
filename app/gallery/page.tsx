@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { Heart, Download, User, Calendar, Image as ImageIcon, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Heart, Download, User, Calendar, Image as ImageIcon, Loader2, Sparkles, ArrowRight, Flame, Clock } from 'lucide-react';
 import Masonry from 'react-masonry-css';
 import type { GalleryItem } from '@/types/database';
 import { FadeIn, GlassCard } from '@/components/react-bits';
@@ -31,6 +32,7 @@ export default function GalleryPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [likedImages, setLikedImages] = useState<LikeState>({});
+  const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
   const [selectedImage, setSelectedImage] = useState<{
     src: string;
     alt: string;
@@ -44,9 +46,9 @@ export default function GalleryPage() {
     500: 1
   };
 
-  const fetchGalleryItems = async (pageNum: number, append = false) => {
+  const fetchGalleryItems = async (pageNum: number, append = false, sort = sortBy) => {
     try {
-      const response = await fetch(`/api/gallery?page=${pageNum}&limit=20`);
+      const response = await fetch(`/api/gallery?page=${pageNum}&limit=20&sort=${sort}`);
       if (!response.ok) throw new Error('获取画廊数据失败');
 
       const data: GalleryResponse = await response.json();
@@ -94,12 +96,13 @@ export default function GalleryPage() {
   useEffect(() => {
     const loadInitialData = async () => {
       setLoading(true);
-      await fetchGalleryItems(1);
+      await fetchGalleryItems(1, false, sortBy);
       setLoading(false);
     };
 
     loadInitialData();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy]);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
@@ -154,7 +157,7 @@ export default function GalleryPage() {
             <p className="mx-auto max-w-2xl text-lg text-pearl/60 font-light">
               欣赏由AI生成的精美作品，发现无限创意灵感
             </p>
-            <div className="flex gap-6 justify-center items-center mt-6 text-sm text-pearl/60 uppercase tracking-widest text-xs">
+            <div className="flex gap-6 justify-center items-center mt-6 text-pearl/60 uppercase tracking-widest text-xs">
               <div className="flex gap-2 items-center">
                 <ImageIcon className="w-4 h-4 text-gold" />
                 <span>共 {items.reduce((acc, item) => acc + (item.preview_images?.length || 0), 0)} 张作品</span>
@@ -166,6 +169,34 @@ export default function GalleryPage() {
             </div>
           </div>
         </FadeIn>
+
+        {/* 排序切换 */}
+        {items.length > 0 && (
+          <FadeIn delay={0.15}>
+            <div className="flex justify-center mb-10">
+              <div className="inline-flex bg-white/5 border border-white/10 rounded-sm p-1">
+                <button
+                  onClick={() => { setSortBy('latest'); setPage(1); }}
+                  className={`px-6 py-2 text-xs tracking-widest uppercase font-medium rounded-sm transition-all duration-300 flex items-center gap-1.5 ${
+                    sortBy === 'latest' ? 'bg-gold text-obsidian' : 'text-pearl/60 hover:text-alabaster'
+                  }`}
+                >
+                  <Clock className="w-3 h-3" />
+                  最新
+                </button>
+                <button
+                  onClick={() => { setSortBy('popular'); setPage(1); }}
+                  className={`px-6 py-2 text-xs tracking-widest uppercase font-medium rounded-sm transition-all duration-300 flex items-center gap-1.5 ${
+                    sortBy === 'popular' ? 'bg-gold text-obsidian' : 'text-pearl/60 hover:text-alabaster'
+                  }`}
+                >
+                  <Flame className="w-3 h-3" />
+                  热门
+                </button>
+              </div>
+            </div>
+          </FadeIn>
+        )}
 
         {/* 画廊内容 */}
         {items.length === 0 ? (
@@ -256,9 +287,21 @@ export default function GalleryPage() {
                         <h3 className="mb-2 font-medium font-display text-alabaster uppercase tracking-wide line-clamp-1">
                           {item.project_name}
                         </h3>
-                        <p className="mb-4 text-xs tracking-widest uppercase text-pearl/60 line-clamp-1">
-                          模板：{item.template_name}
-                        </p>
+                        <div className="flex items-center justify-between mb-4">
+                          <p className="text-xs tracking-widest uppercase text-pearl/60 line-clamp-1">
+                            模板：{item.template_name}
+                          </p>
+                          {item.domain && (
+                            <Link
+                              href={`/create?domain=${item.domain}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex-shrink-0 ml-2 inline-flex items-center gap-1 px-2.5 py-1 bg-gold/10 border border-gold/20 text-gold text-[10px] tracking-wider uppercase rounded-sm hover:bg-gold hover:text-obsidian transition-all duration-300"
+                            >
+                              <Sparkles className="w-2.5 h-2.5" />
+                              同款
+                            </Link>
+                          )}
+                        </div>
                         <div className="flex justify-between items-center text-xs font-light text-pearl/40 uppercase tracking-widest">
                           <div className="flex gap-2 items-center">
                             <User className="w-3.5 h-3.5" />
@@ -295,6 +338,30 @@ export default function GalleryPage() {
                 </button>
               </div>
             )}
+          </FadeIn>
+        )}
+
+        {/* 底部转化 CTA */}
+        {items.length > 0 && (
+          <FadeIn delay={0.4}>
+            <div className="mt-20 mb-8 text-center">
+              <div className="mx-auto max-w-2xl p-10 bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-sm">
+                <Sparkles className="w-8 h-8 text-gold mx-auto mb-4" />
+                <h3 className="text-2xl font-display font-medium text-alabaster tracking-wider mb-3">
+                  喜欢这些效果？
+                </h3>
+                <p className="text-pearl/60 font-light mb-8 max-w-md mx-auto">
+                  立即创建你的专属 AI 写真，新用户注册即送 50 积分
+                </p>
+                <Link
+                  href="/create"
+                  className="inline-flex items-center gap-2 px-10 py-4 bg-gold text-obsidian rounded-sm text-sm font-medium tracking-widest uppercase hover:shadow-glow transition-all duration-500"
+                >
+                  开始创作
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
           </FadeIn>
         )}
       </div>

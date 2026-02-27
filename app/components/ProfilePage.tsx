@@ -131,7 +131,7 @@ export function ProfilePage() {
                   <span className="text-xs text-pearl/60 tracking-wider uppercase">冻结积分</span>
                 </div>
                 <span className="text-2xl font-display font-medium text-pearl/40">
-                  0
+                  {profile.frozen_credits ?? 0}
                 </span>
               </div>
             </div>
