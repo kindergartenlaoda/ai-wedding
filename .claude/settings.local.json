@@ -99,7 +99,13 @@
       "Bash(/tmp/final_success_report.md:*)",
       "Bash(/tmp/quick_test_guide.md:*)",
       "Bash(/tmp/final_report.md:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(chmod +x:*)",
+      "Bash(bash:*)",
+      "Bash(/tmp/commit_msg_security.txt:*)",
+      "Bash(/tmp/commit_msg_features.txt:*)",
+      "Bash(/tmp/commit_msg_docs.txt:*)",
+      "Bash(/tmp/commit_msg_chore.txt:*)"
     ],
     "deny": [],
     "ask": []
