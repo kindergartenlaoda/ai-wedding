@@ -15,6 +15,7 @@ import {
   Music,
   Film,
   Book,
+  GraduationCap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -36,6 +37,7 @@ export const DOMAIN_ICON_MAP: Record<string, LucideIcon> = {
   Music,
   Film,
   Book,
+  GraduationCap,
 };
 
 export function getDomainIcon(iconName: string): LucideIcon {
