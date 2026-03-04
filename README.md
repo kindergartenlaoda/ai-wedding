@@ -1,5 +1,6 @@
 # 多领域 AI 图片生成平台 🎨
 
+ 
 <div align="center">
 
 基于 AI 技术的多领域图片生成平台，上传照片，选择模板，AI 自动生成专业级作品。支持婚礼、证件、艺术、动漫、风景、商品等多种风格。
@@ -502,55 +503,192 @@ pnpm run export       # 导出 JSON + Markdown 报告
 
 ## 🚢 部署
 
-### 自托管部署
+### 🤔 快速选择部署方式
 
-#### 使用 PM2 部署（推荐）
+根据你的场景选择合适的部署方式：
 
-**1. 构建生产版本**
+| 场景 | 推荐方式 | 理由 |
+|------|---------|------|
+| 个人项目 / 小团队 | **PM2** | 简单直接、资源占用小、调试方便 |
+| 多环境 / 团队协作 | **Docker** | 环境一致、一键部署、易于 CI/CD |
+| 已有 Docker 集群 | **Docker** | 可直接集成到现有基础设施 |
+| 单服务器 / 传统运维 | **PM2** | 无需学习 Docker，传统部署流程 |
+| 需要环境隔离 | **Docker** | 完全隔离的运行环境 |
+
+---
+
+### 方式一：Docker 部署（环境隔离）
+
+#### ⚡ 快速启动（推荐）
+
+**适用场景**：开发环境、测试环境、快速体验
+
 ```bash
+# 1. 克隆项目
+git clone https://github.com/your-username/ai-wedding.git
+cd ai-wedding
+
+# 2. 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件，填入你的配置（数据库、API Key 等）
+
+# 3. 启动所有服务（PostgreSQL + MinIO + App）
+docker compose --profile with-minio up -d
+
+# 4. 查看启动状态
+docker compose ps
+
+# 5. 查看应用日志
+docker compose logs -f app
+
+# 6. 访问应用
+# 打开浏览器访问 http://localhost:3000
+```
+
+**服务访问地址**：
+- 应用：`http://localhost:3000`
+- MinIO 控制台：`http://localhost:9001` (账号: `minioadmin` / `minioadmin`)
+- 健康检查：`http://localhost:3000/api/health`
+
+#### 🏢 生产环境部署（使用外部服务）
+
+**适用场景**：生产环境，使用云数据库和云存储
+
+```bash
+# 1. 配置 .env 使用外部服务
+cp .env.example .env
+
+# 编辑 .env：
+# DATABASE_URL=postgresql://user:pass@your-rds.com:5432/ai_wedding
+# STORAGE_PROVIDER=oss
+# ALI_OSS_REGION=oss-cn-hangzhou
+# ... 其他 OSS 配置
+
+# 2. 仅启动应用容器（不启动 PostgreSQL 和 MinIO）
+docker compose up -d app
+
+# 3. 验证启动
+curl http://localhost:3000/api/health
+```
+
+#### 🔧 Docker 常用命令
+
+```bash
+# 查看运行状态
+docker compose ps
+
+# 查看日志
+docker compose logs -f app        # 应用日志
+docker compose logs -f postgres   # 数据库日志
+
+# 重新构建（代码更新后）
+docker compose build --no-cache app
+docker compose up -d app
+
+# 停止所有服务
+docker compose down
+
+# 停止并清除数据（⚠️ 会删除数据库数据）
+docker compose down -v
+
+# 进入应用容器
+docker compose exec app sh
+
+# 手动执行数据库迁移（通常自动执行）
+docker compose exec app npx prisma migrate deploy
+```
+
+#### 📊 自定义端口
+
+```bash
+# 使用环境变量覆盖默认端口
+APP_PORT=8080 POSTGRES_PORT=5433 MINIO_API_PORT=9002 \
+  docker compose --profile with-minio up -d
+```
+
+**完整 Docker 部署文档**：见 [DEPLOYMENT.md - Docker 部署](DEPLOYMENT.md#方式一docker-部署推荐)
+
+---
+
+### 方式二：PM2 部署（传统部署）
+
+#### ⚡ 一键部署
+
+**前置要求**：Node.js 18+、pnpm、PostgreSQL、PM2
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/your-username/ai-wedding.git
+cd ai-wedding
+
+# 2. 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件（确保 DATABASE_URL 指向你的 PostgreSQL）
+
+# 3. 一键部署（安装依赖 → 构建 → 迁移 → 启动）
+pnpm deploy
+```
+
+`pnpm deploy` 会自动执行：
+1. 安装依赖 (`pnpm install`)
+2. 生成 Prisma Client
+3. 构建项目 (`pnpm build`)
+4. 数据库迁移 (`prisma migrate deploy`)
+5. 启动 PM2 进程
+
+#### 🔧 分步部署（完全控制）
+
+```bash
+# 1. 安装依赖
+pnpm install
+
+# 2. 构建项目
 pnpm build
+
+# 3. 数据库迁移
+pnpm prisma migrate deploy
+
+# 4. 初始化种子数据（首次部署）
+pnpm prisma db seed
+
+# 5. 启动 PM2
+pnpm pm2:start
 ```
 
-**2. 启动 PM2 服务**
+#### 📊 PM2 管理命令
+
 ```bash
-pm2 start ecosystem.config.js
+pnpm pm2:start      # 启动应用
+pnpm pm2:stop       # 停止应用
+pnpm pm2:restart    # 重启应用
+pnpm pm2:logs       # 查看日志
+pnpm pm2:status     # 查看状态
 ```
 
-**PM2 配置说明** (`ecosystem.config.js`)：
-```javascript
-{
-  name: "ai-wedding",           // 应用名称
-  script: "pnpm",                // 使用 pnpm 启动
-  args: "start",                 // 执行 pnpm start
-  cwd: "/opt/ai-wedding/ai-wedding",  // 工作目录（根据实际路径修改）
-  env: {
-    PORT: 8081,                  // 服务端口
-    NODE_ENV: "production"       // 生产环境
-  },
-  instances: 1,                  // 单实例运行
-  autorestart: true,             // 自动重启
-  max_memory_restart: "1G",      // 内存超过 1G 时重启
-  error_file: "logs/pm2-error.log",  // 错误日志
-  out_file: "logs/pm2-out.log"       // 输出日志
-}
-```
+#### ⚙️ PM2 高级配置
 
-**PM2 常用命令**：
 ```bash
-pm2 start ecosystem.config.js   # 启动服务
-pm2 stop ai-wedding              # 停止服务
-pm2 restart ai-wedding           # 重启服务
-pm2 logs ai-wedding              # 查看日志
-pm2 status                       # 查看状态
-pm2 delete ai-wedding            # 删除服务
+# 自定义端口
+PORT=8081 pnpm pm2:start
+
+# 多实例集群模式（适合多核服务器）
+PM2_INSTANCES=4 pnpm pm2:start
+
+# 自定义内存限制
+PM2_MAX_MEMORY=2G pnpm pm2:start
 ```
 
-**注意事项**：
-- 修改 `ecosystem.config.js` 中的 `cwd` 路径为你的项目实际路径
-- 确保 `logs/` 目录存在，或修改日志路径
-- 首次部署需要先执行 `pnpm build`
+#### 🔄 代码更新与重新部署
 
-详见 [DEPLOYMENT.md](DEPLOYMENT.md)
+```bash
+# 拉取最新代码
+git pull origin main
+
+# 重新部署
+pnpm deploy
+```
+
+**完整 PM2 部署文档**：见 [DEPLOYMENT.md - PM2 部署](DEPLOYMENT.md#方式二pm2-部署)
 
 ---
 

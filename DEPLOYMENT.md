@@ -4,6 +4,59 @@
 
 ---
 
+## 🤔 选择部署方式
+
+### 快速决策表
+
+| 你的情况 | 推荐方式 | 原因 |
+|---------|---------|------|
+| 刚接触项目，想快速体验 | **Docker** | 一条命令启动所有服务，无需配置 |
+| 熟悉 Node.js，有运维经验 | **PM2** | 传统部署流程，完全控制 |
+| 需要在多台服务器部署 | **Docker** | 环境一致性，减少配置差异 |
+| 已有 PostgreSQL 和对象存储 | **PM2** | 直接连接现有服务，无需容器化 |
+| 团队协作，多人部署 | **Docker** | 避免"在我机器上能跑"问题 |
+| 单服务器，追求性能 | **PM2** | 无容器开销，资源利用率更高 |
+
+### 决策流程图
+
+```mermaid
+graph TD
+    A[开始部署] --> B{熟悉 Docker?}
+    B -->|是| C{需要环境隔离?}
+    B -->|否| D[使用 PM2 部署]
+    C -->|是| E[使用 Docker 部署]
+    C -->|否| F{服务器配置?}
+    F -->|多核 ≥4核| G[PM2 集群模式]
+    F -->|单核/双核| H[PM2 单实例]
+    E --> I{存储选择?}
+    I -->|自建| J[MinIO + Docker]
+    I -->|云服务| K[阿里云 OSS + Docker App]
+
+    D --> L[准备 Node.js + pnpm + PostgreSQL]
+    G --> L
+    H --> L
+    J --> M[docker compose --profile with-minio up -d]
+    K --> N[docker compose up -d app]
+    L --> O[pnpm deploy]
+
+    M --> P[部署完成]
+    N --> P
+    O --> P
+```
+
+### 技术对比
+
+| 维度 | Docker 部署 | PM2 部署 |
+|------|------------|---------|
+| **部署复杂度** | 🟡 中等（需学习 Docker） | 🟢 简单（传统流程） |
+| **环境一致性** | 🟢 强（容器隔离） | 🔴 弱（依赖主机环境） |
+| **资源开销** | 🟡 有虚拟化开销 | 🟢 无额外开销 |
+| **多实例支持** | 🟡 需外部负载均衡 | 🟢 内置 cluster 模式 |
+| **监控调试** | 🟡 docker logs | 🟢 PM2 monit 直观 |
+| **适合场景** | 开发/测试/容器化生产 | 传统服务器生产环境 |
+
+---
+
 ## 目录
 
 - [前置要求](#前置要求)
@@ -552,3 +605,110 @@ services:
 ### 7. 静态资源 404
 
 Docker standalone 模式下需确保 `.next/static` 正确复制，检查 Dockerfile 中的 COPY 指令是否完整。
+
+---
+
+## 🔧 故障排查速查表
+
+快速定位和解决部署中的常见问题。
+
+### 首次部署问题
+
+| 问题症状 | Docker 解决方案 | PM2 解决方案 |
+|---------|----------------|-------------|
+| 启动失败：表不存在 | ✅ 已自动处理（entrypoint 执行迁移） | 手动执行 `pnpm prisma migrate deploy` |
+| 健康检查失败 | 查看日志：`docker compose logs app` | 查看日志：`pm2 logs ai-wedding` |
+| 数据库连接拒绝 | 检查 `DATABASE_URL` 是否使用 `postgres` 主机名 | 检查 PostgreSQL 是否运行：`sudo systemctl status postgresql` |
+| MinIO 启动失败 | 确保使用 `--profile with-minio` 启动 | 确保 MinIO Docker 容器运行或配置阿里云 OSS |
+| 种子数据导入失败 | 正常（非致命），可手动执行：`docker compose exec app npx prisma db seed` | 手动执行：`pnpm prisma db seed` |
+
+### 运行时问题
+
+| 问题症状 | Docker 解决方案 | PM2 解决方案 |
+|---------|----------------|-------------|
+| 端口被占用（3000） | `APP_PORT=8080 docker compose up -d` | `PORT=8080 pnpm pm2:start` |
+| 内存溢出（OOM） | 在 `docker-compose.yml` 添加 `memory: 2G` 限制 | `PM2_MAX_MEMORY=2G pnpm pm2:start` |
+| 图片上传 403 | `docker compose exec app pnpm fix-minio` | `pnpm fix-minio` |
+| SSE 流式超时 | 检查 Nginx `proxy_read_timeout` 配置 | 同左 |
+| CPU 100% 持续高负载 | 检查容器资源：`docker stats ai-wedding-app` | 检查进程：`pm2 monit` |
+| 磁盘空间不足 | 清理镜像：`docker system prune -a` | 清理日志：`pm2 flush` |
+
+### 数据库问题
+
+| 问题症状 | 排查命令（Docker） | 排查命令（PM2） |
+|---------|-------------------|----------------|
+| 连接超时 | `docker compose exec postgres pg_isready` | `psql -h localhost -U user -d ai_wedding -c "SELECT 1"` |
+| 迁移失败 | `docker compose exec app npx prisma migrate status` | `pnpm prisma migrate status` |
+| 数据丢失 | 检查卷：`docker volume ls \| grep postgres` | 检查 PostgreSQL 数据目录权限 |
+| Schema 不同步 | `docker compose exec app npx prisma db push --preview-feature` | `pnpm prisma db push --preview-feature` |
+
+### 存储问题
+
+| 问题症状 | MinIO（Docker） | 阿里云 OSS |
+|---------|----------------|-----------|
+| 上传失败 403 | 检查策略：`docker compose exec app pnpm fix-minio:policy` | 检查 RAM 权限：AliyunOSSFullAccess |
+| 图片访问 404 | 检查 Bucket 公开：MinIO Console → Buckets → Access Policy | 检查 Bucket ACL：公共读 |
+| 上传超时 | 检查 `MINIO_ENDPOINT` 网络连通性 | 检查 `ALI_OSS_REGION` 是否正确 |
+| URL 签名错误 | 检查 `MINIO_ACCESS_KEY/SECRET_KEY` | 检查 `ALI_OSS_ACCESS_KEY_ID/SECRET` |
+
+### 性能问题
+
+| 问题 | Docker 优化 | PM2 优化 |
+|------|-----------|---------|
+| 响应慢（> 2s） | 1. 检查容器资源限制<br>2. 启用 Next.js 缓存 | 1. 启用 PM2 集群：`PM2_INSTANCES=4`<br>2. 调整 Node.js 堆内存 |
+| 图片生成慢 | 检查 AI API 延迟（网络问题） | 同左 |
+| 数据库查询慢 | 1. 添加索引（prisma schema）<br>2. 检查 PostgreSQL 慢查询日志 | 同左 |
+| 静态资源慢 | 在 Nginx 添加缓存配置 | 同左 |
+
+### 网络问题
+
+| 问题 | 排查方法 |
+|------|---------|
+| Docker 容器间通信失败 | `docker compose exec app ping postgres` |
+| 外部 API 调用失败 | `docker compose exec app wget -qO- https://api.openai.com` |
+| Nginx 502 Bad Gateway | 1. 检查 upstream 配置<br>2. 检查应用是否启动：`curl http://localhost:3000/api/health` |
+| HTTPS 证书错误 | `sudo certbot renew --dry-run` |
+
+### 日志收集命令
+
+```bash
+# Docker 环境完整日志
+docker compose logs --tail=100 > deployment-logs.txt
+
+# PM2 环境完整日志
+pm2 logs ai-wedding --lines 100 --nostream > deployment-logs.txt
+
+# 系统级诊断
+{
+  echo "=== System Info ==="
+  uname -a
+  echo "=== Memory ==="
+  free -h
+  echo "=== Disk ==="
+  df -h
+  echo "=== Docker ==="
+  docker --version
+  docker compose version
+  echo "=== Node.js ==="
+  node --version
+  echo "=== pnpm ==="
+  pnpm --version
+} > system-info.txt
+```
+
+---
+
+## 📞 获取帮助
+
+如果上述方法无法解决你的问题：
+
+1. **查看完整日志**：收集错误日志并仔细阅读错误信息
+2. **搜索 Issues**：在 [GitHub Issues](https://github.com/your-username/ai-wedding/issues) 搜索类似问题
+3. **提交 Issue**：提供详细信息（系统版本、错误日志、复现步骤）
+4. **加入讨论**：在 [Discussions](https://github.com/your-username/ai-wedding/discussions) 与社区交流
+
+---
+
+**文档版本**：v2.0
+**最后更新**：2026-03-04
+**维护者**：AI Wedding Team

@@ -24,6 +24,14 @@ services:
 
   # ============================================================
   # MinIO 对象存储（可选，用于图片存储）
+  #
+  # 启用方式：
+  #   开发环境（使用 MinIO）：docker compose --profile with-minio up -d
+  #   生产环境（使用阿里云 OSS）：docker compose up -d（不启动 MinIO，在 .env 配置 OSS）
+  #
+  # 访问地址：
+  #   API: http://localhost:9000
+  #   Console: http://localhost:9001 (默认账号: minioadmin / minioadmin)
   # ============================================================
   minio:
     image: minio/minio:latest
@@ -48,6 +56,14 @@ services:
 
   # ============================================================
   # AI Wedding 应用
+  #
+  # 首次启动时会自动执行：
+  #   1. 数据库连接检查
+  #   2. Prisma 迁移（prisma migrate deploy）
+  #   3. 数据库初始化种子（prisma db seed）
+  #   4. 启动 Next.js 应用
+  #
+  # 健康检查：GET http://localhost:3000/api/health
   # ============================================================
   app:
     build:

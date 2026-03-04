@@ -56,10 +56,16 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
 
+# 复制数据库初始化脚本
+COPY --from=builder --chown=nextjs:nodejs /app/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 RUN mkdir -p logs && chown -R nextjs:nodejs /app/logs
 
 USER nextjs
 
 EXPOSE 3000
 
+# 使用 entrypoint 处理数据库迁移
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["node", "server.js"]
