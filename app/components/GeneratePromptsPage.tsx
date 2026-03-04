@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Sparkles, Upload, Loader2, AlertCircle, CheckCircle, Wand2, ExternalLink } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from './AuthModal';
 import { usePromptGeneration } from '@/hooks/usePromptGeneration';
@@ -11,12 +12,13 @@ export function GeneratePromptsPage() {
   const { user } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [lastImageBase64, setLastImageBase64] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { isGenerating, prompts, generatePrompts, clearPrompts } = usePromptGeneration();
+  const { isGenerating, progress, prompts, generatePrompts, clearPrompts } = usePromptGeneration();
 
   const handleFileSelect = async (file: File): Promise<void> => {
     if (!user) {
@@ -27,29 +29,32 @@ export function GeneratePromptsPage() {
     setError(null);
     setSuccess(null);
 
-    // 验证文件类型
     if (!file.type.startsWith('image/')) {
       setError('请上传图片文件');
       return;
     }
 
-    // 验证文件大小（最大 10MB）
     if (file.size > 10 * 1024 * 1024) {
       setError('图片大小不能超过 10MB');
       return;
     }
 
     try {
-      // 转换为 base64
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      });
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
         setUploadedImage(base64);
         clearPrompts();
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
     } catch {
-      setError('图片读取失败，请重试');
+      setError('图片处理失败，请重试');
     }
   };
 
@@ -73,21 +78,29 @@ export function GeneratePromptsPage() {
   };
 
   const handleGenerate = async (): Promise<void> => {
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
+    if (!user || !uploadedImage) return;
 
-    if (!uploadedImage) {
-      setError('请先上传图片');
-      return;
+    setError(null);
+    setSuccess(null);
+    setLastImageBase64(uploadedImage);
+
+    try {
+      await generatePrompts(uploadedImage);
+      setSuccess('成功生成 5 个风格方案！');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '生成失败，请重试';
+      setError(message);
     }
+  };
+
+  const handleRetry = async (): Promise<void> => {
+    if (!lastImageBase64) return;
 
     setError(null);
     setSuccess(null);
 
     try {
-      await generatePrompts(uploadedImage);
+      await generatePrompts(lastImageBase64);
       setSuccess('成功生成 5 个风格方案！');
     } catch (err) {
       const message = err instanceof Error ? err.message : '生成失败，请重试';
@@ -206,6 +219,19 @@ export function GeneratePromptsPage() {
                   </>
                 )}
               </button>
+
+              {/* 进度条 */}
+              {isGenerating && (
+                <div className="mt-4">
+                  <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-full bg-gold transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-center mt-2 text-pearl/60">{progress}%</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -281,7 +307,17 @@ export function GeneratePromptsPage() {
         {error && (
           <div className="flex gap-3 items-start p-4 mt-6 bg-red-50 rounded-lg border border-red-200 max-w-4xl mx-auto">
             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <p className="text-red-700">{error}</p>
+            <div className="flex-1">
+              <p className="text-red-700">{error}</p>
+              {lastImageBase64 && (
+                <button
+                  onClick={handleRetry}
+                  className="mt-2 text-sm text-red-600 underline hover:text-red-700"
+                >
+                  重试
+                </button>
+              )}
+            </div>
           </div>
         )}
 

@@ -3,18 +3,16 @@ import type { PromptItem, PromptsResponse } from '@/types/prompt';
 
 interface UsePromptGenerationReturn {
   isGenerating: boolean;
+  progress: number;
   prompts: PromptItem[];
   generatePrompts: (imageBase64: string) => Promise<void>;
   error: string | null;
   clearPrompts: () => void;
 }
 
-/**
- * 风格方案生成 Hook
- * 用于根据上传的图片生成风格方案
- */
 export function usePromptGeneration(): UsePromptGenerationReturn {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [prompts, setPrompts] = useState<PromptItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,14 +20,19 @@ export function usePromptGeneration(): UsePromptGenerationReturn {
     setIsGenerating(true);
     setError(null);
     setPrompts([]);
+    setProgress(0);
 
     try {
+      setProgress(20);
+
       const response = await fetch('/api/generate-prompts', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageBase64 }),
       });
+
+      setProgress(40);
 
       if (response.status === 401) {
         throw new Error('未登录，无法生成风格方案');
@@ -40,13 +43,17 @@ export function usePromptGeneration(): UsePromptGenerationReturn {
         throw new Error(errorData.error || '风格方案生成失败');
       }
 
+      setProgress(70);
+
       const result: PromptsResponse = await response.json();
-      
+
       if (!result.success) {
         throw new Error(result.error || '风格方案生成失败');
       }
 
+      setProgress(90);
       setPrompts(result.prompts);
+      setProgress(100);
     } catch (err) {
       const message = err instanceof Error ? err.message : '风格方案生成失败';
       setError(message);
@@ -59,14 +66,15 @@ export function usePromptGeneration(): UsePromptGenerationReturn {
   const clearPrompts = (): void => {
     setPrompts([]);
     setError(null);
+    setProgress(0);
   };
 
   return {
     isGenerating,
+    progress,
     prompts,
     generatePrompts,
     error,
     clearPrompts,
   };
 }
-

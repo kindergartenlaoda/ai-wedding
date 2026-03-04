@@ -320,6 +320,22 @@ model subscriptions {
   @@index([expires_at])
 }
 
+model prompt_generations {
+  id              String   @id @default(cuid())
+  user_id         String
+  domain          String   @default("wedding")
+  input_image_url String?
+  prompts         Json
+  model_config_id String?
+  credits_used    Int      @default(5)
+  created_at      DateTime @default(now())
+  users           users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([domain])
+  @@index([created_at])
+}
+
 model users {
   id                                            String                  @id @default(cuid())
   email                                         String                  @unique
@@ -343,6 +359,7 @@ model users {
   profiles                                      profiles?
   projects                                      projects[]
   subscriptions                                 subscriptions[]
+  prompt_generations                            prompt_generations[]
 }
 
 enum CreditTransactionStatus {

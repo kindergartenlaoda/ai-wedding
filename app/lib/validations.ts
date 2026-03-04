@@ -164,6 +164,42 @@ export const TemplateFilterSchema = z.object({
 });
 
 /**
+ * 图片 Base64 验证函数
+ * 验证图片格式和大小
+ */
+function validateImageBase64(base64: string): boolean {
+  try {
+    if (!base64.startsWith('data:image/')) return false;
+
+    const parts = base64.split(',');
+    if (parts.length !== 2) return false;
+
+    const buffer = Buffer.from(parts[1], 'base64');
+
+    const isJPEG = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+    const isPNG = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+
+    if (!isJPEG && !isPNG) return false;
+
+    return buffer.length <= 10 * 1024 * 1024;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 提示词生成验证
+ */
+export const GeneratePromptsSchema = z.object({
+  imageBase64: z.string()
+    .min(100, '图片数据无效')
+    .refine(validateImageBase64, {
+      message: '无效的图片格式（仅支持 JPEG/PNG，最大 10MB）',
+    }),
+  domain: z.string().optional().default('wedding'),
+});
+
+/**
  * 辅助函数：验证并解析数据
  */
 export function validateData<T>(
@@ -212,4 +248,5 @@ export type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
 export type TrackDownloadInput = z.infer<typeof TrackDownloadSchema>;
 export type PaginationInput = z.infer<typeof PaginationSchema>;
 export type SearchQueryInput = z.infer<typeof SearchQuerySchema>;
+export type GeneratePromptsInput = z.infer<typeof GeneratePromptsSchema>;
 export type TemplateFilterInput = z.infer<typeof TemplateFilterSchema>;

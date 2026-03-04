@@ -19,7 +19,9 @@
     "pm2:restart": "pm2 restart ai-wedding",
     "pm2:logs": "pm2 logs ai-wedding",
     "pm2:status": "pm2 status",
-    "test:storage": "tsx scripts/test-storage-switch.ts"
+    "test:storage": "tsx scripts/test-storage-switch.ts",
+    "secret-scan": "node scripts/secret-scan.mjs",
+    "secret-scan:all": "node scripts/secret-scan.mjs --all"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -37,6 +39,7 @@
     "ali-oss": "^6.23.0",
     "async-mutex": "^0.5.0",
     "bcrypt": "^6.0.0",
+    "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "gsap": "^3.13.0",

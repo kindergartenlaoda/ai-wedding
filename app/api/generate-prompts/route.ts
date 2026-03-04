@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import { getPromptStrategy } from '@/lib/prompt-strategies';
+import { GeneratePromptsSchema, validateData } from '@/lib/validations';
+import { checkRateLimit, rateLimitResponse, RL_LIMIT } from '@/lib/generation-shared';
+import {
+  deductCreditsForGeneration,
+  refundCreditsForGeneration,
+  getUserCreditBalance,
+} from '@/lib/credit-service';
 import type { ModelConfig } from '@/types/model-config';
 import type { PromptItem } from '@/types/prompt';
-import { isValidDomain } from '@/types/domain';
+import type { Prisma } from '../../../generated/prisma/client';
 import { ModelConfigType } from '../../../generated/prisma/enums';
 import { createRequestLogger, sanitize } from '@/lib/logger';
+
+const CREDITS_PER_PROMPT_GENERATION = 5;
 
 async function getActivePromptsConfig(log: ReturnType<typeof createRequestLogger>): Promise<ModelConfig | null> {
   try {
@@ -34,9 +43,6 @@ async function getActivePromptsConfig(log: ReturnType<typeof createRequestLogger
   }
 }
 
-/**
- * 使用 OpenAI 兼容 API 分析图片并生成提示词
- */
 async function generatePromptsWithStrategy(
   imageBase64: string,
   api_base_url: string,
@@ -47,7 +53,6 @@ async function generatePromptsWithStrategy(
 ): Promise<PromptItem[]> {
   const endpoint = `${api_base_url.replace(/\/$/, '')}/v1/chat/completions`;
 
-  // 确保 base64 格式正确
   const base64Data = imageBase64.includes('base64,')
     ? imageBase64
     : `data:image/jpeg;base64,${imageBase64}`;
@@ -93,6 +98,7 @@ async function generatePromptsWithStrategy(
       Authorization: `Bearer ${api_key}`,
     },
     body: JSON.stringify(requestData),
+    signal: AbortSignal.timeout(30000),
   });
 
   log.debug({ status: response.status }, 'API 响应状态');
@@ -116,7 +122,6 @@ async function generatePromptsWithStrategy(
     finishReason: finishReason
   }, 'API 完整响应结构');
 
-  // 检查是否因为长度限制而被截断
   if (finishReason === 'length') {
     log.error({ finishReason }, '响应被截断');
     throw new Error('生成的内容过长被截断，请重试');
@@ -128,7 +133,6 @@ async function generatePromptsWithStrategy(
     totalLength: content.length,
   }, '提取的内容');
 
-  // 解析 JSON 响应
   try {
     const parsed = JSON.parse(content);
     log.debug({
@@ -147,7 +151,6 @@ async function generatePromptsWithStrategy(
       throw new Error('生成的提示词数量为 0');
     }
 
-    // 验证每个提示词的结构
     for (const prompt of parsed.prompts) {
       if (!prompt.chinese || !prompt.english || typeof prompt.index !== 'number') {
         log.error({ prompt }, '提示词结构不完整');
@@ -164,7 +167,6 @@ async function generatePromptsWithStrategy(
       content: sanitize.truncate(content, 500),
     }, 'JSON 解析失败');
 
-    // 如果是 JSON 解析错误，提供更友好的错误信息
     if (err instanceof SyntaxError) {
       throw new Error(`JSON 格式错误：${err.message}。可能是内容被截断，请重试`);
     }
@@ -173,54 +175,84 @@ async function generatePromptsWithStrategy(
   }
 }
 
-/**
- * POST /api/generate-prompts
- * 根据图片生成风格提示词
- */
 export async function POST(req: NextRequest) {
   const requestId = `prompts_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const log = createRequestLogger('generate-prompts', requestId);
 
   log.info('开始处理提示词生成请求');
 
+  let userId: string | null = null;
+
   try {
-    // 1) 认证校验
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
-    log.info({ user_id: authResult.user.id }, '用户认证成功');
+    userId = authResult.user.id;
+    log.info({ user_id: userId }, '用户认证成功');
 
-    // 2) 获取提示词生成模型配置
+    const rl = checkRateLimit(userId);
+    if (!rl.allowed) {
+      log.warn({ userId, count: rl.count, limit: RL_LIMIT }, '速率限制超过');
+      return rateLimitResponse(rl.retryAfter!);
+    }
+    log.debug({ count: rl.count, limit: RL_LIMIT }, '速率限制检查通过');
+
+    const balance = await getUserCreditBalance(userId);
+    log.info({ credits: balance }, '用户积分余额');
+
+    if (balance < CREDITS_PER_PROMPT_GENERATION) {
+      log.warn({ current: balance, required: CREDITS_PER_PROMPT_GENERATION }, '积分不足');
+      return NextResponse.json({
+        error: '积分不足',
+        current_credits: balance,
+        required_credits: CREDITS_PER_PROMPT_GENERATION,
+        message: `当前积分 ${balance}，需要 ${CREDITS_PER_PROMPT_GENERATION} 积分才能生成`
+      }, { status: 402 });
+    }
+
+    const tempId = `prompt_${requestId}`;
+    try {
+      await deductCreditsForGeneration(
+        userId,
+        tempId,
+        CREDITS_PER_PROMPT_GENERATION,
+        '提示词生成消费积分'
+      );
+    } catch (deductError) {
+      log.error({ error: deductError }, '扣除积分失败');
+      return NextResponse.json({ error: '扣除积分失败，请重试' }, { status: 500 });
+    }
+
+    log.info({ deducted: CREDITS_PER_PROMPT_GENERATION, remaining: balance - CREDITS_PER_PROMPT_GENERATION }, '成功扣除积分');
+
+    const body = await req.json();
+    const validation = validateData(GeneratePromptsSchema, body);
+    if (!validation.success) {
+      log.error({ error: validation.error }, '参数验证失败');
+      await refundCreditsForGeneration(userId, tempId, CREDITS_PER_PROMPT_GENERATION, '验证失败退款');
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const { imageBase64, domain } = validation.data;
+
     const dbConfig = await getActivePromptsConfig(log);
 
     if (!dbConfig) {
       log.error('未找到激活的提示词生成配置');
+      await refundCreditsForGeneration(userId, tempId, CREDITS_PER_PROMPT_GENERATION, '配置不可用退款');
       return NextResponse.json(
-        { success: false, error: '暂无可用的提示词生成配置，请联系管理员' },
+        { error: '暂无可用的提示词生成配置，请联系管理员' },
         { status: 500 }
       );
     }
 
     log.info({ name: dbConfig.name, id: dbConfig.id }, '使用数据库配置');
 
-    // 3) 解析请求体
-    const body = await req.json();
-    const { imageBase64, domain } = body as { imageBase64: string; domain?: string };
-
-    if (!imageBase64) {
-      return NextResponse.json(
-        { success: false, error: '缺少图片参数' },
-        { status: 400 }
-      );
-    }
-
-    const resolvedDomain = domain && isValidDomain(domain) ? domain : 'wedding';
-    const strategy = getPromptStrategy(resolvedDomain);
+    const strategy = getPromptStrategy(domain);
     const analysisPrompt = strategy.generateAnalysisPrompt();
 
-    log.info({ domain: resolvedDomain }, '使用领域策略');
+    log.info({ domain }, '使用领域策略');
     log.debug('开始生成提示词');
 
-    // 4) 生成提示词
     const prompts = await generatePromptsWithStrategy(
       imageBase64,
       dbConfig.api_base_url,
@@ -232,17 +264,37 @@ export async function POST(req: NextRequest) {
 
     log.info({ count: prompts.length }, '成功生成提示词');
 
+    const record = await prisma.prompt_generations.create({
+      data: {
+        user_id: userId,
+        domain,
+        prompts: prompts as unknown as Prisma.InputJsonValue,
+        model_config_id: dbConfig.id,
+        credits_used: CREDITS_PER_PROMPT_GENERATION,
+      },
+    });
+
+    log.info({ recordId: record.id }, '保存历史记录成功');
+
     return NextResponse.json({
       success: true,
       prompts,
+      recordId: record.id,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unexpected error';
     log.error({ error: err }, '发生异常');
-    return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 }
-    );
+
+    if (userId) {
+      await refundCreditsForGeneration(
+        userId,
+        `prompt_${requestId}`,
+        CREDITS_PER_PROMPT_GENERATION,
+        '生成失败退款'
+      );
+      log.info('已退还积分');
+    }
+
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
