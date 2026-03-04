@@ -53,7 +53,7 @@ export type GenerationDomain = string;
 /**
  * Legacy domain list - kept for backward compatibility.
  * New code should fetch domains from API instead.
- * @deprecated Use useDomains() hook or /api/domains endpoint
+ * @deprecated Use useDomains() hook or /api/public/domains endpoint
  */
 export const GENERATION_DOMAINS = [
   'wedding',
@@ -77,7 +77,7 @@ export interface DomainInfo {
 /**
  * Legacy domain config - kept for backward compatibility.
  * New code should fetch domains from API instead.
- * @deprecated Use useDomains() hook or /api/domains endpoint
+ * @deprecated Use useDomains() hook or /api/public/domains endpoint
  */
 export const DOMAIN_CONFIG: Record<string, DomainInfo> = {
   wedding: {

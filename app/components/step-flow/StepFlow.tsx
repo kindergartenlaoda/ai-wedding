@@ -6,6 +6,7 @@ import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useTemplates } from '@/hooks/useTemplates';
 import { useDomains } from '@/hooks/useDomains';
+import { getDomainCoverImage } from '@/lib/domain-fallbacks';
 import type { Domain } from '@/hooks/useDomains';
 import type { StepFlowState, StepFlowAction, PhotoState } from '@/types/step-flow';
 import { useStepFlow } from '@/hooks/useStepFlow';
@@ -21,8 +22,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch, domains }: { state: Ste
   const containerRef = useRef<HTMLDivElement>(null);
 
   const currentDomain = domains.find((d) => d.slug === state.domain);
-  const domainCover = currentDomain?.cover_image || domains[0]?.cover_image;
-  const fallbackCover = domainCover || '/images/default-cover.jpg';
+  const firstDomainSlug = domains[0]?.slug || 'wedding';
 
   useGSAP(() => {
     if (containerRef.current) {
@@ -38,7 +38,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch, domains }: { state: Ste
     return (
       <div ref={containerRef} className="absolute inset-0">
         <Image
-          src={domains[0]?.cover_image || fallbackCover}
+          src={getDomainCoverImage(domains[0]?.cover_image, firstDomainSlug)}
           alt="Domain Preview"
           fill
           className="object-cover opacity-30 mix-blend-luminosity"
@@ -62,7 +62,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch, domains }: { state: Ste
     return (
       <div ref={containerRef} className="absolute inset-0">
         <Image
-          src={fallbackCover}
+          src={getDomainCoverImage(currentDomain?.cover_image, state.domain)}
           alt="Style Preview"
           fill
           className="object-cover"
@@ -76,7 +76,7 @@ function MainCanvas({ state, isFullScreenStep, dispatch, domains }: { state: Ste
     return (
       <div ref={containerRef} className="absolute inset-0">
         <Image
-          src={state.template?.preview_image_url || fallbackCover}
+          src={state.template?.preview_image_url || getDomainCoverImage(currentDomain?.cover_image, state.domain)}
           alt="Template Preview"
           fill
           className="object-cover"

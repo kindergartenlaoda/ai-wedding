@@ -19,7 +19,7 @@ import type { TemplateFormInput } from '@/types/admin';
 import { ImageUploadField } from './ImageUploadField';
 import { PromptConfigEditor } from './PromptConfigEditor';
 import { PromptListEditor } from './PromptListEditor';
-import { useDomains } from '@/hooks/useDomains';
+import { useAdminDomains } from '@/hooks/useAdminDomains';
 
 interface TemplateFormProps {
   template?: AdminTemplate;
@@ -36,7 +36,7 @@ const CATEGORIES = [
 ] as const;
 
 export function TemplateForm({ template, onSubmit, onCancel }: TemplateFormProps) {
-  const { domains, loading: domainsLoading } = useDomains();
+  const { domains, loading: domainsLoading } = useAdminDomains();
 
   const [formData, setFormData] = useState<TemplateFormInput>({
     name: template?.name || '',

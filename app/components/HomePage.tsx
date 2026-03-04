@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FadeIn } from '@/components/react-bits';
 import { getDomainIcon } from '@/types/domain';
+import { getDomainCoverImage } from '@/lib/domain-fallbacks';
 import dynamic from 'next/dynamic';
 import { ShowcaseCarousel } from './ShowcaseCarousel';
 
@@ -47,20 +48,6 @@ interface HomePageProps {
   onNavigate?: (page: string) => void;
 }
 
-const DOMAIN_IMAGES: Record<string, string> = {
-  wedding: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=800&auto=format&fit=crop',
-  children: 'https://images.unsplash.com/photo-1627885489708-ce79ebabc2c8?q=80&w=800&auto=format&fit=crop',
-  id_photo: 'https://images.unsplash.com/photo-1623951551061-f09b2e04fbee?q=80&w=800&auto=format&fit=crop',
-  artistic: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?q=80&w=800&auto=format&fit=crop',
-  portrait: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop',
-  anime: 'https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=800&auto=format&fit=crop',
-  landscape: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=800&auto=format&fit=crop',
-  product: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop',
-};
-
-const DEFAULT_COVER =
-  'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=800&auto=format&fit=crop';
-
 export function HomePage({ onNavigate }: HomePageProps) {
   const router = useRouter();
   const [domains, setDomains] = useState<DomainFromApi[]>([]);
@@ -68,7 +55,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
   const [stats, setStats] = useState<PlatformStats | null>(null);
 
   useEffect(() => {
-    fetch('/api/domains', { credentials: 'include' })
+    fetch('/api/public/domains', { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => setDomains(data.data ?? []))
       .catch(() => setDomains([]))
@@ -211,7 +198,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
             ) : (
               domains.map((domain, index) => {
                 const Icon = getDomainIcon(domain.icon);
-                const coverSrc = domain.cover_image || DOMAIN_IMAGES[domain.slug] || DEFAULT_COVER;
+                const coverSrc = getDomainCoverImage(domain.cover_image, domain.slug);
                 return (
                   <FadeIn key={domain.id} delay={0.1 * index} className="min-w-[80vw] sm:min-w-0 snap-center">
                     <Link href={`/create?domain=${domain.slug}`} className="group block relative aspect-[3/4] overflow-hidden rounded-sm bg-obsidian shadow-2xl border border-white/5">

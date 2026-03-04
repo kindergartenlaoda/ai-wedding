@@ -69,7 +69,7 @@ export default function AdminTemplatesPage() {
   useEffect(() => {
     const loadDomains = async () => {
       try {
-        const response = await fetch('/api/domains');
+        const response = await fetch('/api/admin/domains', { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           setDomains(data.data || []);
