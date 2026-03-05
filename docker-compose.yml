@@ -12,26 +12,27 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-aiwedding}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aiwedding123}
       POSTGRES_DB: ${POSTGRES_DB:-ai_wedding}
+      TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aiwedding}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - ai-wedding
 
   # ============================================================
-  # MinIO 对象存储（可选，用于图片存储）
+  # MinIO 对象存储
   #
   # 启用方式：
-  #   开发环境（使用 MinIO）：docker compose --profile with-minio up -d
-  #   生产环境（使用阿里云 OSS）：docker compose up -d（不启动 MinIO，在 .env 配置 OSS）
+  #   使用 MinIO：docker compose --profile with-minio up -d
+  #   不使用（用阿里云 OSS）：docker compose up -d
   #
-  # 访问地址：
-  #   API: http://localhost:9000
-  #   Console: http://localhost:9001 (默认账号: minioadmin / minioadmin)
+  # 管理后台：http://localhost:9001
   # ============================================================
   minio:
     image: minio/minio:latest
@@ -53,17 +54,38 @@ services:
       retries: 5
     profiles:
       - with-minio
+    networks:
+      - ai-wedding
+
+  # ============================================================
+  # MinIO 初始化（自动创建 bucket 并设置公开读取策略）
+  # ============================================================
+  minio-init:
+    image: minio/mc:latest
+    container_name: ai-wedding-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 $${MINIO_ACCESS_KEY:-minioadmin} $${MINIO_SECRET_KEY:-minioadmin};
+      mc mb myminio/$${MINIO_BUCKET_NAME:-ai-images} --ignore-existing;
+      mc anonymous set download myminio/$${MINIO_BUCKET_NAME:-ai-images};
+      echo 'MinIO bucket initialized';
+      "
+    profiles:
+      - with-minio
+    networks:
+      - ai-wedding
 
   # ============================================================
   # AI Wedding 应用
   #
-  # 首次启动时会自动执行：
-  #   1. 数据库连接检查
-  #   2. Prisma 迁移（prisma migrate deploy）
-  #   3. 数据库初始化种子（prisma db seed）
-  #   4. 启动 Next.js 应用
-  #
-  # 健康检查：GET http://localhost:3000/api/health
+  # 启动时自动执行：
+  #   1. 等待 PostgreSQL 就绪
+  #   2. Prisma migrate deploy
+  #   3. 数据库 seed（管理员、领域、模板、模型配置）
+  #   4. 启动 Next.js
   # ============================================================
   app:
     build:
@@ -78,6 +100,9 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-aiwedding}:${POSTGRES_PASSWORD:-aiwedding123}@postgres:5432/${POSTGRES_DB:-ai_wedding}
+      MINIO_INTERNAL_ENDPOINT: http://minio:9000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,10 +111,21 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - ai-wedding
 
 volumes:
   postgres_data:
     driver: local
   minio_data:
     driver: local
+
+networks:
+  ai-wedding:
+    driver: bridge

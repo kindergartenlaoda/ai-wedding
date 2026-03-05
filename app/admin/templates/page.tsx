@@ -9,6 +9,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Plus, Edit, Trash2, Eye, EyeOff, Copy } from 'lucide-react';
 import type { AdminTemplate } from '@/types/database';
 import { cn } from '@/lib/utils';
+import { getTemplatePreviewImage } from '@/lib/domain-fallbacks';
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -308,7 +309,7 @@ export default function AdminTemplatesPage() {
                 {/* 图片区域 - 固定宽高比 */}
                 <div className="relative w-full aspect-[16/9] bg-muted overflow-hidden">
                   <Image
-                    src={template.preview_image_url}
+                    src={getTemplatePreviewImage(template.preview_image_url, template.domain)}
                     alt={template.name}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"

@@ -2,8 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   output: process.env.DOCKER_BUILD === '1' ? 'standalone' : undefined,
-  // Pino 使用 worker 线程（pino-pretty transport），Next.js 打包会破坏路径解析
-  // 将 pino 设为外部包，避免 bundler 处理，解决 "Cannot find module .../vendor-chunks/lib/worker.js" 错误
   experimental: {
     serverComponentsExternalPackages: ['pino', 'pino-pretty'],
   },

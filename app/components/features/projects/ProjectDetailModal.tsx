@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { ProjectWithTemplate } from '@/types/database';
 import { getStatusLabel, getStatusVisual } from '@/lib/status';
 import { GlassCard } from '@/components/react-bits';
+import { getTemplatePreviewImage } from '@/lib/domain-fallbacks';
 
 interface ProjectDetailModalProps {
   project: ProjectWithTemplate;
@@ -136,7 +137,7 @@ export function ProjectDetailModal({
                       <div className="flex items-center gap-4 p-5 bg-white/5 rounded-sm border border-white/10 group">
                         <div className="relative w-20 h-20 rounded-sm overflow-hidden flex-shrink-0 border border-white/10 shadow-lg group-hover:border-gold/30 transition-colors">
                           <Image
-                            src={project.template.preview_image_url}
+                            src={getTemplatePreviewImage(project.template.preview_image_url)}
                             alt={project.template.name}
                             fill
                             className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"

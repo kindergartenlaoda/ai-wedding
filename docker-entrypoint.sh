@@ -1,51 +1,82 @@
 #!/bin/sh
-# Docker 容器启动脚本
-# 用于在应用启动前执行数据库迁移和初始化
-
 set -e
 
 echo "=============================================="
-echo "🚀 AI Wedding Container Starting"
+echo "  AI Wedding - Container Starting"
 echo "=============================================="
-
 echo ""
-echo "🔍 Step 1: Checking database connection..."
-# 等待数据库就绪，最多 30 秒
-timeout 30 sh -c '
-  until npx prisma db execute --stdin <<EOF 2>/dev/null
-SELECT 1;
-EOF
-  do
-    echo "⏳ Waiting for PostgreSQL to be ready..."
+
+wait_for_db() {
+  if [ -z "$DATABASE_URL" ]; then
+    echo "[ERROR] DATABASE_URL is not set"
+    exit 1
+  fi
+
+  DB_HOST=$(echo "$DATABASE_URL" | sed -n 's|.*@\([^:/]*\).*|\1|p')
+  DB_PORT=$(echo "$DATABASE_URL" | sed -n 's|.*:\([0-9]*\)/.*|\1|p')
+  DB_PORT=${DB_PORT:-5432}
+
+  echo "[DB] Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT}..."
+
+  MAX_RETRIES=30
+  RETRY=0
+  while [ $RETRY -lt $MAX_RETRIES ]; do
+    if pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null; then
+      echo "[DB] PostgreSQL is ready"
+      return 0
+    fi
+    RETRY=$((RETRY + 1))
+    echo "[DB] Waiting... (${RETRY}/${MAX_RETRIES})"
     sleep 2
   done
-' || {
-  echo "❌ Database connection timeout! Check DATABASE_URL and PostgreSQL service."
+
+  echo "[ERROR] PostgreSQL not ready after ${MAX_RETRIES} attempts"
   exit 1
 }
 
-echo "✅ Database connection established"
+run_migrations() {
+  if [ "${SKIP_MIGRATIONS:-false}" = "true" ]; then
+    echo "[DB] Skipping migrations (SKIP_MIGRATIONS=true)"
+    return 0
+  fi
 
-echo ""
-echo "🗄️  Step 2: Running database migrations..."
-npx prisma migrate deploy || {
-  echo "❌ Migration failed! Check prisma/migrations/ directory."
-  exit 1
+  echo "[DB] Syncing database schema..."
+  npx prisma db push --accept-data-loss 2>&1 || {
+    echo "[WARN] prisma db push failed, trying migrate deploy..."
+    npx prisma migrate deploy 2>&1 || {
+      echo "[ERROR] Migration failed"
+      exit 1
+    }
+  }
+  echo "[DB] Schema sync completed"
 }
-echo "✅ Migrations applied successfully"
 
-echo ""
-echo "🌱 Step 3: Seeding initial data (if needed)..."
-npx prisma db seed 2>&1 || {
-  echo "⚠️  Seed skipped or already completed (this is usually fine)"
+run_seed() {
+  if [ "${SKIP_SEED:-false}" = "true" ]; then
+    echo "[DB] Skipping seed (SKIP_SEED=true)"
+    return 0
+  fi
+
+  echo "[DB] Running database seed..."
+  npx prisma db seed 2>&1 || {
+    echo "[WARN] Seed failed (may already be seeded)"
+  }
+  echo "[DB] Seed completed"
 }
+
+wait_for_db
+run_migrations
+run_seed
+
+if [ -n "$ADMIN_EMAIL" ]; then
+  echo ""
+  echo "[INFO] Admin account: $ADMIN_EMAIL"
+fi
 
 echo ""
 echo "=============================================="
-echo "✅ Database initialization completed"
-echo "🚀 Starting Next.js application..."
+echo "  Starting Next.js application on port 3000"
 echo "=============================================="
 echo ""
 
-# 执行传入的命令（例如 "node server.js"）
 exec "$@"

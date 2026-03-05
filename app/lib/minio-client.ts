@@ -11,8 +11,11 @@ function getMinioConfig(): MinioConfig {
   const bucketName = process.env.MINIO_BUCKET_NAME || 'ai-images';
   const useSSL = process.env.MINIO_USE_SSL === 'true';
 
-  // 解析 endpoint，提取主机和端口
-  const endpointUrl = new URL(endpoint);
+  // MINIO_INTERNAL_ENDPOINT 用于 Docker 容器内 SDK 连接（如 http://minio:9000）
+  // MINIO_ENDPOINT 用于生成浏览器可访问的图片 URL
+  const internalEndpoint = process.env.MINIO_INTERNAL_ENDPOINT || endpoint;
+
+  const endpointUrl = new URL(internalEndpoint);
   const endpointHost = endpointUrl.hostname;
   const endpointPort = endpointUrl.port ? parseInt(endpointUrl.port) : (useSSL ? 443 : 9000);
 
@@ -23,6 +26,17 @@ function getMinioConfig(): MinioConfig {
     secretKey,
     useSSL,
     bucketName,
+  };
+}
+
+function getPublicEndpoint(): { host: string; port: number; useSSL: boolean } {
+  const endpoint = process.env.MINIO_ENDPOINT || 'http://localhost:9000';
+  const useSSL = process.env.MINIO_USE_SSL === 'true';
+  const url = new URL(endpoint);
+  return {
+    host: url.hostname,
+    port: url.port ? parseInt(url.port) : (useSSL ? 443 : 9000),
+    useSSL,
   };
 }
 
@@ -110,8 +124,9 @@ async function generateThumbnails(
   const lastDot = objectName.lastIndexOf('.');
   const baseName = lastDot >= 0 ? objectName.substring(0, lastDot) : objectName;
 
-  const protocol = config.useSSL ? 'https' : 'http';
-  const port = config.port === 80 || config.port === 443 ? '' : `:${config.port}`;
+  const pub = getPublicEndpoint();
+  const protocol = pub.useSSL ? 'https' : 'http';
+  const port = pub.port === 80 || pub.port === 443 ? '' : `:${pub.port}`;
 
   for (const size of THUMBNAIL_SIZES) {
     try {
@@ -130,7 +145,7 @@ async function generateThumbnails(
         { 'Content-Type': 'image/webp' },
       );
 
-      const url = `${protocol}://${config.endpoint}${port}/${bucketName}/${thumbObjectName}`;
+      const url = `${protocol}://${pub.host}${port}/${bucketName}/${thumbObjectName}`;
 
       if (size.suffix === '_thumb') {
         result.thumbnailUrl = url;
@@ -187,10 +202,10 @@ export async function uploadImage(options: UploadImageOptions): Promise<UploadIm
 
     console.log(`✅ 图片上传成功: ${objectName} (${(options.buffer.length / 1024).toFixed(1)}KB)`);
 
-    // 生成公共访问 URL
-    const protocol = config.useSSL ? 'https' : 'http';
-    const port = config.port === 80 || config.port === 443 ? '' : `:${config.port}`;
-    const publicUrl = `${protocol}://${config.endpoint}${port}/${bucketName}/${objectName}`;
+    const pub = getPublicEndpoint();
+    const protocol = pub.useSSL ? 'https' : 'http';
+    const portStr = pub.port === 80 || pub.port === 443 ? '' : `:${pub.port}`;
+    const publicUrl = `${protocol}://${pub.host}${portStr}/${bucketName}/${objectName}`;
 
     // 生成预签名 URL（7天有效期）
     const presignedUrl = await client.presignedGetObject(bucketName, objectName, 7 * 24 * 60 * 60);

@@ -3,6 +3,7 @@ import { X, Save } from 'lucide-react';
 import Image from 'next/image';
 import { ProjectWithTemplate } from '@/types/database';
 import { GlassCard } from '@/components/react-bits';
+import { getTemplatePreviewImage } from '@/lib/domain-fallbacks';
 
 interface ProjectEditModalProps {
   project: ProjectWithTemplate;
@@ -118,7 +119,7 @@ export function ProjectEditModal({
                   <div className="flex items-center gap-4 p-4 bg-black/40 rounded-lg border border-white/10">
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                       <Image
-                        src={project.template.preview_image_url}
+                        src={getTemplatePreviewImage(project.template.preview_image_url)}
                         alt={project.template.name}
                         fill
                         className="object-cover"

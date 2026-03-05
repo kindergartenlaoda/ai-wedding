@@ -111,7 +111,13 @@
       "Bash(/tmp/create-reexports.sh:*)",
       "Bash(/tmp/fix-imports.sh:*)",
       "Bash(/tmp/fix-imports-2.sh:*)",
-      "Bash(/tmp/review-context.txt:*)"
+      "Bash(/tmp/review-context.txt:*)",
+      "Bash(docker-compose.prod.yml:*)",
+      "Bash(.env.production.example:*)",
+      "Bash(README_DOCKER.md:*)",
+      "Bash(docker compose:*)",
+      "Bash(pnpm:*)",
+      "Bash(.npmrc:*)"
     ],
     "deny": [],
     "ask": []

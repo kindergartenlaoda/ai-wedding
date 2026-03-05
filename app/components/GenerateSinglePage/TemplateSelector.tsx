@@ -3,6 +3,7 @@ import { Sparkles, CheckCircle, ImageOff } from 'lucide-react';
 import { Template } from '@/types/database';
 import { CardSkeleton } from '@/components/ui/card-skeleton';
 import { useState } from 'react';
+import { getTemplatePreviewImage } from '@/lib/domain-fallbacks';
 
 interface TemplateSelectorProps {
   templates: Template[];
@@ -70,7 +71,7 @@ export function TemplateSelector({
                   </div>
                 ) : (
                   <Image
-                    src={template.preview_image_url}
+                    src={getTemplatePreviewImage(template.preview_image_url, template.domain)}
                     alt={template.name}
                     fill
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16vw"

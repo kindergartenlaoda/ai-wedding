@@ -6,9 +6,9 @@ import { Template } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/features/auth/AuthModal';
 import { useTemplates } from '@/hooks/useTemplates';
-//
 import { CardSkeleton } from '@/components/ui/card-skeleton';
 import { useFavorites } from '@/hooks/useFavorites';
+import { getTemplatePreviewImage } from '@/lib/domain-fallbacks';
 
 interface TemplatesPageProps {
   onNavigate: (page: string, template?: Template) => void;
@@ -111,7 +111,7 @@ export function TemplatesPage({ onNavigate }: TemplatesPageProps) {
               >
                 <div className="relative aspect-[3/4] overflow-hidden">
                   <Image
-                    src={template.preview_image_url}
+                    src={getTemplatePreviewImage(template.preview_image_url, template.domain)}
                     alt={template.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"

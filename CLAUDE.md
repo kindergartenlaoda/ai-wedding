@@ -97,7 +97,7 @@ pnpm start        # Start production server
 pnpm lint         # Run ESLint checks
 pnpm typecheck    # Run TypeScript type checking (strict mode)
 pnpm prisma migrate deploy  # Apply database migrations
-pnpm prisma db seed        # Seed initial templates
+pnpm prisma db seed        # Seed admin user, domains, templates, model configs
 ```
 
 ### Operations
@@ -152,11 +152,17 @@ pnpm fix-minio:urls      # Refresh MinIO image URLs
    - `ALI_OSS_ACCESS_KEY_SECRET` - Access key secret
    - `ALI_OSS_BUCKET` - Bucket name
 
+   **Admin Initialization (Recommended for first deploy)**:
+   - `ADMIN_EMAIL` - Admin account email (created on seed)
+   - `ADMIN_PASSWORD` - Admin account password (min 6 chars)
+   - `SEED_MODEL_API_KEY` - API key for seeded model configs (falls back to `IMAGE_API_KEY`)
+   - `SEED_MODEL_API_BASE_URL` - API base URL for seeded model configs (falls back to `IMAGE_API_BASE_URL`)
+
    **Payment (Optional)**:
    - `STRIPE_WEBHOOK_SECRET` - For Stripe webhook signature verification
    - `PAYMENT_PROVIDER` - `mock` or `stripe`
 
-3. Initialize database: `pnpm prisma migrate deploy` then `pnpm prisma db seed`
+3. Initialize database: `pnpm prisma migrate deploy` then `pnpm prisma db seed` (seeds admin user, domains, templates, model configs)
 
 ## Architecture Patterns
 
@@ -236,7 +242,7 @@ pnpm fix-minio:urls      # Refresh MinIO image URLs
 - `model_configs` - Dynamic model configuration (multi-source AI)
 - `system_announcements` - System-wide announcements
 
-**Domain System**: Templates and projects have a `domain` field (wedding, children, id_photo, artistic, portrait, anime, landscape, product). See `app/types/domain.ts`.
+**Domain System**: Templates and projects have a `domain` field (wedding, children, id_photo, artistic, portrait, anime, landscape, maternity, graduation, couple). See `app/types/domain.ts` and `prisma/seed-data/domains.ts`.
 
 ### API Routes
 

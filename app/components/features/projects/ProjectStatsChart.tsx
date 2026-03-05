@@ -98,7 +98,7 @@ export function ProjectStatsChart({ projects }: ProjectStatsChartProps) {
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number) => [`${value} 个`, '数量']} />
+            <Tooltip formatter={(value: number | undefined) => [`${value ?? 0} 个`, '数量']} />
           </PieChart>
         </ResponsiveContainer>
 

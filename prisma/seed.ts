@@ -1,6 +1,133 @@
 import 'dotenv/config';
 import { PrismaClient } from '../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import * as bcrypt from 'bcrypt';
+import { domainsSeedData } from './seed-data/domains';
+import { templatesSeedData } from './seed-data/templates';
+import { modelConfigsSeedData } from './seed-data/model-configs';
+
+function generateInviteCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+async function seedAdminUser(prisma: PrismaClient): Promise<void> {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    console.log('  ADMIN_EMAIL/ADMIN_PASSWORD not set, skipping');
+    return;
+  }
+
+  if (adminPassword.length < 6) {
+    console.log('  ADMIN_PASSWORD must be at least 6 characters, skipping');
+    return;
+  }
+
+  const existingUser = await prisma.users.findUnique({
+    where: { email: adminEmail },
+  });
+
+  if (existingUser) {
+    const profile = await prisma.profiles.findUnique({
+      where: { user_id: existingUser.id },
+    });
+
+    if (profile && profile.role === 'admin') {
+      console.log(`  Admin already exists: ${adminEmail}`);
+      return;
+    }
+
+    if (profile) {
+      await prisma.profiles.update({
+        where: { user_id: existingUser.id },
+        data: { role: 'admin' },
+      });
+      console.log(`  Promoted existing user to admin: ${adminEmail}`);
+      return;
+    }
+  }
+
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
+
+  await prisma.$transaction(async (tx) => {
+    const user = await tx.users.create({
+      data: {
+        email: adminEmail,
+        password_hash: passwordHash,
+        name: 'Admin',
+      },
+    });
+
+    await tx.profiles.create({
+      data: {
+        user_id: user.id,
+        credits: 9999,
+        role: 'admin',
+        invite_code: generateInviteCode(),
+      },
+    });
+  });
+
+  console.log(`  Admin created: ${adminEmail}`);
+}
+
+async function seedDomains(prisma: PrismaClient): Promise<void> {
+  const existingCount = await prisma.domains.count();
+  if (existingCount > 0) {
+    console.log(`  Domains already exist (${existingCount}), skipping`);
+    return;
+  }
+
+  await prisma.domains.createMany({ data: domainsSeedData });
+  console.log(`  Created ${domainsSeedData.length} domains`);
+}
+
+async function seedTemplates(prisma: PrismaClient): Promise<void> {
+  const existingCount = await prisma.templates.count();
+  if (existingCount > 0) {
+    console.log(`  Templates already exist (${existingCount}), skipping`);
+    return;
+  }
+
+  await prisma.templates.createMany({ data: templatesSeedData });
+  console.log(`  Created ${templatesSeedData.length} templates`);
+}
+
+async function seedModelConfigs(prisma: PrismaClient): Promise<void> {
+  const existingCount = await prisma.model_configs.count();
+  if (existingCount > 0) {
+    console.log(`  Model configs already exist (${existingCount}), skipping`);
+    return;
+  }
+
+  const seedApiKey = process.env.SEED_MODEL_API_KEY || process.env.IMAGE_API_KEY;
+  const seedApiBaseUrl = process.env.SEED_MODEL_API_BASE_URL || process.env.IMAGE_API_BASE_URL;
+
+  if (!seedApiKey) {
+    console.log('  No API key available (SEED_MODEL_API_KEY or IMAGE_API_KEY), skipping model configs');
+    return;
+  }
+
+  if (!seedApiBaseUrl) {
+    console.log('  No API base URL available (SEED_MODEL_API_BASE_URL or IMAGE_API_BASE_URL), skipping model configs');
+    return;
+  }
+
+  const configs = modelConfigsSeedData.map((config) => ({
+    ...config,
+    api_key: seedApiKey,
+    api_base_url: seedApiBaseUrl.trim(),
+  }));
+
+  await prisma.model_configs.createMany({ data: configs });
+  console.log(`  Created ${configs.length} model configs`);
+}
 
 async function main() {
   const connectionString = process.env.DATABASE_URL;
@@ -10,134 +137,19 @@ async function main() {
   const adapter = new PrismaPg({ connectionString });
   const prisma = new PrismaClient({ adapter });
 
-  const existingCount = await prisma.templates.count();
-  if (existingCount > 0) {
-    console.log(`Templates already exist (${existingCount}), skipping seed`);
-    await prisma.$disconnect();
-    return;
-  }
+  console.log('=== Seed: Admin user ===');
+  await seedAdminUser(prisma);
 
-  const templates = [
-    {
-      name: '巴黎浪漫',
-      description: 'Classic wedding photos with Eiffel Tower backdrop',
-      category: 'location',
-      domain: 'wedding',
-      preview_image_url:
-        'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=800',
-      prompt_config: { basePrompt: 'romantic wedding photo in Paris' },
-      prompt_list: [
-        'A romantic wedding photo in front of the Eiffel Tower, golden hour lighting',
-      ],
-      price_credits: 10,
-      is_active: true,
-      sort_order: 1,
-    },
-    {
-      name: '可爱童趣',
-      description: '温馨可爱的儿童摄影风格',
-      category: 'outdoor',
-      domain: 'children',
-      preview_image_url:
-        'https://images.pexels.com/photos/1648377/pexels-photo-1648377.jpeg?auto=compress&cs=tinysrgb&w=800',
-      prompt_config: { basePrompt: 'cute children photo in a garden' },
-      prompt_list: ['A cute child playing in a sunny garden with flowers'],
-      price_credits: 10,
-      is_active: true,
-      sort_order: 1,
-    },
-    {
-      name: '标准证件照',
-      description: '白底蓝底标准证件照',
-      category: 'standard',
-      domain: 'id_photo',
-      preview_image_url:
-        'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=800',
-      prompt_config: { basePrompt: 'professional ID photo with white background' },
-      prompt_list: [
-        'Professional ID photo, white background, even lighting, formal attire',
-      ],
-      price_credits: 5,
-      is_active: true,
-      sort_order: 1,
-    },
-    {
-      name: '油画风格',
-      description: '经典油画艺术风格',
-      category: 'painting',
-      domain: 'artistic',
-      preview_image_url:
-        'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=800',
-      prompt_config: { basePrompt: 'oil painting style portrait' },
-      prompt_list: [
-        'Classical oil painting style portrait with rich colors and dramatic lighting',
-      ],
-      price_credits: 15,
-      is_active: true,
-      sort_order: 1,
-    },
-    {
-      name: '时尚写真',
-      description: '专业时尚人像写真',
-      category: 'fashion',
-      domain: 'portrait',
-      preview_image_url:
-        'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=800',
-      prompt_config: { basePrompt: 'fashion portrait photography' },
-      prompt_list: ['High-fashion portrait with professional studio lighting'],
-      price_credits: 10,
-      is_active: true,
-      sort_order: 1,
-    },
-    {
-      name: '日系动漫',
-      description: '日本动漫风格转换',
-      category: 'japanese',
-      domain: 'anime',
-      preview_image_url:
-        'https://images.pexels.com/photos/2832382/pexels-photo-2832382.jpeg?auto=compress&cs=tinysrgb&w=800',
-      prompt_config: { basePrompt: 'Japanese anime style character' },
-      prompt_list: [
-        'Japanese anime style character with vibrant colors and detailed eyes',
-      ],
-      price_credits: 10,
-      is_active: true,
-      sort_order: 1,
-    },
-    {
-      name: '壮丽山河',
-      description: '壮观自然风景',
-      category: 'nature',
-      domain: 'landscape',
-      preview_image_url:
-        'https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=800',
-      prompt_config: { basePrompt: 'majestic mountain landscape' },
-      prompt_list: [
-        'Majestic mountain landscape with dramatic sky and golden hour lighting',
-      ],
-      price_credits: 10,
-      is_active: true,
-      sort_order: 1,
-    },
-    {
-      name: '商品展示',
-      description: '专业商品摄影',
-      category: 'studio',
-      domain: 'product',
-      preview_image_url:
-        'https://images.pexels.com/photos/1667088/pexels-photo-1667088.jpeg?auto=compress&cs=tinysrgb&w=800',
-      prompt_config: { basePrompt: 'professional product photography' },
-      prompt_list: [
-        'Professional product photography with clean white background and soft shadows',
-      ],
-      price_credits: 10,
-      is_active: true,
-      sort_order: 1,
-    },
-  ];
+  console.log('=== Seed: Domains ===');
+  await seedDomains(prisma);
 
-  await prisma.templates.createMany({ data: templates });
-  console.log(`Seed data inserted successfully: ${templates.length} templates`);
+  console.log('=== Seed: Templates ===');
+  await seedTemplates(prisma);
+
+  console.log('=== Seed: Model configs ===');
+  await seedModelConfigs(prisma);
+
+  console.log('\nSeed completed.');
   await prisma.$disconnect();
 }
 

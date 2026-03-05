@@ -43,7 +43,7 @@ export interface Template {
   name: string;
   description: string;
   category: string;
-  preview_image_url: string;
+  preview_image_url: string | null;
   /** 可用提示词数量（服务端计算，前端不接触原始 prompt） */
   prompt_count: number;
   /** 提示词的中文描述，供前端展示 */
@@ -216,7 +216,8 @@ export interface ProjectWithTemplate {
   template?: {
     id: string;
     name: string;
-    preview_image_url: string;
+    preview_image_url: string | null;
+    domain?: string;
   };
   generation?: {
     id: string;

@@ -27,6 +27,9 @@ docker-compose*
 .env
 .env.local
 .env.production
+.env1
+env.docker.example
+.env.production.example
 
 # Docs & scripts not needed in image
 docs/
@@ -47,3 +50,17 @@ generated/
 
 # Agent transcripts
 agent-transcripts/
+
+# Backups
+backups/
+
+# Deploy scripts
+deploy.sh
+deploy.ps1
+docker-deploy.sh
+docker-manage.sh
+
+# Claude/Codex config
+.claude/
+.codex/
+.planning/

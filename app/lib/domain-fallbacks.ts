@@ -27,6 +27,21 @@ export const DOMAIN_FALLBACK_IMAGES: Record<string, string> = {
 export const DEFAULT_COVER =
   'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=800&auto=format&fit=crop';
 
+export const DEFAULT_TEMPLATE_COVER =
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800&auto=format&fit=crop';
+
+/**
+ * Get template preview image with fallback to domain cover or global default
+ */
+export function getTemplatePreviewImage(
+  previewUrl: string | null | undefined,
+  domain?: string
+): string {
+  if (previewUrl) return previewUrl;
+  if (domain && domain in DOMAIN_FALLBACK_IMAGES) return DOMAIN_FALLBACK_IMAGES[domain];
+  return DEFAULT_TEMPLATE_COVER;
+}
+
 /**
  * Get domain cover image with intelligent fallback
  *

@@ -15,7 +15,10 @@ Database schema definition, migrations, and seed data for the PostgreSQL databas
 |------|-------------|
 | `schema.prisma` | Database schema: 13 models, 3 enums, PostgreSQL provider |
 | `migrations/20250224000000_init/migration.sql` | Initial migration SQL |
-| `seed.ts` | Database seed script (initial templates) |
+| `seed.ts` | Database seed script (admin user, domains, templates, model configs) |
+| `seed-data/domains.ts` | Seed data: 9 domain configurations |
+| `seed-data/templates.ts` | Seed data: 79 templates across all domains |
+| `seed-data/model-configs.ts` | Seed data: model config definitions (api_key from env) |
 | `sync-wedding-templates.ts` | Wedding template sync utility |
 
 ## Data Models (15)
@@ -97,7 +100,7 @@ pnpm prisma studio            # Open Prisma Studio GUI
 ## Testing
 
 - No automated migration tests
-- Seed script provides initial development data
+- Seed script initializes: admin user (via `ADMIN_EMAIL`/`ADMIN_PASSWORD`), domains, templates, model configs (via `IMAGE_API_KEY`/`IMAGE_API_BASE_URL`). All steps are idempotent.
 - `pnpm verify-db` script checks database permissions
 
 ## Related Files
