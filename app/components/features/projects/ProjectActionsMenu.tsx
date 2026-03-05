@@ -1,5 +1,6 @@
 import { MoreVertical, Eye, Edit, Trash2, Share2, Download, Globe, EyeOff } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ProjectActionsMenuProps {
   projectId: string;
@@ -27,24 +28,44 @@ export function ProjectActionsMenu({
   onToggleGalleryShare,
 }: ProjectActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+
+  const updatePosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + 8,
+        left: rect.right,
+      });
+    }
+  }, []);
 
   // 点击外部关闭菜单
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (
+        menuRef.current && !menuRef.current.contains(event.target as Node) &&
+        buttonRef.current && !buttonRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
+      updatePosition();
       document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', () => setIsOpen(false), true);
+      window.addEventListener('resize', () => setIsOpen(false));
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', () => setIsOpen(false), true);
+      window.removeEventListener('resize', () => setIsOpen(false));
     };
-  }, [isOpen]);
+  }, [isOpen, updatePosition]);
 
   const handleAction = (action: () => void | undefined) => {
     return (e: React.MouseEvent) => {
@@ -57,8 +78,9 @@ export function ProjectActionsMenu({
   const isCompleted = status === 'completed';
 
   return (
-    <div className="relative" ref={menuRef} id={`actions-menu-${projectId}`} data-project-id={projectId}>
+    <div className="relative" id={`actions-menu-${projectId}`} data-project-id={projectId}>
       <button
+        ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
@@ -69,8 +91,13 @@ export function ProjectActionsMenu({
         <MoreVertical className="w-5 h-5" />
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+      {isOpen && createPortal(
+        <div
+          ref={menuRef}
+          style={{ position: 'fixed', top: menuPosition.top, left: menuPosition.left, transform: 'translateX(-100%)' }}
+          className="w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-[9999]"
+          onClick={(e) => e.stopPropagation()}
+        >
           {onView && isCompleted && (
             <button
               onClick={handleAction(onView)}
@@ -142,7 +169,8 @@ export function ProjectActionsMenu({
               </button>
             </>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
