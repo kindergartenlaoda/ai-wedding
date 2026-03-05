@@ -106,7 +106,12 @@
       "Bash(/tmp/commit_msg_features.txt:*)",
       "Bash(/tmp/commit_msg_docs.txt:*)",
       "Bash(/tmp/commit_msg_chore.txt:*)",
-      "Bash(/tmp/commit_msg_ui.txt:*)"
+      "Bash(/tmp/commit_msg_ui.txt:*)",
+      "Bash(/tmp/conversation_history.txt:*)",
+      "Bash(/tmp/create-reexports.sh:*)",
+      "Bash(/tmp/fix-imports.sh:*)",
+      "Bash(/tmp/fix-imports-2.sh:*)",
+      "Bash(/tmp/review-context.txt:*)"
     ],
     "deny": [],
     "ask": []

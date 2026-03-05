@@ -178,7 +178,9 @@ export async function POST(req: NextRequest) {
             ...result,
           };
         } catch (err) {
-          log.error({ index: index + 1, error: err }, '图片识别失败');
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          const errorStack = err instanceof Error ? err.stack : undefined;
+          log.error({ index: index + 1, error: errorMsg, stack: errorStack }, '图片识别失败');
           return {
             index,
             success: false,

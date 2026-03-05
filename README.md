@@ -1,6 +1,5 @@
 # 多领域 AI 图片生成平台 🎨
 
- 
 <div align="center">
 
 基于 AI 技术的多领域图片生成平台，上传照片，选择模板，AI 自动生成专业级作品。支持婚礼、证件、艺术、动漫、风景、商品等多种风格。
@@ -10,7 +9,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma-336791)](https://www.postgresql.org/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38bdf8)](https://tailwindcss.com/)
 
-[功能特性](#-核心功能) | [快速开始](#-快速开始) | [文档](#-文档)
+[功能特性](#-核心特性) | [快速开始](#-快速开始) | [部署文档](./docs/deployment/README.md) | [API 文档](#-api-文档)
 
 </div>
 
@@ -20,7 +19,7 @@
 
 通过 AI 图像生成技术，让用户上传照片并选择场景模板（巴黎、东京、冰岛等），快速生成专业级图片。支持婚礼、证件、艺术、动漫、风景、商品等多领域。
 
-### ✨ 核心特性
+## ✨ 核心特性
 
 - 💡 **AI 图像生成**：支持 DALL-E 3 / Gemini 2.5 等多种模型
 - 🎯 **人物识别**：自动检测上传照片是否包含人物
@@ -29,125 +28,63 @@
 - 🌐 **画廊分享**：作品分享、点赞、收藏功能
 - 💰 **积分系统**：积分购买、邀请奖励机制
 
-### 🎯 核心功能
+## 🏗️ 技术栈
 
-#### 用户端
-- 🖼️ **照片生成**：上传照片 → 选择模板 → AI 自动生成
-- 🔍 **智能识别**：自动验证照片是否包含人物
-- 📊 **项目管理**：查看生成历史、编辑删除项目
-- 🌐 **画廊浏览**：浏览公开作品、点赞收藏
-- 💰 **积分管理**：购买积分、邀请好友获得奖励
-
-#### 管理员
-- 🛠️ **模板管理**：创建/编辑模板、配置提示词
-- ⚙️ **模型配置**：动态切换 AI 模型（图片生成、图片识别）
-- 📈 **数据统计**：用户活跃度、生成量、收入分析
-
-### 🏗️ 技术栈
-
-**前端**: Next.js 14 + TypeScript + TailwindCSS  
-**后端**: PostgreSQL + Prisma + MinIO 存储  
-**认证**: NextAuth (Credentials)  
+**前端**: Next.js 14 + TypeScript + TailwindCSS
+**后端**: PostgreSQL + Prisma + MinIO/OSS 存储
+**认证**: NextAuth (Credentials)
 **AI**: OpenAI / Gemini / 兼容 API
 
 ---
 
 ## 🚀 快速开始
 
-### 前置要求
-
-- Node.js 18+
-- pnpm
-- PostgreSQL 数据库
-- OpenAI API Key 或兼容服务
-- Docker（可选，用于 MinIO 对象存储）
-
-### 1️⃣ 克隆项目
+### 本地开发
 
 ```bash
+# 1. 克隆项目
 git clone https://github.com/your-username/ai-wedding.git
 cd ai-wedding
-```
 
-### 2️⃣ 安装依赖
-
-```bash
+# 2. 安装依赖
 pnpm install
-```
 
-### 3️⃣ 配置环境变量
-
-复制环境变量模板：
-
-```bash
+# 3. 配置环境变量
 cp .env.example .env
-```
+# 编辑 .env 文件，配置数据库和 API Key
 
-编辑 `.env` 文件：
-
-```bash
-# PostgreSQL (Prisma)
-DATABASE_URL="postgresql://user:password@host:5432/database"
-
-# NextAuth
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-random-secret-here"
-
-# MinIO 存储（可选）
-MINIO_ENDPOINT=http://localhost:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
-MINIO_BUCKET_NAME=ai-images
-MINIO_USE_SSL=false
-```
-
-### 4️⃣ 初始化数据库
-
-```bash
-# 执行 Prisma 迁移
+# 4. 初始化数据库
 pnpm prisma migrate deploy
-
-# 填充初始模板数据（可选）
 pnpm prisma db seed
-```
 
-### 5️⃣ 设置管理员权限
-
-在数据库中执行：
-
-```sql
--- 通过邮箱设置管理员权限（profiles 表）
-UPDATE profiles 
-SET role = 'admin' 
-WHERE user_id = (SELECT id FROM users WHERE email = 'your-admin-email@example.com');
-```
-
-### 6️⃣ 配置 AI 模型
-
-启动服务后，访问管理后台配置 AI 模型。
-
-#### 启动开发服务器
-
-```bash
+# 5. 启动开发服务器
 pnpm dev
 ```
 
 访问 [http://localhost:3000](http://localhost:3000)
 
-#### 添加图片生成配置
+详细配置请参考 [本地开发指南](./docs/development/local-setup.md)
 
-1. 使用管理员账号登录
-2. 访问 [http://localhost:3000/admin/model-configs](http://localhost:3000/admin/model-configs)
-3. 点击"新建配置"
+### 生产部署
 
-**配置示例（OpenAI DALL-E 3）：**
+**Docker Compose（推荐）**:
+```bash
+# 一键启动所有服务
+docker compose --profile with-minio up -d
 ```
-配置名称：默认图片生成配置
-用途类型：图片生成 (image-generation)
-API Base URL：https://api.openai.com
-API Key：sk-your-openai-api-key
-模型名称：dall-e-3
-状态：激活 ✅
+
+**PM2 部署**:
+```bash
+# 自动化部署脚本
+pnpm deploy
+```
+
+完整部署指南请参考：
+- [部署总览](./docs/deployment/README.md)
+- [Docker 生产部署](./docs/deployment/production-docker.md)
+- [PM2 生产部署](./docs/deployment/production-pm2.md)
+- [环境变量配置](./docs/deployment/environment-vars.md)
+- [故障排查](./docs/deployment/troubleshooting.md)
 ```
 
 **配置示例（302.AI / Gemini）：**
@@ -383,9 +320,18 @@ pnpm pm2:logs           # 查看日志
 | `MINIO_ACCESS_KEY` | MinIO 访问密钥 | - |
 | `MINIO_SECRET_KEY` | MinIO 密钥 | - |
 
+
 ---
 
 ## 📚 文档
+
+### 部署文档
+
+- [部署总览](./docs/deployment/README.md) - 选择合适的部署方案
+- [Docker 生产部署](./docs/deployment/production-docker.md) - 使用 Docker Compose 部署
+- [PM2 生产部署](./docs/deployment/production-pm2.md) - 使用 PM2 部署
+- [环境变量配置](./docs/deployment/environment-vars.md) - 完整的环境变量说明
+- [故障排查](./docs/deployment/troubleshooting.md) - 常见问题解决方案
 
 ### 功能文档
 
@@ -405,11 +351,102 @@ pnpm pm2:logs           # 查看日志
 - [数据完善工作总结](scripts/WORK_SUMMARY.md) - 详细的工作总结报告
 - [快速启动指南](scripts/QUICK_START.md) - 数据管理快速上手
 
-**数据管理功能**:
-- 📊 数据查询与分析 - 查看 domains 和 templates 数据状态
-- 🔧 数据操作与修复 - 自动修复数据问题，生成种子数据
-- 💾 数据导出与可视化 - 导出 JSON/CSV/HTML 格式报告
-- 📈 数据质量监控 - 定期检查数据健康状况
+---
+
+## 🎯 核心功能
+
+### 用户端
+- 🖼️ **照片生成**：上传照片 → 选择模板 → AI 自动生成
+- 🔍 **智能识别**：自动验证照片是否包含人物
+- 📊 **项目管理**：查看生成历史、编辑删除项目
+- 🌐 **画廊浏览**：浏览公开作品、点赞收藏
+- 💰 **积分管理**：购买积分、邀请好友获得奖励
+
+### 管理员
+- 🛠️ **模板管理**：创建/编辑模板、配置提示词
+- ⚙️ **模型配置**：动态切换 AI 模型（图片生成、图片识别）
+- 📈 **数据统计**：用户活跃度、生成量、收入分析
+
+---
+
+## 🛠️ 开发指南
+
+### 常用命令
+
+```bash
+# 开发
+pnpm dev
+
+# 构建
+pnpm build
+
+# 启动生产服务
+pnpm start
+
+# 代码检查
+pnpm lint
+
+# 数据库管理
+pnpm prisma migrate deploy   # 应用数据库迁移
+pnpm prisma db seed          # 填充初始数据
+pnpm prisma studio           # 打开数据库管理界面
+```
+
+### 代码规范
+
+- **TypeScript**: 严格模式，禁止 `any`
+- **组件**: 单个组件不超过 500 行
+- **样式**: 优先使用 Tailwind CSS
+
+---
+
+## 📂 项目结构
+
+```
+ai-wedding/
+├── app/                          # Next.js App Router
+│   ├── api/                      # API 路由
+│   ├── components/               # React 组件
+│   ├── hooks/                    # 自定义 Hooks
+│   ├── lib/                      # 工具函数
+│   └── types/                    # TypeScript 类型
+├── prisma/                       # 数据库
+│   ├── schema.prisma             # 数据库模型定义
+│   ├── migrations/               # 数据库迁移
+│   └── seed.ts                   # 初始数据种子
+├── docs/                         # 项目文档
+│   └── deployment/               # 部署文档
+├── scripts/                      # 运维脚本
+└── .env.example                  # 环境变量模板
+```
+
+---
+
+## 🗺️ API 文档
+
+### 图片处理
+```
+POST /api/generate-image        - 图片生成
+POST /api/identify-image        - 人物检测
+POST /api/upload-image          - 照片上传
+```
+
+### 用户功能
+```
+GET  /api/templates             - 获取模板
+GET  /api/gallery               - 获取画廊作品
+```
+
+### 管理员 API
+```
+GET    /api/admin/templates              - 管理模板
+POST   /api/admin/templates              - 创建模板
+PUT    /api/admin/templates/[id]         - 更新模板
+DELETE /api/admin/templates/[id]         - 删除模板
+GET    /api/admin/model-configs          - 管理配置
+POST   /api/admin/model-configs          - 创建配置
+PUT    /api/admin/model-configs/[id]     - 更新配置
+```
 
 **快速使用**:
 ```bash
@@ -421,64 +458,38 @@ pnpm run visualize    # 生成可视化报告
 
 详见 [scripts/README.md](scripts/README.md)
 
+
 ---
 
 ## 🔧 常见问题
 
-### Q: 如何使用 Docker 安装 MinIO？
+详细的故障排查请参考 [故障排查文档](./docs/deployment/troubleshooting.md)。
 
-A: 使用以下命令安装和运行 MinIO：
+### 部署相关
 
-**1. 拉取 MinIO 镜像**
-```bash
-docker pull quay.io/minio/minio:latest
-```
+**Q: 如何选择部署方案？**
+A: 参考 [部署总览](./docs/deployment/README.md)，推荐使用 Docker Compose。
 
-**2. 运行 MinIO 容器**
-```bash
-docker run -d \
-  --name minio \
-  -p 9000:9000 \
-  -p 9001:9001 \
-  -v /mnt/data:/data \
-  -e "MINIO_ROOT_USER=admin" \
-  -e "MINIO_ROOT_PASSWORD=admin123" \
-  quay.io/minio/minio server /data --console-address ":9001"
-```
+**Q: 环境变量如何配置？**
+A: 参考 [环境变量配置文档](./docs/deployment/environment-vars.md)。
 
-**3. 查看容器状态**
-```bash
-docker ps
-```
+**Q: 部署失败怎么办？**
+A: 查看 [故障排查文档](./docs/deployment/troubleshooting.md) 的常见问题部分。
 
-**访问地址**：
-- API 端点：`http://localhost:9000`
-- 管理控制台：`http://localhost:9001`
-- 默认账号：`admin` / `admin123`
+### 功能相关
 
-**环境变量配置**（`.env` 文件）：
-```bash
-MINIO_ENDPOINT=http://localhost:9000
-MINIO_ACCESS_KEY=admin
-MINIO_SECRET_KEY=admin123
-MINIO_BUCKET_NAME=ai-images
-MINIO_USE_SSL=false
-```
-
-### Q: 上传照片提示"未检测到人物"？
-
+**Q: 上传照片提示"未检测到人物"？**
 A: 确保照片中有清晰的人物面部，光线充足，不模糊。
 
-### Q: 如何切换 AI 模型？
-
+**Q: 如何切换 AI 模型？**
 A: 进入 `/admin/model-configs`，创建新配置并点击"激活"。
 
-### Q: MinIO 出现 403 错误？
+**Q: MinIO 出现 403 错误？**
+A: 运行 `bash scripts/fix-minio-403.sh` 或参考 [MinIO 配置文档](docs/MINIO_403_FIX.md)。
 
-A: 运行 `pnpm fix-minio` 或参考 [MinIO 配置文档](docs/MINIO_403_FIX.md)。
+### 数据管理
 
-### Q: 如何查看数据库数据状态？
-
+**Q: 如何查看数据库数据状态？**
 A: 使用数据管理脚本：
 ```bash
 cd scripts
@@ -489,63 +500,47 @@ pnpm run visualize    # 生成可视化报告
 
 详见 [scripts/README.md](scripts/README.md)
 
-### Q: 如何备份数据？
+**Q: 如何备份数据？**
+A: 参考 [Docker 部署文档](./docs/deployment/production-docker.md#数据持久化) 或 [PM2 部署文档](./docs/deployment/production-pm2.md#数据备份)。
 
-A: 使用数据导出脚本：
-```bash
-cd scripts
-pnpm run export       # 导出 JSON + Markdown 报告
-```
-
-导出文件位于 `scripts/exports/` 目录。
 
 ---
 
-## 🚢 部署
+## 🤝 贡献指南
 
-### 🤔 快速选择部署方式
+欢迎贡献代码、报告问题或提出建议！
 
-根据你的场景选择合适的部署方式：
-
-| 场景 | 推荐方式 | 理由 |
-|------|---------|------|
-| 个人项目 / 小团队 | **PM2** | 简单直接、资源占用小、调试方便 |
-| 多环境 / 团队协作 | **Docker** | 环境一致、一键部署、易于 CI/CD |
-| 已有 Docker 集群 | **Docker** | 可直接集成到现有基础设施 |
-| 单服务器 / 传统运维 | **PM2** | 无需学习 Docker，传统部署流程 |
-| 需要环境隔离 | **Docker** | 完全隔离的运行环境 |
+1. Fork 本项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 提交 Pull Request
 
 ---
 
-### 方式一：Docker 部署（环境隔离）
+## 📞 联系方式
 
-#### ⚡ 快速启动（推荐）
+- 🐛 **Bug 报告**: [Issues](https://github.com/your-username/ai-wedding/issues)
+- 💡 **功能建议**: [Issues](https://github.com/your-username/ai-wedding/issues)
+- 💬 **讨论交流**: [Discussions](https://github.com/your-username/ai-wedding/discussions)
 
-**适用场景**：开发环境、测试环境、快速体验
+---
 
-```bash
-# 1. 克隆项目
-git clone https://github.com/your-username/ai-wedding.git
-cd ai-wedding
+## 📄 许可证
 
-# 2. 配置环境变量
-cp .env.example .env
-# 编辑 .env 文件，填入你的配置（数据库、API Key 等）
+本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
 
-# 3. 启动所有服务（PostgreSQL + MinIO + App）
-docker compose --profile with-minio up -d
+---
 
-# 4. 查看启动状态
-docker compose ps
+<div align="center">
 
-# 5. 查看应用日志
-docker compose logs -f app
+**如果这个项目对你有帮助，请给一个 ⭐️ Star！**
 
-# 6. 访问应用
-# 打开浏览器访问 http://localhost:3000
-```
+Made with ❤️ by AI Wedding Team
 
-**服务访问地址**：
+Copyright © 2025 AI 图片生成. All rights reserved.
+
+</div>
 - 应用：`http://localhost:3000`
 - MinIO 控制台：`http://localhost:9001` (账号: `minioadmin` / `minioadmin`)
 - 健康检查：`http://localhost:3000/api/health`

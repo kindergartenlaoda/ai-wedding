@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Mail, Lock, User, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Toast } from './Toast';
+import { Toast } from '@/components/shared/Toast';
 
 interface AuthModalProps {
   onClose: () => void;

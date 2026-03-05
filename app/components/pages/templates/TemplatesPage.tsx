@@ -4,7 +4,7 @@ import { Heart, Sparkles, ArrowRight, Search } from 'lucide-react';
 import { categoryInfo } from '@/data/mockData';
 import { Template } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
-import { AuthModal } from './AuthModal';
+import { AuthModal } from '@/components/features/auth/AuthModal';
 import { useTemplates } from '@/hooks/useTemplates';
 //
 import { CardSkeleton } from '@/components/ui/card-skeleton';

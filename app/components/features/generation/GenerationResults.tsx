@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Sparkles, AlertCircle, Heart, Eye, Download, ArrowLeft, Check } from 'lucide-react';
 import NextImage from 'next/image';
 import { GlassCard, FadeIn } from '@/components/react-bits';
-import { ImagePreviewModal } from './ImagePreviewModal';
+import { ImagePreviewModal } from '@/components/shared/ImagePreviewModal';
 
 interface GenerationResultsProps {
   images: string[];

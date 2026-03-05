@@ -28,11 +28,11 @@ import {
 import { PhotoUploaderProps } from '@/types/photo';
 import { usePhotoUpload } from '@/hooks/usePhotoUpload';
 import { usePhotoSelection } from '@/hooks/usePhotoSelection';
-import { SortablePhoto } from './photo-uploader/SortablePhoto';
-import { PhotoUploadZone } from './photo-uploader/PhotoUploadZone';
-import { PhotoUploadGuide } from './photo-uploader/PhotoUploadGuide';
+import { SortablePhoto } from '@/components/photo-uploader/SortablePhoto';
+import { PhotoUploadZone } from '@/components/photo-uploader/PhotoUploadZone';
+import { PhotoUploadGuide } from '@/components/photo-uploader/PhotoUploadGuide';
 import { PhotoGuideModal } from './PhotoGuideModal';
-import { ConfirmDialog } from './ConfirmDialog';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import {
   AlertDialog,
   AlertDialogAction,

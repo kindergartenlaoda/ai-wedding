@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Calendar, Coins, Eye } from 'lucide-react';
-import { ImagePreviewModal } from './ImagePreviewModal';
+import { ImagePreviewModal } from '@/components/shared/ImagePreviewModal';
 import type { SingleGeneration } from '@/types/database';
 
 interface SingleGenerationCardProps {

@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { Sparkles, Upload, Loader2, AlertCircle, CheckCircle, Wand2, ExternalLink } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { useAuth } from '@/contexts/AuthContext';
-import { AuthModal } from './AuthModal';
+import { AuthModal } from '@/components/features/auth/AuthModal';
 import { usePromptGeneration } from '@/hooks/usePromptGeneration';
 import Image from 'next/image';
 

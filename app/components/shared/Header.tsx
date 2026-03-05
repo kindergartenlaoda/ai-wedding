@@ -1,7 +1,7 @@
 import { Camera, Sparkles, LogIn, LogOut, User, Menu, X, Github, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { AuthModal } from './AuthModal';
+import { AuthModal } from '@/components/features/auth/AuthModal';
 import { GITHUB_REPO_URL } from '@/lib/constants';
 
 interface HeaderProps {

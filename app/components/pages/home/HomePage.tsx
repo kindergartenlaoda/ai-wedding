@@ -20,7 +20,7 @@ import { FadeIn } from '@/components/react-bits';
 import { getDomainIcon } from '@/types/domain';
 import { getDomainCoverImage } from '@/lib/domain-fallbacks';
 import dynamic from 'next/dynamic';
-import { ShowcaseCarousel } from './ShowcaseCarousel';
+import { ShowcaseCarousel } from '@/components/features/gallery/ShowcaseCarousel';
 
 interface PlatformStats {
   users: number;
@@ -40,7 +40,7 @@ interface DomainFromApi {
 }
 
 const HeroProcessAnimation = dynamic(
-  () => import('./HeroProcessAnimation').then((mod) => mod.HeroProcessAnimation),
+  () => import('@/components/shared/HeroProcessAnimation').then((mod) => mod.HeroProcessAnimation),
   { ssr: false }
 );
 

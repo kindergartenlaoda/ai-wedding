@@ -7,27 +7,27 @@ import { useProjects } from '@/hooks/useProjects';
 import { useSingleGenerations } from '@/hooks/useGenerations';
 import { useDashboardActions } from '@/hooks/useDashboardActions';
 import { useDashboardModals } from '@/hooks/useDashboardModals';
-import { ProjectFilters } from './ProjectFilters';
+import { ProjectFilters } from '@/components/features/projects/ProjectFilters';
 import type { FilterState } from '@/types/filters';
 import { FadeIn, GlassCard } from '@/components/react-bits';
-import { Toast } from './Toast';
-import { InvitePanel } from './InvitePanel';
+import { Toast } from '@/components/shared/Toast';
+import { InvitePanel } from '@/components/features/onboarding/InvitePanel';
 import {
   DashboardHeader,
   DashboardTabs,
   SingleGenerationList,
   ProjectList,
-} from './Dashboard';
+} from '@/components/Dashboard';
 
 // Code split modals
-const ConfirmDialog = dynamic(() => import('./ConfirmDialog').then(m => ({ default: m.ConfirmDialog })));
-const ProjectDetailModal = dynamic(() => import('./ProjectDetailModal').then(m => ({ default: m.ProjectDetailModal })));
-const ProjectEditModal = dynamic(() => import('./ProjectEditModal').then(m => ({ default: m.ProjectEditModal })));
-const SingleGenerationDetailModal = dynamic(() => import('./SingleGenerationDetailModal').then(m => ({ default: m.SingleGenerationDetailModal })));
-const OnboardingModal = dynamic(() => import('./OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+const ConfirmDialog = dynamic(() => import('@/components/shared/ConfirmDialog').then(m => ({ default: m.ConfirmDialog })));
+const ProjectDetailModal = dynamic(() => import('@/components/features/projects/ProjectDetailModal').then(m => ({ default: m.ProjectDetailModal })));
+const ProjectEditModal = dynamic(() => import('@/components/features/projects/ProjectEditModal').then(m => ({ default: m.ProjectEditModal })));
+const SingleGenerationDetailModal = dynamic(() => import('@/components/features/generation/SingleGenerationDetailModal').then(m => ({ default: m.SingleGenerationDetailModal })));
+const OnboardingModal = dynamic(() => import('@/components/features/onboarding/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
 
 // Import hook separately
-import { useShowOnboarding } from './OnboardingModal';
+import { useShowOnboarding } from '@/components/features/onboarding/OnboardingModal';
 
 interface DashboardPageProps {
   onNavigate: (page: string, template?: Template, generationId?: string) => void;
