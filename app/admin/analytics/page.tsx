@@ -3,14 +3,13 @@
 import { useEffect, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import { AnalyticsTimeRangeSelector } from '@/components/admin/analytics/AnalyticsTimeRangeSelector';
+import { AnalyticsOverviewCards } from '@/components/admin/analytics/AnalyticsOverviewCards';
 import {
-  Users,
-  Layers,
-  CreditCard,
-  TrendingUp,
   Star,
   ArrowRight,
   Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import {
   BarChart,
@@ -27,58 +26,55 @@ import {
   Line,
 } from 'recharts';
 import type { PieLabelRenderProps } from 'recharts';
+import type { AnalyticsData, TimeRange } from '@/types/analytics';
+import { getDomainColorArray } from '@/lib/domain-colors';
 
-interface AnalyticsData {
-  overview: {
-    totalUsers: number;
-    totalGenerations: number;
-    completedGenerations: number;
-    totalOrders: number;
-    recentUsers: number;
-    recentGenerations: number;
-  };
-  funnel: {
-    registered: number;
-    firstGeneration: number;
-    paid: number;
-  };
-  templateHotlist: Array<{
-    template_id: string;
-    name: string;
-    domain: string;
-    count: number;
-  }>;
-  domainDistribution: Array<{
-    domain: string;
-    count: number;
-  }>;
-  dailyRegistrations: Array<{ date: string; count: number }>;
-  dailyGenerations: Array<{ date: string; count: number }>;
-  feedback: {
-    averageRating: number | null;
-    totalFeedbacks: number;
-  };
-}
-
-const CHART_COLORS = [
-  '#C8A064', '#8B7355', '#D4AF37', '#B8860B',
-  '#DAA520', '#CD853F', '#DEB887', '#F5DEB3',
-];
+const CHART_COLORS = getDomainColorArray();
 
 export default function AdminAnalyticsPage() {
   const { profile } = useAuth();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState<TimeRange>({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    endDate: new Date(),
+    preset: '30d',
+  });
 
   useEffect(() => {
     if (profile?.role !== 'admin') return;
 
-    fetch('/api/admin/analytics', { credentials: 'include' })
-      .then((res) => res.json())
-      .then((d: AnalyticsData) => setData(d))
-      .catch(() => {})
+    setLoading(true);
+    setError(null);
+
+    const controller = new AbortController();
+
+    const params = new URLSearchParams({
+      startDate: timeRange.startDate.toISOString(),
+      endDate: timeRange.endDate.toISOString(),
+    });
+
+    fetch(`/api/admin/analytics?${params}`, {
+      credentials: 'include',
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('获取数据失败');
+        return res.json();
+      })
+      .then((d: AnalyticsData) => {
+        setData(d);
+        setError(null);
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        setError(err instanceof Error ? err.message : '加载数据失败');
+      })
       .finally(() => setLoading(false));
-  }, [profile?.role]);
+
+    return () => controller.abort();
+  }, [profile?.role, timeRange]);
 
   if (profile?.role !== 'admin') {
     return (
@@ -98,10 +94,19 @@ export default function AdminAnalyticsPage() {
     );
   }
 
-  if (!data) {
+  if (error || !data) {
     return (
       <AdminLayout>
-        <div className="text-center py-20 text-pearl/60">加载数据失败</div>
+        <div className="flex flex-col items-center justify-center py-20 text-pearl/60">
+          <AlertCircle className="w-12 h-12 mb-4 text-red-400" />
+          <p className="text-lg">{error || '加载数据失败'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-sm transition-colors"
+          >
+            重新加载
+          </button>
+        </div>
       </AdminLayout>
     );
   }
@@ -115,57 +120,15 @@ export default function AdminAnalyticsPage() {
   return (
     <AdminLayout>
       <div className="space-y-8">
-        <h1 className="text-2xl font-display font-medium text-alabaster tracking-wider">
-          数据分析
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-display font-medium text-alabaster tracking-wider">
+            数据分析
+          </h1>
+          <AnalyticsTimeRangeSelector value={timeRange} onChange={setTimeRange} />
+        </div>
 
         {/* Overview Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            {
-              label: '总用户数',
-              value: data.overview.totalUsers,
-              sub: `近7天 +${data.overview.recentUsers}`,
-              icon: Users,
-            },
-            {
-              label: '总生成数',
-              value: data.overview.totalGenerations,
-              sub: `近7天 +${data.overview.recentGenerations}`,
-              icon: Layers,
-            },
-            {
-              label: '完成生成',
-              value: data.overview.completedGenerations,
-              sub: `完成率 ${data.overview.totalGenerations > 0 ? Math.round((data.overview.completedGenerations / data.overview.totalGenerations) * 100) : 0}%`,
-              icon: TrendingUp,
-            },
-            {
-              label: '付费订单',
-              value: data.overview.totalOrders,
-              sub: data.feedback.averageRating
-                ? `平均评分 ${data.feedback.averageRating.toFixed(1)}`
-                : `${data.feedback.totalFeedbacks} 条反馈`,
-              icon: CreditCard,
-            },
-          ].map((card) => (
-            <div
-              key={card.label}
-              className="p-5 bg-white/5 border border-white/10 rounded-sm"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <card.icon className="w-4 h-4 text-gold" />
-                <span className="text-xs text-pearl/60 tracking-wider uppercase">
-                  {card.label}
-                </span>
-              </div>
-              <p className="text-2xl font-display font-medium text-alabaster">
-                {card.value.toLocaleString()}
-              </p>
-              <p className="text-xs text-pearl/40 mt-1">{card.sub}</p>
-            </div>
-          ))}
-        </div>
+        <AnalyticsOverviewCards data={data.overview} loading={loading} />
 
         {/* Funnel + Domain Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -225,7 +188,7 @@ export default function AdminAnalyticsPage() {
                   >
                     {data.domainDistribution.map((_, idx) => (
                       <Cell
-                        key={idx}
+                        key={`cell-${idx}`}
                         fill={CHART_COLORS[idx % CHART_COLORS.length]}
                       />
                     ))}
@@ -257,10 +220,10 @@ export default function AdminAnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)' }}
+                    tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }}
                     tickFormatter={(v: string) => v.slice(5)}
                   />
-                  <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)' }} />
+                  <YAxis tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }} />
                   <Tooltip
                     contentStyle={{
                       background: '#1a1a1a',
@@ -292,10 +255,10 @@ export default function AdminAnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)' }}
+                    tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }}
                     tickFormatter={(v: string) => v.slice(5)}
                   />
-                  <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)' }} />
+                  <YAxis tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }} />
                   <Tooltip
                     contentStyle={{
                       background: '#1a1a1a',
@@ -332,7 +295,7 @@ export default function AdminAnalyticsPage() {
                 margin={{ left: 120 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)' }} />
+                <XAxis type="number" tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }} />
                 <YAxis
                   type="category"
                   dataKey="name"
