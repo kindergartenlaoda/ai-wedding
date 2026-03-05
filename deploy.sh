@@ -3,7 +3,8 @@
 # AI Wedding - Docker 一键部署脚本 (macOS / Linux)
 # ============================================================
 # 用法:
-#   bash deploy.sh              # 交互式部署（首次）
+#   bash deploy.sh              # 自动部署（已配置则直接启动，未配置则交互式配置）
+#   bash deploy.sh init         # 强制进入交互式配置
 #   bash deploy.sh up           # 启动服务
 #   bash deploy.sh down         # 停止服务
 #   bash deploy.sh restart      # 重启服务
@@ -90,34 +91,85 @@ check_prerequisites() {
 }
 
 # ============================================================
-# 环境配置
+# 环境检测 - 判断 .env 是否已正确配置
+# ============================================================
+is_env_configured() {
+  [ -f .env ] || return 1
+  local api_key secret admin_pass
+  api_key=$(get_env_value "IMAGE_API_KEY" "")
+  secret=$(get_env_value "NEXTAUTH_SECRET" "")
+  admin_pass=$(get_env_value "ADMIN_PASSWORD" "")
+  [ "$api_key" != "sk-your-api-key-here" ] && [ -n "$api_key" ] \
+    && [ "$secret" != "please-change-this-secret-in-production" ] && [ -n "$secret" ] \
+    && [ "$admin_pass" != "change-me-please" ] && [ -n "$admin_pass" ]
+}
+
+ensure_nextauth_secret() {
+  local secret
+  secret=$(get_env_value "NEXTAUTH_SECRET" "")
+  if [ "$secret" = "please-change-this-secret-in-production" ] || [ -z "$secret" ]; then
+    local new_secret
+    new_secret=$(openssl rand -base64 32 2>/dev/null || head -c 32 /dev/urandom | base64)
+    sed_inplace "s|NEXTAUTH_SECRET=.*|NEXTAUTH_SECRET=${new_secret}|" .env
+    ok "Generated NEXTAUTH_SECRET automatically"
+  fi
+}
+
+# ============================================================
+# 自动部署 - 检测 .env 是否已配置，已配置则跳过交互直接部署
+# ============================================================
+ensure_env() {
+  if is_env_configured; then
+    ok ".env is configured, skipping interactive setup"
+    ensure_nextauth_secret
+    return
+  fi
+  warn ".env is not configured or using default values, entering interactive setup..."
+  echo ""
+  setup_env
+}
+
+# ============================================================
+# 环境配置 - 交互式配置 .env 文件
 # ============================================================
 setup_env() {
-  if [ -f .env ]; then
-    warn ".env file already exists"
-    read -rp "  Overwrite with template? (y/N): " overwrite
-    if [ "$overwrite" != "y" ] && [ "$overwrite" != "Y" ]; then
-      info "Keeping existing .env file"
-      return
-    fi
-  fi
-
   if [ ! -f env.docker.example ]; then
     err "env.docker.example not found"
     exit 1
   fi
 
-  cp env.docker.example .env
-  ok "Created .env from template"
+  if [ -f .env ]; then
+    warn ".env file already exists"
+    read -rp "  Reset from template? (y/N): " overwrite
+    if [ "$overwrite" = "y" ] || [ "$overwrite" = "Y" ]; then
+      cp env.docker.example .env
+      ok "Reset .env from template"
+    else
+      info "Modifying existing .env file"
+    fi
+  else
+    cp env.docker.example .env
+    ok "Created .env from template"
+  fi
 
   echo ""
-  info "Please configure the following required settings:"
+  info "Please configure the following settings (press Enter to keep current value):"
   echo ""
 
   # AI API Key
-  read -rp "  AI API Key (IMAGE_API_KEY): " api_key
-  if [ -n "$api_key" ]; then
-    sed_inplace "s|IMAGE_API_KEY=sk-your-api-key-here|IMAGE_API_KEY=${api_key}|" .env
+  local current_key
+  current_key=$(get_env_value "IMAGE_API_KEY" "")
+  if [ -n "$current_key" ] && [ "$current_key" != "sk-your-api-key-here" ]; then
+    local masked_key="${current_key:0:8}***"
+    read -rp "  AI API Key (IMAGE_API_KEY) [$masked_key]: " api_key
+    if [ -n "$api_key" ] && [ "$api_key" != "$masked_key" ]; then
+      sed_inplace "s|IMAGE_API_KEY=.*|IMAGE_API_KEY=${api_key}|" .env
+    fi
+  else
+    read -rp "  AI API Key (IMAGE_API_KEY): " api_key
+    if [ -n "$api_key" ]; then
+      sed_inplace "s|IMAGE_API_KEY=.*|IMAGE_API_KEY=${api_key}|" .env
+    fi
   fi
 
   # AI API Base URL
@@ -134,7 +186,7 @@ setup_env() {
     4) read -rp "  Enter custom API base URL: " api_base ;;
     *) api_base="https://api.openai.com" ;;
   esac
-  sed_inplace "s|IMAGE_API_BASE_URL=https://api.openai.com|IMAGE_API_BASE_URL=${api_base}|" .env
+  sed_inplace "s|IMAGE_API_BASE_URL=.*|IMAGE_API_BASE_URL=${api_base}|" .env
 
   # API Mode
   echo ""
@@ -143,31 +195,32 @@ setup_env() {
   echo "    2) chat   - Streaming (Gemini, etc.)"
   read -rp "  Select (1-2) [1]: " mode_choice
   if [ "$mode_choice" = "2" ]; then
-    sed_inplace "s|IMAGE_API_MODE=images|IMAGE_API_MODE=chat|" .env
+    sed_inplace "s|IMAGE_API_MODE=.*|IMAGE_API_MODE=chat|" .env
   fi
 
   # Admin account
   echo ""
-  read -rp "  Admin email [admin@example.com]: " admin_email
+  local current_admin
+  current_admin=$(get_env_value "ADMIN_EMAIL" "admin@example.com")
+  read -rp "  Admin email [$current_admin]: " admin_email
   if [ -n "$admin_email" ]; then
-    sed_inplace "s|ADMIN_EMAIL=admin@example.com|ADMIN_EMAIL=${admin_email}|" .env
+    sed_inplace "s|ADMIN_EMAIL=.*|ADMIN_EMAIL=${admin_email}|" .env
   fi
 
   read -rp "  Admin password [change-me-please]: " admin_pass
   if [ -n "$admin_pass" ]; then
-    sed_inplace "s|ADMIN_PASSWORD=change-me-please|ADMIN_PASSWORD=${admin_pass}|" .env
+    sed_inplace "s|ADMIN_PASSWORD=.*|ADMIN_PASSWORD=${admin_pass}|" .env
   fi
 
-  # NextAuth Secret
-  echo ""
-  NEXTAUTH_SECRET=$(openssl rand -base64 32 2>/dev/null || head -c 32 /dev/urandom | base64)
-  sed_inplace "s|NEXTAUTH_SECRET=please-change-this-secret-in-production|NEXTAUTH_SECRET=${NEXTAUTH_SECRET}|" .env
-  ok "Generated NEXTAUTH_SECRET automatically"
+  # NextAuth Secret - always auto-generate
+  ensure_nextauth_secret
 
   # Server URL
-  read -rp "  Server URL (NEXTAUTH_URL) [http://localhost:3000]: " server_url
+  local current_url
+  current_url=$(get_env_value "NEXTAUTH_URL" "http://localhost:3000")
+  read -rp "  Server URL (NEXTAUTH_URL) [$current_url]: " server_url
   if [ -n "$server_url" ]; then
-    sed_inplace "s|NEXTAUTH_URL=http://localhost:3000|NEXTAUTH_URL=${server_url}|" .env
+    sed_inplace "s|NEXTAUTH_URL=.*|NEXTAUTH_URL=${server_url}|" .env
   fi
 
   # Storage
@@ -177,7 +230,7 @@ setup_env() {
   echo "    2) Aliyun OSS"
   read -rp "  Select (1-2) [1]: " storage_choice
   if [ "$storage_choice" = "2" ]; then
-    sed_inplace "s|STORAGE_PROVIDER=minio|STORAGE_PROVIDER=oss|" .env
+    sed_inplace "s|STORAGE_PROVIDER=.*|STORAGE_PROVIDER=oss|" .env
     echo ""
     read -rp "  ALI_OSS_REGION [oss-cn-beijing]: " oss_region
     read -rp "  ALI_OSS_ACCESS_KEY_ID: " oss_key_id
@@ -396,8 +449,12 @@ main() {
     status)   do_status ;;
     backup)   do_backup ;;
     restore)  do_restore ;;
-    "")
+    init)
       setup_env
+      ok "Configuration complete. Run 'bash deploy.sh' to deploy."
+      ;;
+    "")
+      ensure_env
       echo ""
       info "Starting deployment..."
       echo ""
@@ -423,7 +480,8 @@ main() {
       echo "Usage: bash deploy.sh [command]"
       echo ""
       echo "Commands:"
-      echo "  (none)     Interactive setup & deploy"
+      echo "  (none)     Auto deploy (skip setup if .env is configured)"
+      echo "  init       Force interactive setup (reconfigure .env)"
       echo "  up         Start services"
       echo "  down       Stop services"
       echo "  restart    Restart services"
