@@ -7,7 +7,6 @@ import { AnalyticsTimeRangeSelector } from '@/components/admin/analytics/Analyti
 import { AnalyticsOverviewCards } from '@/components/admin/analytics/AnalyticsOverviewCards';
 import {
   Star,
-  ArrowRight,
   Loader2,
   AlertCircle,
 } from 'lucide-react';
@@ -79,7 +78,7 @@ export default function AdminAnalyticsPage() {
   if (profile?.role !== 'admin') {
     return (
       <AdminLayout>
-        <div className="text-center py-20 text-pearl/60">无权访问</div>
+        <div className="text-center py-20 text-muted-foreground">无权访问</div>
       </AdminLayout>
     );
   }
@@ -88,7 +87,7 @@ export default function AdminAnalyticsPage() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-gold" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       </AdminLayout>
     );
@@ -97,12 +96,12 @@ export default function AdminAnalyticsPage() {
   if (error || !data) {
     return (
       <AdminLayout>
-        <div className="flex flex-col items-center justify-center py-20 text-pearl/60">
-          <AlertCircle className="w-12 h-12 mb-4 text-red-400" />
+        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+          <AlertCircle className="w-12 h-12 mb-4 text-destructive" />
           <p className="text-lg">{error || '加载数据失败'}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-gold/20 hover:bg-gold/30 text-gold rounded-sm transition-colors"
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors"
           >
             重新加载
           </button>
@@ -121,7 +120,7 @@ export default function AdminAnalyticsPage() {
     <AdminLayout>
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-display font-medium text-alabaster tracking-wider">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             数据分析
           </h1>
           <AnalyticsTimeRangeSelector value={timeRange} onChange={setTimeRange} />
@@ -133,31 +132,27 @@ export default function AdminAnalyticsPage() {
         {/* Funnel + Domain Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* User Funnel */}
-          <div className="p-6 bg-white/5 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-display font-medium text-alabaster tracking-wider uppercase mb-6">
+          <div className="p-6 bg-card border border-border rounded-lg shadow-sm">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
               用户转化漏斗
             </h2>
             <div className="space-y-4">
-              {funnelData.map((step, idx) => {
+              {funnelData.map((step) => {
                 const maxVal = funnelData[0].value || 1;
                 const pct = Math.round((step.value / maxVal) * 100);
                 return (
                   <div key={step.name}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-pearl/60 tracking-wider">{step.name}</span>
-                      <span className="text-alabaster font-medium">
+                    <div className="flex justify-between text-xs mb-2">
+                      <span className="text-muted-foreground font-medium">{step.name}</span>
+                      <span className="text-foreground font-bold">
                         {step.value.toLocaleString()} ({pct}%)
                       </span>
                     </div>
-                    <div className="h-8 bg-black/40 rounded-sm overflow-hidden">
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-gold/80 to-gold/40 rounded-sm transition-all duration-700 flex items-center justify-end pr-2"
+                        className="h-full bg-primary rounded-full transition-all duration-700"
                         style={{ width: `${Math.max(pct, 2)}%` }}
-                      >
-                        {idx < funnelData.length - 1 && (
-                          <ArrowRight className="w-3 h-3 text-obsidian/60" />
-                        )}
-                      </div>
+                      />
                     </div>
                   </div>
                 );
@@ -166,8 +161,8 @@ export default function AdminAnalyticsPage() {
           </div>
 
           {/* Domain Distribution */}
-          <div className="p-6 bg-white/5 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-display font-medium text-alabaster tracking-wider uppercase mb-6">
+          <div className="p-6 bg-card border border-border rounded-lg shadow-sm">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
               领域偏好分布
             </h2>
             {data.domainDistribution.length > 0 ? (
@@ -195,96 +190,117 @@ export default function AdminAnalyticsPage() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      background: '#1a1a1a',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '2px',
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: 'var(--radius)',
+                      color: 'hsl(var(--foreground))',
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-pearl/40 text-center py-10">暂无数据</p>
+              <p className="text-muted-foreground text-center py-10">暂无数据</p>
             )}
           </div>
         </div>
 
         {/* Daily Trends */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="p-6 bg-white/5 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-display font-medium text-alabaster tracking-wider uppercase mb-6">
+          <div className="p-6 bg-card border border-border rounded-lg shadow-sm">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
               每日注册趋势（30天）
             </h2>
             {data.dailyRegistrations.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={data.dailyRegistrations}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }}
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                     tickFormatter={(v: string) => v.slice(5)}
+                    axisLine={false}
+                    tickLine={false}
+                    dy={10}
                   />
-                  <YAxis tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }} />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} 
+                    axisLine={false}
+                    tickLine={false}
+                    dx={-10}
+                  />
                   <Tooltip
                     contentStyle={{
-                      background: '#1a1a1a',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '2px',
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: 'var(--radius)',
+                      color: 'hsl(var(--foreground))',
                     }}
                   />
                   <Line
                     type="monotone"
                     dataKey="count"
-                    stroke="#C8A064"
+                    stroke="hsl(var(--primary))"
                     strokeWidth={2}
-                    dot={{ r: 3, fill: '#C8A064' }}
+                    dot={{ r: 3, fill: 'hsl(var(--primary))' }}
+                    activeDot={{ r: 5, strokeWidth: 0 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-pearl/40 text-center py-10">暂无数据</p>
+              <p className="text-muted-foreground text-center py-10">暂无数据</p>
             )}
           </div>
 
-          <div className="p-6 bg-white/5 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-display font-medium text-alabaster tracking-wider uppercase mb-6">
+          <div className="p-6 bg-card border border-border rounded-lg shadow-sm">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
               每日生成趋势（30天）
             </h2>
             {data.dailyGenerations.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={data.dailyGenerations}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }}
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                     tickFormatter={(v: string) => v.slice(5)}
+                    axisLine={false}
+                    tickLine={false}
+                    dy={10}
                   />
-                  <YAxis tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }} />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} 
+                    axisLine={false}
+                    tickLine={false}
+                    dx={-10}
+                  />
                   <Tooltip
                     contentStyle={{
-                      background: '#1a1a1a',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '2px',
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: 'var(--radius)',
+                      color: 'hsl(var(--foreground))',
                     }}
                   />
                   <Line
                     type="monotone"
                     dataKey="count"
-                    stroke="#DAA520"
+                    stroke="hsl(var(--accent))"
                     strokeWidth={2}
-                    dot={{ r: 3, fill: '#DAA520' }}
+                    dot={{ r: 3, fill: 'hsl(var(--accent))' }}
+                    activeDot={{ r: 5, strokeWidth: 0 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-pearl/40 text-center py-10">暂无数据</p>
+              <p className="text-muted-foreground text-center py-10">暂无数据</p>
             )}
           </div>
         </div>
 
         {/* Template Hotlist */}
-        <div className="p-6 bg-white/5 border border-white/10 rounded-sm">
-          <h2 className="text-sm font-display font-medium text-alabaster tracking-wider uppercase mb-6">
-            <Star className="w-4 h-4 inline-block mr-2 text-gold" />
+        <div className="p-6 bg-card border border-border rounded-lg shadow-sm">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6 flex items-center">
+            <Star className="w-4 h-4 mr-2 text-accent" />
             模板热度 TOP 10
           </h2>
           {data.templateHotlist.length > 0 ? (
@@ -292,28 +308,37 @@ export default function AdminAnalyticsPage() {
               <BarChart
                 data={data.templateHotlist}
                 layout="vertical"
-                margin={{ left: 120 }}
+                margin={{ left: 120, right: 20 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.4)' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis 
+                  type="number" 
+                  tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} 
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.6)' }}
+                  tick={{ fontSize: 12, fill: 'hsl(var(--foreground))', fontWeight: 500 }}
                   width={110}
+                  axisLine={false}
+                  tickLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: '#1a1a1a',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '2px',
+                    background: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 'var(--radius)',
+                    color: 'hsl(var(--foreground))',
                   }}
+                  cursor={{ fill: 'hsl(var(--muted)/0.2)' }}
                 />
-                <Bar dataKey="count" fill="#C8A064" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-pearl/40 text-center py-10">暂无数据</p>
+            <p className="text-muted-foreground text-center py-10">暂无数据</p>
           )}
         </div>
       </div>

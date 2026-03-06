@@ -39,18 +39,18 @@ export function AnalyticsTimeRangeSelector({ value, onChange }: AnalyticsTimeRan
 
   return (
     <div className="flex items-center gap-2">
-      <Calendar className="w-4 h-4 text-gold" />
-      <div className="flex gap-2">
+      <Calendar className="w-4 h-4 text-primary" />
+      <div className="flex gap-2 p-1 bg-muted rounded-lg">
         {PRESETS.map((preset) => (
           <button
             key={preset.value}
             onClick={() => handlePresetClick(preset.value, preset.days)}
             className={`
-              px-3 py-1.5 text-sm rounded-sm transition-colors
+              px-3 py-1.5 text-xs font-medium rounded-md transition-all
               ${
                 value.preset === preset.value
-                  ? 'bg-gold text-obsidian font-medium'
-                  : 'bg-white/5 text-pearl/60 hover:bg-white/10 hover:text-pearl'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
               }
             `}
           >
