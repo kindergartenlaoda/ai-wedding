@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { X, Mail, Lock, User, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Toast } from '@/components/shared/Toast';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -12,7 +11,6 @@ export function AuthModal({ onClose }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -29,13 +27,10 @@ export function AuthModal({ onClose }: AuthModalProps) {
         await signIn(formData.email, formData.password);
         onClose();
       } else {
+        // signUp 会在注册成功后自动调用 signIn 登录
         await signUp(formData.email, formData.password, formData.fullName);
-        // 注册成功后显示提醒消息
-        setShowSuccessToast(true);
-        // 3秒后关闭弹窗
-        setTimeout(() => {
-          onClose();
-        }, 3000);
+        // 注册并登录成功，直接关闭弹窗
+        onClose();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '发生错误');
@@ -46,15 +41,6 @@ export function AuthModal({ onClose }: AuthModalProps) {
 
   return (
     <>
-      {showSuccessToast && (
-        <Toast
-          message="注册成功！请查看您的邮箱并点击确认链接来激活账号。"
-          type="success"
-          onClose={() => setShowSuccessToast(false)}
-          duration={3000}
-        />
-      )}
-
       <div className="flex fixed inset-0 z-50 justify-center items-center p-4 backdrop-blur-sm bg-black/60">
         <div className="relative w-full max-w-md rounded-xl border shadow-2xl bg-black/90 border-white/10">
           <button

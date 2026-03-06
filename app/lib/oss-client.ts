@@ -81,12 +81,15 @@ async function generateThumbnails(
                 headers: { 'Content-Type': 'image/webp' },
             });
 
-            const url = putResult.url;
+            // 为缩略图也生成签名 URL（7 天有效期）
+            const presignedUrl = client.signatureUrl(thumbObjectName, {
+                expires: 7 * 24 * 60 * 60,
+            });
 
             if (size.suffix === '_thumb') {
-                result.thumbnailUrl = url;
+                result.thumbnailUrl = presignedUrl;
             } else {
-                result.mediumUrl = url;
+                result.mediumUrl = presignedUrl;
             }
 
             console.log(
@@ -138,10 +141,12 @@ export async function uploadImage(options: UploadImageOptions): Promise<UploadIm
         // 异步生成缩略图
         const thumbnails = await generateThumbnails(bufferCopy(options.buffer), objectName, client);
 
+        // 优先返回签名 URL，确保私有 bucket 也能访问
+        // 如果 bucket 配置为公共读，可以直接使用 publicUrl
         return {
-            url: publicUrl,
-            publicUrl,
-            presignedUrl,
+            url: presignedUrl,  // 默认使用签名 URL，兼容私有和公共 bucket
+            publicUrl,          // 公共 URL（仅当 bucket 公共读时可用）
+            presignedUrl,       // 签名 URL（7天有效期，适用于私有 bucket）
             objectName,
             bucket: config.bucket,
             ...thumbnails,

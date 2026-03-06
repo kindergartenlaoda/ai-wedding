@@ -10,7 +10,8 @@ import {
   Heart,
   Image as ImageIcon,
   Users,
-  Layers
+  Layers,
+  Wand2
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -120,6 +121,13 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   >
                     <Camera className="w-5 h-5" />
                     免费试用
+                  </button>
+                  <button
+                    onClick={() => navigate('generate-prompts')}
+                    className="px-10 py-4 border border-white/20 text-alabaster rounded-sm hover:bg-white/5 transition-colors duration-500 text-sm tracking-[0.15em] uppercase font-medium flex items-center justify-center gap-3"
+                  >
+                    <Wand2 className="w-5 h-5" />
+                    AI 风格定制
                   </button>
                   <button
                     onClick={() => navigate('gallery')}

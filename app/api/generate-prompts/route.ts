@@ -19,10 +19,26 @@ const CREDITS_PER_PROMPT_GENERATION = 5;
 
 async function getActivePromptsConfig(log: ReturnType<typeof createRequestLogger>): Promise<ModelConfig | null> {
   try {
-    const config = await prisma.model_configs.findFirst({
+    // 优先使用 generate_prompts 配置
+    let config = await prisma.model_configs.findFirst({
       where: { type: ModelConfigType.generate_prompts, status: 'active' },
     });
-    if (!config) return null;
+    
+    // 如果没有 generate_prompts 配置，降级使用 identify_image 配置
+    if (!config) {
+      log.info('未找到 generate_prompts 配置，降级使用 identify_image 配置');
+      config = await prisma.model_configs.findFirst({
+        where: { type: ModelConfigType.identify_image, status: 'active' },
+      });
+    }
+    
+    if (!config) {
+      log.warn('未找到任何可用配置');
+      return null;
+    }
+    
+    log.info({ type: config.type, name: config.name }, '使用配置');
+    
     return {
       id: config.id,
       type: config.type as ModelConfig['type'],
