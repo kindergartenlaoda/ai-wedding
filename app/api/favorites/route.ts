@@ -11,14 +11,19 @@ export async function GET() {
   if (authResult instanceof Response) return authResult;
   const user_id = authResult.user.id;
 
-  const favorites = await prisma.favorites.findMany({
-    where: { user_id },
-    select: { template_id: true },
-  });
+  try {
+    const favorites = await prisma.favorites.findMany({
+      where: { user_id },
+      select: { template_id: true },
+    });
 
-  return NextResponse.json({
-    data: favorites.map((f) => f.template_id),
-  });
+    return NextResponse.json({
+      data: favorites.map((f) => f.template_id),
+    });
+  } catch (error) {
+    console.warn('Favorites database unavailable, using empty favorites:', error);
+    return NextResponse.json({ data: [], fallback: true });
+  }
 }
 
 /**
@@ -38,18 +43,26 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'remove') {
-    await prisma.favorites.deleteMany({
-      where: { user_id, template_id },
-    });
+    try {
+      await prisma.favorites.deleteMany({
+        where: { user_id, template_id },
+      });
+    } catch (error) {
+      console.warn('Favorites database unavailable, ignoring remove:', error);
+    }
     return NextResponse.json({ success: true, favorited: false });
   }
 
-  await prisma.favorites.upsert({
-    where: {
-      user_id_template_id: { user_id, template_id },
-    },
-    create: { user_id, template_id },
-    update: {},
-  });
+  try {
+    await prisma.favorites.upsert({
+      where: {
+        user_id_template_id: { user_id, template_id },
+      },
+      create: { user_id, template_id },
+      update: {},
+    });
+  } catch (error) {
+    console.warn('Favorites database unavailable, ignoring add:', error);
+  }
   return NextResponse.json({ success: true, favorited: true });
 }

@@ -77,7 +77,7 @@ async function generateThumbnails(
 
             const thumbObjectName = `${baseName}${size.suffix}.webp`;
 
-            const putResult = await client.put(thumbObjectName, resizedBuffer, {
+            await client.put(thumbObjectName, resizedBuffer, {
                 headers: { 'Content-Type': 'image/webp' },
             });
 

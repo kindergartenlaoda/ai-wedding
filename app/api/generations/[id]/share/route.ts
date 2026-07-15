@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { isLocalGenerationStoreEnabled, updateLocalGenerationShare } from '@/lib/local-generation-store';
 
 export async function PATCH(
   request: NextRequest,
@@ -14,6 +15,21 @@ export async function PATCH(
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
     const user_id = authResult.user.id;
+
+    if (isLocalGenerationStoreEnabled(user_id)) {
+      const generation = await updateLocalGenerationShare(id, user_id, Boolean(isShared));
+      if (!generation) {
+        return NextResponse.json({ error: 'Generation not found' }, { status: 404 });
+      }
+      if (generation === 'not_completed') {
+        return NextResponse.json({ error: 'Only completed generations can be shared' }, { status: 400 });
+      }
+      return NextResponse.json({
+        success: true,
+        message: isShared ? 'Shared to gallery' : 'Removed from gallery',
+        local: true,
+      });
+    }
 
     const generation = await prisma.generations.findUnique({
       where: { id },

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { ArrowLeft } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useImageLikes } from '@/hooks/useImageLikes';
 import { rateImages } from '@/lib/image-rating';
 import { FadeIn } from '@/components/react-bits';
@@ -14,7 +13,7 @@ import { ResultsPageProps, ResultsPageData, ImageTab } from './types';
 const ShareModal = dynamic(() => import('@/components/ShareModal').then(mod => ({ default: mod.ShareModal })), { ssr: false });
 
 export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
-  const { user } = useAuth();
+  const isLocalAdminMode = process.env.NEXT_PUBLIC_LOCAL_ADMIN_MODE === 'true';
   const [generation, setGeneration] = useState<ResultsPageData | null>(null);
   const [loading, setLoading] = useState(!!generationId);
   const [error, setError] = useState<string | null>(null);
@@ -37,11 +36,21 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
         if (!res.ok) throw new Error('加载失败');
         const data = await res.json();
         if (!data) throw new Error('未找到生成记录');
+        const previewImages = Array.isArray(data.preview_images) ? data.preview_images : [];
+        const highResImages = Array.isArray(data.high_res_images) && data.high_res_images.length > 0
+          ? data.high_res_images
+          : (isLocalAdminMode ? previewImages : []);
+
         setGeneration({
           ...data,
+          preview_images: previewImages,
+          high_res_images: highResImages,
           project: data.project || { name: '', uploaded_photos: [] },
           template: data.template || { name: '' },
         });
+        if (isLocalAdminMode && highResImages.length > 0) {
+          setTab('high_res');
+        }
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : '加载失败');
@@ -49,7 +58,7 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
         setLoading(false);
       }
     })();
-  }, [generationId]);
+  }, [generationId, isLocalAdminMode]);
 
   const currentImages = useMemo(() => {
     return tab === 'preview' ? (generation?.preview_images || []) : (generation?.high_res_images || []);
@@ -60,7 +69,11 @@ export function ResultsPage({ onNavigate, generationId }: ResultsPageProps) {
   const toggleImageSelection = useCallback((index: number) => {
     setSelectedImages(prev => {
       const next = new Set(prev);
-      next.has(index) ? next.delete(index) : next.add(index);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
       return next;
     });
   }, []);

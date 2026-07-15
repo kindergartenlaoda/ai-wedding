@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing ref_code' }, { status: 400 });
     }
 
+    if (process.env.LOCAL_ADMIN_MODE === 'true' && invitee_id === 'local-admin') {
+      return NextResponse.json({ ok: true, skipped: true, local: true }, { status: 200 });
+    }
+
     // 2. 使用事务确保原子性，防止竞态条件
     const result = await prisma.$transaction(async (tx) => {
       // 2.1 查找邀请人

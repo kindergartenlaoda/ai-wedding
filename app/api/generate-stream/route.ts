@@ -10,6 +10,11 @@ import {
   resolvePromptFromTemplate,
   enhancePromptWithSettings,
   mapCreativityToParams,
+  callOpenAIImageEndpoint,
+  buildOpenAIImageEndpointStream,
+  ImageEndpointError,
+  isOpenAIImageEndpointModel,
+  buildOpenAICompatibleEndpoint,
 } from '@/lib/generation-shared';
 import type { ChatContentItem, FacePreservationLevel, CreativityLevel } from '@/lib/generation-shared';
 
@@ -19,6 +24,9 @@ export const runtime = 'nodejs';
 const ENV_IMAGE_API_BASE_URL = process.env.IMAGE_API_BASE_URL;
 const ENV_IMAGE_API_KEY = process.env.IMAGE_API_KEY;
 const ENV_IMAGE_CHAT_MODEL = process.env.IMAGE_CHAT_MODEL || 'gemini-2.5-flash-image';
+const ENV_IMAGE_OUTPUT_SIZE = process.env.IMAGE_OUTPUT_SIZE || '1024x1536';
+const ENV_IMAGE_OUTPUT_QUALITY = process.env.IMAGE_OUTPUT_QUALITY || 'high';
+const LOCAL_ADMIN_MODE = process.env.LOCAL_ADMIN_MODE === 'true';
 
 export async function POST(req: Request) {
   const requestId = `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -31,10 +39,13 @@ export async function POST(req: Request) {
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
     const userId = authResult.user.id;
-    log.info({ userId }, '用户认证成功');
+    const isLocalAdmin = LOCAL_ADMIN_MODE && userId === 'local-admin';
+    log.info({ userId, localAdminMode: LOCAL_ADMIN_MODE }, '用户认证成功');
 
     // 2) 速率限制
-    const rl = checkRateLimit(userId);
+    const rl = isLocalAdmin
+      ? { allowed: true, count: 0, retryAfter: undefined }
+      : checkRateLimit(userId);
     if (!rl.allowed) {
       log.warn({ userId, count: rl.count, limit: RL_LIMIT }, '速率限制超过');
       return rateLimitResponse(rl.retryAfter!);
@@ -57,6 +68,8 @@ export async function POST(req: Request) {
     const source = data.source;
     const facePreservation = (data.face_preservation || 'high') as FacePreservationLevel;
     const creativityLevel = (data.creativity_level || 'conservative') as CreativityLevel;
+    const imageSize = data.image_size || (LOCAL_ADMIN_MODE ? ENV_IMAGE_OUTPUT_SIZE : '1024x1024');
+    const imageQuality = data.image_quality || (LOCAL_ADMIN_MODE ? ENV_IMAGE_OUTPUT_QUALITY : 'auto');
 
     // 5) 解析提示词（服务端完成）
     let rawPrompt: string;
@@ -74,6 +87,10 @@ export async function POST(req: Request) {
     } else {
       rawPrompt = data.custom_prompt;
       log.info({ promptLength: rawPrompt.length }, '使用自定义提示词');
+    }
+
+    if ('additional_prompt' in data && data.additional_prompt?.trim()) {
+      rawPrompt = rawPrompt + '\n\nAdditional scene and user requirements:\n' + data.additional_prompt.trim();
     }
 
     const composedPrompt = enhancePromptWithSettings(rawPrompt, facePreservation);
@@ -136,6 +153,44 @@ export async function POST(req: Request) {
       );
     }
 
+    if (isOpenAIImageEndpointModel(chatModel)) {
+      log.info({ model: chatModel }, '使用 OpenAI Images API 格式');
+
+      try {
+        const images = await callOpenAIImageEndpoint({
+          apiBaseUrl,
+          apiKey,
+          model: chatModel,
+          prompt: composedPrompt,
+          image_inputs,
+          size: imageSize,
+          quality: imageQuality as 'auto' | 'low' | 'medium' | 'high',
+          inputFidelity: facePreservation === 'high' ? 'high' : undefined,
+          n: 1,
+          log,
+        });
+
+        return new Response(buildOpenAIImageEndpointStream(images, log), {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        });
+      } catch (error) {
+        const status = error instanceof ImageEndpointError ? error.status : 500;
+        const detail = error instanceof ImageEndpointError ? error.detail : error instanceof Error ? error.message : 'Unknown error';
+        log.error({ status, error: sanitize.errorMessage(detail) }, 'OpenAI Images API 返回错误');
+        const message = LOCAL_ADMIN_MODE
+          ? `图片生成失败：${sanitize.truncate(detail, 300)}`
+          : '图片生成失败，请稍后重试';
+        return new Response(
+          JSON.stringify({ error: message }),
+          { status, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // 8) 调用上游 API
     const requestData = {
       model: chatModel,
@@ -146,7 +201,7 @@ export async function POST(req: Request) {
       stream_options: { include_usage: true },
     };
 
-    const endpoint = `${apiBaseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+    const endpoint = buildOpenAICompatibleEndpoint(apiBaseUrl, '/chat/completions');
 
     log.info({
       model: requestData.model,
@@ -194,4 +249,5 @@ export async function POST(req: Request) {
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
+
 }

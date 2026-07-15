@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
+import { getLocalGenerationById, isLocalGenerationStoreAvailable } from '@/lib/local-generation-store';
+import { createLocalComment, listLocalComments } from '@/lib/local-feature-store';
 
 /**
  * GET /api/gallery/[id]/comments
@@ -14,6 +16,22 @@ export async function GET(
   const { searchParams } = req.nextUrl;
   const limit = parseInt(searchParams.get('limit') || '20');
   const offset = parseInt(searchParams.get('offset') || '0');
+
+  if (isLocalGenerationStoreAvailable()) {
+    const { comments, total } = await listLocalComments(generation_id, limit, offset);
+    return NextResponse.json({
+      comments: comments.map((c) => ({
+        id: c.id,
+        content: c.content,
+        user_name: c.user_name,
+        user_image: c.user_image,
+        created_at: c.created_at,
+      })),
+      total,
+      hasMore: offset + limit < total,
+      local: true,
+    });
+  }
 
   const [comments, total] = await Promise.all([
     prisma.gallery_comments.findMany({
@@ -66,6 +84,30 @@ export async function POST(
 
   if (content.trim().length > 500) {
     return NextResponse.json({ error: 'Comment too long (max 500 chars)' }, { status: 400 });
+  }
+
+  if (isLocalGenerationStoreAvailable() && user_id === 'local-admin') {
+    const generation = await getLocalGenerationById(generation_id);
+    if (!generation || !generation.is_shared_to_gallery) {
+      return NextResponse.json({ error: 'Gallery item not found' }, { status: 404 });
+    }
+    const comment = await createLocalComment({
+      generationId: generation_id,
+      userId: user_id,
+      userName: authResult.user.name,
+      content,
+    });
+    return NextResponse.json({
+      ok: true,
+      comment: {
+        id: comment.id,
+        content: comment.content,
+        user_name: comment.user_name,
+        user_image: comment.user_image,
+        created_at: comment.created_at,
+      },
+      local: true,
+    });
   }
 
   const generation = await prisma.generations.findFirst({

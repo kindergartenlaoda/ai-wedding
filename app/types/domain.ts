@@ -57,6 +57,9 @@ export type GenerationDomain = string;
  */
 export const GENERATION_DOMAINS = [
   'wedding',
+  'couple',
+  'maternity',
+  'graduation',
   'children',
   'id_photo',
   'artistic',
@@ -86,6 +89,27 @@ export const DOMAIN_CONFIG: Record<string, DomainInfo> = {
     description: '唯美婚纱、旅拍、中式喜庆，多风格一键生成',
     icon: Camera,
     color: 'from-pink-500 to-rose-500',
+  },
+  couple: {
+    id: 'couple',
+    name: 'AI 情侣照',
+    description: '纪念日、旅行约会、氛围合影，保留两人真实特征',
+    icon: Heart,
+    color: 'from-red-500 to-pink-500',
+  },
+  maternity: {
+    id: 'maternity',
+    name: 'AI 孕妇照',
+    description: '温柔孕期写真、家庭纪念照，定格珍贵时刻',
+    icon: Baby,
+    color: 'from-amber-400 to-rose-400',
+  },
+  graduation: {
+    id: 'graduation',
+    name: 'AI 毕业照',
+    description: '学士服、校园纪念、青春合影，多场景自由创作',
+    icon: GraduationCap,
+    color: 'from-sky-500 to-indigo-500',
   },
   children: {
     id: 'children',

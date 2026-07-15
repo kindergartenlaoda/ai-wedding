@@ -31,7 +31,7 @@ export type StepFlowState =
   | { step: 'domain'; domain: null }
   | { step: 'style'; domain: GenerationDomain; template: null }
   | { step: 'upload'; domain: GenerationDomain; template: Template; photos: PhotoState[] }
-  | { step: 'generate'; domain: GenerationDomain; template: Template; photos: ValidatedPhoto[]; imageCount: number; progress: number; progressText: string }
+  | { step: 'generate'; domain: GenerationDomain; template: Template; photos: ValidatedPhoto[]; imageCount: number; additionalPrompt?: string; progress: number; progressText: string }
   | { step: 'result'; domain: GenerationDomain; template: Template; images: string[]; generationId: string | null }
   | { step: 'error'; domain: GenerationDomain; template: Template; error: string };
 
@@ -43,7 +43,7 @@ export type StepFlowAction =
   | { type: 'ADD_PHOTOS'; photos: PhotoState[] }
   | { type: 'UPDATE_PHOTO'; photoId: string; updates: Partial<PhotoState> }
   | { type: 'REMOVE_PHOTO'; photoId: string }
-  | { type: 'START_GENERATE'; photos: ValidatedPhoto[]; imageCount?: number }
+  | { type: 'START_GENERATE'; photos: ValidatedPhoto[]; imageCount?: number; additionalPrompt?: string }
   | { type: 'UPDATE_PROGRESS'; progress: number; progressText: string }
   | { type: 'COMPLETE'; images: string[]; generationId: string | null }
   | { type: 'FAIL'; error: string }

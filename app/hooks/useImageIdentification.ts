@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 interface IdentifyResult {
   index: number;
   success: boolean;
@@ -28,8 +26,8 @@ interface UseImageIdentificationReturn {
  * 用于验证上传的图片是否包含人物
  */
 export function useImageIdentification(): UseImageIdentificationReturn {
-  const [isIdentifying, setIsIdentifying] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const isIdentifying = false;
+  const error: string | null = null;
 
   const identifyImages = async (images: string[]): Promise<IdentifyResponse> => {
     // TODO: 暂时跳过 identify-image 接口调用，直接返回全部通过

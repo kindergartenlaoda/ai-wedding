@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { validatePaginationParams } from '@/lib/validation-utils';
+import { isLocalGenerationStoreAvailable, listLocalSharedGenerations } from '@/lib/local-generation-store';
+import { countLocalGenerationComments, countLocalGenerationLikes } from '@/lib/local-feature-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,6 +69,41 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    if (isLocalGenerationStoreAvailable()) {
+      const { searchParams } = request.nextUrl;
+      const { page, limit, offset } = validatePaginationParams(
+        searchParams.get('page'),
+        searchParams.get('limit'),
+        100
+      );
+      const domain = searchParams.get('domain');
+      const sort = searchParams.get('sort') || 'latest';
+      const { generations, total } = await listLocalSharedGenerations({ domain, limit, offset, sort });
+      const items = await Promise.all(generations.map(async (generation) => ({
+        id: generation.id,
+        generation_id: generation.id,
+        preview_images: generation.preview_images,
+        project_name: 'Local Project',
+        template_name: generation.template_id || 'Local Template',
+        template_id: generation.template_id ?? undefined,
+        domain: generation.domain,
+        user_name: 'Local Admin',
+        likes_count: await countLocalGenerationLikes(generation.id),
+        comments_count: await countLocalGenerationComments(generation.id),
+        created_at: generation.created_at,
+      })));
+
+      return NextResponse.json({
+        items,
+        pagination: {
+          page,
+          limit,
+          total,
+          hasMore: total > offset + limit,
+        },
+        local: true,
+      });
+    }
     logger.error({ error }, '画廊 API 错误');
     return NextResponse.json(
       { error: '服务器内部错误' },

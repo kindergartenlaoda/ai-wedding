@@ -23,6 +23,32 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const LOCAL_ADMIN_ENABLED = process.env.NEXT_PUBLIC_LOCAL_ADMIN_MODE === 'true';
+const LOCAL_ADMIN_USER: AuthUser = {
+  id: 'local-admin',
+  email: 'admin@local.test',
+  name: 'Local Admin',
+};
+
+function createLocalAdminProfile(): Profile {
+  const now = new Date().toISOString();
+  return {
+    id: 'local-admin-profile',
+    user_id: LOCAL_ADMIN_USER.id,
+    email: LOCAL_ADMIN_USER.email,
+    full_name: LOCAL_ADMIN_USER.name || 'Local Admin',
+    credits: 999999,
+    frozen_credits: 0,
+    role: 'admin',
+    invite_code: null,
+    invited_by: null,
+    invite_count: 0,
+    reward_credits: 0,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
 
@@ -42,13 +68,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
   const [profile, setProfile] = useState<Profile | null>(null);
   const profileFetchedRef = useRef(false);
-  const loading = status === 'loading';
+  const loading = LOCAL_ADMIN_ENABLED ? false : status === 'loading';
 
-  const user: AuthUser | null = session?.user
+  const user: AuthUser | null = LOCAL_ADMIN_ENABLED
+    ? LOCAL_ADMIN_USER
+    : session?.user
     ? { id: session.user.id, email: session.user.email ?? '', name: session.user.name, image: session.user.image }
     : null;
 
   const loadProfile = useCallback(async () => {
+    if (LOCAL_ADMIN_ENABLED) {
+      setProfile(createLocalAdminProfile());
+      return;
+    }
+
     if (!session?.user?.id) {
       setProfile(null);
       return;
@@ -102,6 +135,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const inviteClaimedRef = useRef(false);
 
   useEffect(() => {
+    if (LOCAL_ADMIN_ENABLED) {
+      setProfile(createLocalAdminProfile());
+      return;
+    }
+
     if (session?.user?.id) {
       if (!profileFetchedRef.current) {
         profileFetchedRef.current = true;
@@ -146,6 +184,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     setProfile(null);
+    if (LOCAL_ADMIN_ENABLED) {
+      setProfile(createLocalAdminProfile());
+      return;
+    }
     await nextAuthSignOut({ redirect: false });
   };
 

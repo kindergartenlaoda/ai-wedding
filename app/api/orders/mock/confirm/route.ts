@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import { addCreditsForPurchase } from '@/lib/credit-service';
+import { completeLocalOrder, isLocalFeatureStoreEnabled } from '@/lib/local-feature-store';
 
 export const runtime = 'nodejs';
 
@@ -33,6 +34,14 @@ export async function POST(req: Request) {
     const body = (await req.json()) as { payment_intent_id?: string };
     const pid = body?.payment_intent_id;
     if (!pid) return NextResponse.json({ error: 'Missing payment_intent_id' }, { status: 400 });
+
+    if (isLocalFeatureStoreEnabled(user_id)) {
+      const order = await completeLocalOrder(pid, user_id);
+      if (!order) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+      return NextResponse.json({ ok: true, creditsAdded: order.credits, local: true });
+    }
 
     const order = await prisma.orders.findFirst({
       where: { payment_intent_id: pid },

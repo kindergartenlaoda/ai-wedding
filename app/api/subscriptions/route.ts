@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import { addCreditsForPurchase } from '@/lib/credit-service';
+import {
+  createLocalOrder,
+  createLocalSubscription,
+  getActiveLocalSubscription,
+  isLocalFeatureStoreEnabled,
+} from '@/lib/local-feature-store';
 
 interface SubscriptionPlan {
   id: string;
@@ -36,6 +42,15 @@ export async function GET() {
   const authResult = await requireAuth();
   if (authResult instanceof Response) return authResult;
   const user_id = authResult.user.id;
+
+  if (isLocalFeatureStoreEnabled(user_id)) {
+    const subscription = await getActiveLocalSubscription(user_id);
+    return NextResponse.json({
+      subscription,
+      plans: SUBSCRIPTION_PLANS,
+      local: true,
+    });
+  }
 
   const subscription = await prisma.subscriptions.findFirst({
     where: {
@@ -72,13 +87,46 @@ export async function POST(req: NextRequest) {
   const user_id = authResult.user.id;
 
   const body = await req.json();
-  const { plan: planId } = body as { plan?: string };
+  const { plan: planBody, plan_id } = body as { plan?: string; plan_id?: string };
+  const planId = planBody || plan_id;
 
   if (!planId || !SUBSCRIPTION_PLANS[planId]) {
     return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
   }
 
   const plan = SUBSCRIPTION_PLANS[planId];
+
+  if (isLocalFeatureStoreEnabled(user_id)) {
+    const existingSub = await getActiveLocalSubscription(user_id);
+    if (existingSub) {
+      return NextResponse.json(
+        { error: 'Active subscription already exists' },
+        { status: 409 }
+      );
+    }
+
+    await createLocalOrder({
+      userId: user_id,
+      amount: plan.price,
+      currency: 'USD',
+      paymentMethod: 'local-mock',
+      credits: plan.monthlyCredits,
+      status: 'completed',
+    });
+    const subscription = await createLocalSubscription({
+      userId: user_id,
+      plan: plan.id,
+      monthlyCredits: plan.monthlyCredits,
+      durationMonths: plan.durationMonths,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      subscription,
+      creditsAdded: plan.monthlyCredits,
+      local: true,
+    });
+  }
 
   const existingSub = await prisma.subscriptions.findFirst({
     where: {

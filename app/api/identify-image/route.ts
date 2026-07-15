@@ -5,6 +5,7 @@ import type { ModelConfig } from '@/types/model-config';
 import { ModelConfigType } from '../../../generated/prisma/enums';
 import { createRequestLogger, sanitize } from '@/lib/logger';
 import { logger } from '@/lib/logger';
+import { buildOpenAICompatibleEndpoint } from '@/lib/generation-shared';
 
 const ENV_IDENTIFY_API_BASE_URL = process.env.IDENTIFY_API_BASE_URL || 'https://api.openai.com';
 const ENV_IDENTIFY_API_KEY = process.env.IDENTIFY_API_KEY;
@@ -52,7 +53,7 @@ async function identifyPerson(
   model: string,
   log: ReturnType<typeof createRequestLogger>
 ): Promise<{ hasPerson: boolean; confidence: number; description: string }> {
-  const endpoint = `${api_base_url.replace(/\/$/, '')}/v1/chat/completions`;
+  const endpoint = buildOpenAICompatibleEndpoint(api_base_url, '/chat/completions');
 
   const requestData = {
     model,
@@ -212,4 +213,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

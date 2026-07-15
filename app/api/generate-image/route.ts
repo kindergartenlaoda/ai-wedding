@@ -6,7 +6,7 @@ import {
   checkRateLimit,
   rateLimitResponse,
   RL_LIMIT,
-  convertUrlToBase64,
+  buildOpenAICompatibleEndpoint,
 } from '@/lib/generation-shared';
 import type { ChatContentItem } from '@/lib/generation-shared';
 
@@ -102,7 +102,7 @@ async function handleChatMode(
 
   log.info('使用 Chat 模式生成图片');
 
-  const endpoint = `${IMAGE_API_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`;
+  const endpoint = buildOpenAICompatibleEndpoint(IMAGE_API_BASE_URL, '/chat/completions');
   const chatContent: ChatContentItem[] = [{ type: 'text', text: prompt.trim() }];
 
   // 添加图片输入（最多 3 张 dataURL）
@@ -199,7 +199,7 @@ async function handleImagesMode(
 
   log.info('使用 Images 模式生成图片');
 
-  const endpoint = `${IMAGE_API_BASE_URL.replace(/\/$/, '')}/v1/images/generations`;
+  const endpoint = buildOpenAICompatibleEndpoint(IMAGE_API_BASE_URL, '/images/generations');
   const payload = {
     model: model || IMAGE_IMAGE_MODEL,
     prompt: prompt.trim(),

@@ -6,9 +6,12 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { resolveFallbackPrompt } from '@/lib/fallback-templates';
+import { getActiveLocalModelConfig, isLocalModelConfigStoreEnabled } from '@/lib/local-model-config-store';
 import type { ModelConfig } from '@/types/model-config';
 import { ModelConfigType } from '../../generated/prisma/enums';
 import type { Logger } from 'pino';
+import sharp from 'sharp';
 
 // ─── 类型定义 ───────────────────────────────────────────────
 
@@ -109,6 +112,15 @@ export async function getActiveModelConfig(
   }
   if (cached) modelConfigCache.delete(cacheKey);
 
+  if (isLocalModelConfigStoreEnabled()) {
+    const localConfig = await getActiveLocalModelConfig(type, source);
+    modelConfigCache.set(cacheKey, {
+      value: localConfig,
+      expiresAt: now + MODEL_CONFIG_CACHE_TTL_MS,
+    });
+    return localConfig;
+  }
+
   try {
     const config = await prisma.model_configs.findFirst({
       where: {
@@ -143,8 +155,30 @@ export async function getActiveModelConfig(
     return normalized;
   } catch (err) {
     log.error({ error: err }, '获取激活配置异常');
+    if (isLocalModelConfigStoreEnabled()) {
+      const localConfig = await getActiveLocalModelConfig(type, source);
+      modelConfigCache.set(cacheKey, {
+        value: localConfig,
+        expiresAt: now + MODEL_CONFIG_CACHE_TTL_MS,
+      });
+      return localConfig;
+    }
     return cached?.value ?? null;
   }
+}
+
+export function buildOpenAICompatibleEndpoint(apiBaseUrl: string, pathname: string): string {
+  const baseUrl = apiBaseUrl.replace(/\/+$/, '');
+  const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  const pathWithoutVersion = normalizedPath.startsWith('/v1/')
+    ? normalizedPath.slice(3)
+    : normalizedPath;
+
+  if (/\/v1$/i.test(baseUrl)) {
+    return `${baseUrl}${pathWithoutVersion}`;
+  }
+
+  return `${baseUrl}/v1${pathWithoutVersion}`;
 }
 
 // ─── 图片转换 ───────────────────────────────────────────────
@@ -159,8 +193,12 @@ function isPrivateOrSensitiveUrl(url: string): boolean {
     const parsed = new URL(url);
     const hostname = parsed.hostname.toLowerCase();
 
+    if (process.env.LOCAL_ADMIN_MODE === 'true' && isLoopbackHost(hostname)) {
+      return false;
+    }
+
     // 检查 localhost 和本地回环
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+    if (isLoopbackHost(hostname)) {
       return true;
     }
 
@@ -198,6 +236,13 @@ function isPrivateOrSensitiveUrl(url: string): boolean {
     // URL 解析失败，视为不安全
     return true;
   }
+}
+
+function isLoopbackHost(hostname: string): boolean {
+  return hostname === 'localhost'
+    || hostname === '127.0.0.1'
+    || hostname === '::1'
+    || hostname === '[::1]';
 }
 
 /**
@@ -494,9 +539,20 @@ export async function resolvePromptFromTemplate(
   templateId: string,
   promptIndex: number = 0
 ): Promise<string> {
-  const template = await getTemplateFromCacheOrDb(templateId);
+  let template;
+  try {
+    template = await getTemplateFromCacheOrDb(templateId);
+  } catch (error) {
+    const fallbackPrompt = resolveFallbackPrompt(templateId, promptIndex);
+    if (fallbackPrompt) return fallbackPrompt;
+    throw error;
+  }
 
-  if (!template) throw new Error('模板不存在');
+  if (!template) {
+    const fallbackPrompt = resolveFallbackPrompt(templateId, promptIndex);
+    if (fallbackPrompt) return fallbackPrompt;
+    throw new Error('模板不存在');
+  }
   if (!template.is_active) throw new Error('模板已停用');
 
   const promptList = Array.isArray(template.prompt_list)
@@ -605,6 +661,395 @@ export function mapCreativityToParams(level: CreativityLevel): { temperature: nu
     default:
       return { temperature: 0.2, topP: 0.7 };
   }
+}
+
+// ─── OpenAI Images API 适配 ───────────────────────────────────────────
+
+export class ImageEndpointError extends Error {
+  status: number;
+  detail: string;
+
+  constructor(status: number, detail: string) {
+    super(`Image endpoint request failed: ${status}`);
+    this.name = 'ImageEndpointError';
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
+export interface OpenAIImageEndpointResult {
+  dataUrl?: string;
+  url?: string;
+}
+
+interface CallOpenAIImageEndpointParams {
+  apiBaseUrl: string;
+  apiKey: string;
+  model: string;
+  prompt: string;
+  image_inputs?: string[];
+  size?: string;
+  quality?: 'auto' | 'low' | 'medium' | 'high';
+  inputFidelity?: 'low' | 'high';
+  n?: number;
+  log?: Logger;
+}
+
+export function isOpenAIImageEndpointModel(model: string): boolean {
+  return model.trim().toLowerCase().startsWith('gpt-image-');
+}
+
+export async function callOpenAIImageEndpoint(
+  params: CallOpenAIImageEndpointParams,
+): Promise<OpenAIImageEndpointResult[]> {
+  const {
+    apiBaseUrl,
+    apiKey,
+    model,
+    prompt,
+    image_inputs,
+    size = '1024x1024',
+    quality = 'auto',
+    inputFidelity,
+    n = 1,
+    log,
+  } = params;
+
+  const pickedImages = Array.isArray(image_inputs)
+    ? image_inputs
+        .filter((s) => typeof s === 'string' && (s.startsWith('data:image/') || s.startsWith('http://') || s.startsWith('https://')))
+        .slice(0, 5)
+    : [];
+
+  let endpoint: string;
+  let response: Response;
+  const started = Date.now();
+  const canUseCompatibleFallback = size !== '1024x1024' || quality !== 'auto';
+  const requestTimeoutMs = canUseCompatibleFallback
+    ? Number(process.env.IMAGE_NATIVE_HD_TIMEOUT_MS || '60000')
+    : Number(process.env.IMAGE_API_REQUEST_TIMEOUT_MS || '180000');
+
+  const runCompatibleFallback = async (reason: unknown): Promise<OpenAIImageEndpointResult[]> => {
+    log?.warn({
+      reason: reason instanceof Error ? reason.message : String(reason),
+      requestedSize: size,
+      requestedQuality: quality,
+    }, 'Native high-resolution request failed; using compatible fallback');
+    const fallbackResults = await callOpenAIImageEndpoint({
+      ...params,
+      size: '1024x1024',
+      quality: 'auto',
+      // Some compatible gateways accept only one edit image. The native
+      // request still tries all references first for better identity fidelity.
+      image_inputs: pickedImages.length > 1 ? [pickedImages[0]] : params.image_inputs,
+    });
+    return upscaleImageEndpointResults(fallbackResults, 2048, log);
+  };
+
+  const preferEventStream = shouldRequestImageEventStream(apiBaseUrl, model);
+
+  try {
+  if (pickedImages.length > 0) {
+    endpoint = buildOpenAICompatibleEndpoint(apiBaseUrl, '/images/edits');
+    const form = new FormData();
+    form.append('model', model);
+    form.append('prompt', prompt);
+    form.append('n', String(Math.max(1, Math.min(8, n))));
+    form.append('size', size);
+    if (quality !== 'auto') {
+      form.append('quality', quality);
+    }
+    if (inputFidelity) {
+      form.append('input_fidelity', inputFidelity);
+    }
+    form.append('response_format', 'b64_json');
+    if (preferEventStream) {
+      form.append('stream', 'true');
+      form.append('partial_images', '1');
+    }
+
+    // OpenAI's Images Edits API uses image[] for multiple references. Keeping
+    // one image as image preserves compatibility with simpler gateways.
+    for (const [index, pickedImage] of pickedImages.entries()) {
+      const imageDataUrl = await convertUrlToBase64(pickedImage);
+      const { mimeType, bytes, extension } = await parseImageDataUrl(imageDataUrl, log);
+      const fieldName = pickedImages.length > 1 ? 'image[]' : 'image';
+      form.append(fieldName, new Blob([bytes], { type: mimeType }), `input-${index}.${extension}`);
+    }
+
+    log?.info({
+      endpoint,
+      model,
+      size,
+      hasImage: true,
+      referenceCount: pickedImages.length,
+      inputFidelity,
+      preferEventStream,
+    }, '调用 OpenAI Images edits API');
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        ...(preferEventStream ? { Accept: 'text/event-stream' } : {}),
+      },
+      body: form,
+      signal: AbortSignal.timeout(requestTimeoutMs),
+    });
+  } else {
+    endpoint = buildOpenAICompatibleEndpoint(apiBaseUrl, '/images/generations');
+    const payload = {
+      model,
+      prompt,
+      n: Math.max(1, Math.min(8, n)),
+      size,
+      response_format: 'b64_json' as const,
+      ...(quality !== 'auto' ? { quality } : {}),
+      ...(preferEventStream ? { stream: true, partial_images: 1 } : {}),
+    };
+
+    log?.info({ endpoint, model, size, hasImage: false, preferEventStream }, '调用 OpenAI Images generations API');
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+        ...(preferEventStream ? { Accept: 'text/event-stream' } : {}),
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(requestTimeoutMs),
+    });
+  }
+  } catch (error) {
+    if (canUseCompatibleFallback) {
+      return runCompatibleFallback(error);
+    }
+    throw error;
+  }
+
+  const text = await response.text();
+  const contentType = response.headers.get('content-type') || '';
+  log?.info({ status: response.status, contentType, duration: `${Date.now() - started}ms` }, '收到 OpenAI Images API 响应');
+
+  let data: Record<string, unknown> | null = null;
+  try {
+    data = text ? JSON.parse(text) as Record<string, unknown> : null;
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    if (response.status === 400 && inputFidelity) {
+      log?.warn({ endpoint, inputFidelity }, '上游不兼容 input_fidelity，移除后重试');
+      return callOpenAIImageEndpoint({ ...params, inputFidelity: undefined });
+    }
+    if (pickedImages.length > 1 && response.status === 400) {
+      log?.warn({ endpoint }, '多参考图请求不被上游兼容，退回单参考图');
+      return callOpenAIImageEndpoint({ ...params, image_inputs: [pickedImages[0]] });
+    }
+    if (canUseCompatibleFallback && (
+      response.status === 400
+      || response.status === 408
+      || response.status === 429
+      || response.status >= 500
+    )) {
+      return runCompatibleFallback(new ImageEndpointError(response.status, text || response.statusText));
+    }
+    throw new ImageEndpointError(response.status, text || response.statusText);
+  }
+
+  if (!data) {
+    const eventImages = parseImageEventStream(text, log);
+    if (eventImages.length > 0) return eventImages;
+    throw new ImageEndpointError(
+      502,
+      describeInvalidImageEndpointResponse(endpoint, contentType, text),
+    );
+  }
+
+  const outputFormat = typeof data.output_format === 'string' ? data.output_format : 'png';
+  const mimeType = outputFormat.includes('/') ? outputFormat : `image/${outputFormat}`;
+  const items = Array.isArray(data?.data) ? data.data as Array<{ b64_json?: string; url?: string }> : [];
+  const results = items.reduce<OpenAIImageEndpointResult[]>((acc, item) => {
+    if (typeof item.b64_json === 'string' && item.b64_json.length > 0) {
+      acc.push({ dataUrl: `data:${mimeType};base64,${item.b64_json}` });
+    } else if (typeof item.url === 'string' && item.url.length > 0) {
+      acc.push({ url: item.url });
+    }
+    return acc;
+  }, []);
+
+  if (results.length === 0) {
+    throw new ImageEndpointError(502, describeInvalidImageEndpointResponse(endpoint, contentType, text));
+  }
+
+  return results;
+}
+
+async function upscaleImageEndpointResults(
+  results: OpenAIImageEndpointResult[],
+  targetLongEdge: number,
+  log?: Logger,
+): Promise<OpenAIImageEndpointResult[]> {
+  return Promise.all(results.map(async (result) => {
+    try {
+      const dataUrl = result.dataUrl || (result.url ? await convertUrlToBase64(result.url) : null);
+      if (!dataUrl) return result;
+      const match = dataUrl.match(/^data:[^;]+;base64,([\s\S]+)$/);
+      if (!match) return result;
+
+      const input = Buffer.from(match[1].replace(/\s+/g, ''), 'base64');
+      const image = sharp(input, { failOn: 'none' }).rotate();
+      const metadata = await image.metadata();
+      const width = metadata.width || 0;
+      const height = metadata.height || 0;
+      const currentLongEdge = Math.max(width, height);
+      if (!width || !height || currentLongEdge >= targetLongEdge) return result;
+
+      const scale = targetLongEdge / currentLongEdge;
+      const outputWidth = Math.max(1, Math.round(width * scale));
+      const outputHeight = Math.max(1, Math.round(height * scale));
+      const output = await image
+        .resize(outputWidth, outputHeight, {
+          fit: 'fill',
+          kernel: sharp.kernel.lanczos3,
+        })
+        .sharpen(1)
+        .flatten({ background: '#ffffff' })
+        .jpeg({ quality: 95, mozjpeg: true, chromaSubsampling: '4:4:4' })
+        .toBuffer();
+
+      log?.info({
+        inputWidth: width,
+        inputHeight: height,
+        outputWidth,
+        outputHeight,
+        outputKb: Math.round(output.length / 1024),
+      }, 'Generated 2K upscaled image');
+
+      return { dataUrl: `data:image/jpeg;base64,${output.toString('base64')}` };
+    } catch (error) {
+      log?.warn({ error: error instanceof Error ? error.message : String(error) }, '2K upscale failed; preserving original image');
+      return result;
+    }
+  }));
+}
+
+function shouldRequestImageEventStream(apiBaseUrl: string, model: string): boolean {
+  if (process.env.IMAGE_API_STREAM_IMAGES === 'true') return true;
+  if (process.env.IMAGE_API_STREAM_IMAGES === 'false') return false;
+  try {
+    const host = new URL(apiBaseUrl).hostname.toLowerCase();
+    return isOpenAIImageEndpointModel(model) && isLoopbackHost(host);
+  } catch {
+    return false;
+  }
+}
+
+function parseImageEventStream(text: string, log?: Logger): OpenAIImageEndpointResult[] {
+  const results: OpenAIImageEndpointResult[] = [];
+  const events = text.split(/\n\n+/);
+
+  for (const event of events) {
+    const dataLines = event
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith('data:'))
+      .map((line) => line.slice(5).trim())
+      .filter((line) => line && line !== '[DONE]');
+
+    for (const line of dataLines) {
+      try {
+        const payload = JSON.parse(line) as Record<string, unknown>;
+        const outputFormat = typeof payload.output_format === 'string' ? payload.output_format : 'png';
+        const mimeType = outputFormat.includes('/') ? outputFormat : `image/${outputFormat}`;
+        const b64 = typeof payload.b64_json === 'string'
+          ? payload.b64_json
+          : typeof payload.result === 'string'
+            ? payload.result
+            : '';
+        const eventType = typeof payload.type === 'string' ? payload.type : '';
+
+        if (b64 && (eventType.includes('completed') || !results.some((item) => item.dataUrl === `data:${mimeType};base64,${b64}`))) {
+          results.push({ dataUrl: `data:${mimeType};base64,${b64}` });
+        }
+      } catch {
+        // Ignore non-JSON SSE data lines.
+      }
+    }
+  }
+
+  if (results.length > 0) {
+    log?.info({ count: results.length }, '已解析 OpenAI Images SSE 图像结果');
+  }
+  return results;
+}
+function describeInvalidImageEndpointResponse(endpoint: string, contentType: string, text: string): string {
+  const compact = text.replace(/\s+/g, ' ').trim();
+  const preview = compact.slice(0, 240);
+  if (/^<!doctype html|<html[\s>]/i.test(compact)) {
+    return `Upstream ${endpoint} returned an HTML page instead of an OpenAI Images JSON response. This usually means the gateway does not expose /v1/images/* or routed the request to its web UI.`;
+  }
+  return `Upstream ${endpoint} did not return image data. content-type=${contentType || 'unknown'} body=${preview || 'empty'}`;
+}
+
+export function buildOpenAIImageEndpointStream(
+  images: OpenAIImageEndpointResult[],
+  log?: Logger,
+): ReadableStream {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    start(controller) {
+      try {
+        for (const image of images) {
+          const imageRef = image.dataUrl || image.url;
+          if (!imageRef) continue;
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: `![image](${imageRef})` } }] })}\n\n`));
+        }
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+        log?.info({ count: images.length }, 'OpenAI Images API 响应已转换为 SSE');
+      } catch (error) {
+        log?.error({ error }, 'OpenAI Images API SSE 转换失败');
+        controller.error(error);
+      }
+    },
+  });
+}
+
+async function parseImageDataUrl(
+  dataUrl: string,
+  log?: Logger,
+): Promise<{ mimeType: string; bytes: ArrayBuffer; extension: string }> {
+  const match = dataUrl.match(/^data:([^;]+);base64,([\s\S]+)$/);
+  if (!match) {
+    throw new Error('Invalid image data URL');
+  }
+
+  let mimeType = match[1];
+  const buffer = Buffer.from(match[2].replace(/\s+/g, ''), 'base64');
+  let output = new Uint8Array(buffer);
+
+  try {
+    output = new Uint8Array(await sharp(buffer, { failOn: 'none' })
+      .rotate()
+      .resize({ width: 1024, height: 1024, fit: 'inside', withoutEnlargement: true })
+      .png({ compressionLevel: 9 })
+      .toBuffer());
+    mimeType = 'image/png';
+    log?.info({ inputKb: Math.round(buffer.length / 1024), outputKb: Math.round(output.length / 1024) }, '已压缩 OpenAI Images edits 输入图');
+  } catch (error) {
+    log?.warn({ error: error instanceof Error ? error.message : 'Unknown' }, '输入图压缩失败，使用原图');
+  }
+
+  const bytes = new ArrayBuffer(output.byteLength);
+  new Uint8Array(bytes).set(output);
+  const extension = mimeType.split('/')[1]?.replace('jpeg', 'jpg').replace(/[^a-z0-9]/gi, '') || 'png';
+
+  return {
+    mimeType,
+    bytes,
+    extension,
+  };
 }
 
 // ─── 敏感数据过滤 ───────────────────────────────────────────

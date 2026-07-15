@@ -4,6 +4,12 @@ import { prisma } from '@/lib/prisma';
 import { deductCreditsForGeneration } from '@/lib/credit-service';
 import { mapGeneration } from '@/lib/generation-mapper';
 import { getCache, invalidateCacheByPrefix, setCache } from '@/lib/server-cache';
+import {
+  createLocalGeneration,
+  formatLocalGeneration,
+  isLocalGenerationStoreEnabled,
+  listLocalGenerations,
+} from '@/lib/local-generation-store';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
@@ -70,23 +76,47 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const [profile, project, template] = await Promise.all([
-    prisma.profiles.findUnique({
-      where: { user_id },
-      select: { credits: true },
-    }),
-    generation_type === 'batch' && project_id
-      ? prisma.projects.findFirst({ where: { id: project_id, user_id }, select: { id: true, uploaded_photos: true } })
-      : Promise.resolve(null),
-    template_id
-      ? prisma.templates.findUnique({
-          where: { id: template_id },
-          select: { id: true, domain: true },
-        })
-      : Promise.resolve(null),
-  ]);
+  if (isLocalGenerationStoreEnabled(user_id)) {
+    const generation = await createLocalGeneration({
+      userId: user_id,
+      projectId: project_id,
+      templateId: template_id,
+      creditsUsed: credits_used,
+      isSharedToGallery: is_shared_to_gallery,
+      domain,
+      generationType: generation_type,
+      prompt,
+      originalImage: original_image,
+      settings,
+    });
 
-  if (!profile || profile.credits < (credits_used || 0)) {
+    return NextResponse.json({
+      id: generation.id,
+      status: generation.status,
+      generation_type: generation.generation_type,
+      credits_used: generation.credits_used,
+      local: true,
+    }, { status: 201 });
+  }
+
+  try {
+    const [profile, project, template] = await Promise.all([
+      prisma.profiles.findUnique({
+        where: { user_id },
+        select: { credits: true },
+      }),
+      generation_type === 'batch' && project_id
+        ? prisma.projects.findFirst({ where: { id: project_id, user_id }, select: { id: true, uploaded_photos: true } })
+        : Promise.resolve(null),
+      template_id
+        ? prisma.templates.findUnique({
+            where: { id: template_id },
+            select: { id: true, domain: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+  if (generation_type === 'batch' && (!profile || profile.credits < (credits_used || 0))) {
     return NextResponse.json({ error: '积分不足' }, { status: 402 });
   }
 
@@ -135,22 +165,50 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  await deductCreditsForGeneration(
-    user_id,
-    generation.id,
-    credits_used || 0,
-    `${generation_type === 'batch' ? '批量' : '单图'}生成消费积分`
-  );
+  // Single-image generation is charged by /api/generate-single before the
+  // upstream request. This endpoint only persists its completed record.
+  if (generation_type === 'batch') {
+    await deductCreditsForGeneration(
+      user_id,
+      generation.id,
+      credits_used || 0,
+      '批量生成消费积分'
+    );
+  }
 
   invalidateCacheByPrefix(`generations:${user_id}:`);
   invalidateCacheByPrefix(`projects:${user_id}:`);
 
-  return NextResponse.json({
-    id: generation.id,
-    status: generation.status,
-    generation_type: generation.generation_type,
-    credits_used: generation.credits_used,
-  }, { status: 201 });
+    return NextResponse.json({
+      id: generation.id,
+      status: generation.status,
+      generation_type: generation.generation_type,
+      credits_used: generation.credits_used,
+    }, { status: 201 });
+  } catch (error) {
+    if (!isLocalGenerationStoreEnabled(user_id)) throw error;
+
+    const generation = await createLocalGeneration({
+      userId: user_id,
+      projectId: project_id,
+      templateId: template_id,
+      creditsUsed: credits_used,
+      isSharedToGallery: is_shared_to_gallery,
+      domain,
+      generationType: generation_type,
+      prompt,
+      originalImage: original_image,
+      settings,
+    });
+
+    return NextResponse.json({
+      id: generation.id,
+      status: generation.status,
+      generation_type: generation.generation_type,
+      credits_used: generation.credits_used,
+      local: true,
+    }, { status: 201 });
+  }
 }
 
 /**
@@ -168,6 +226,17 @@ export async function GET(req: NextRequest) {
   const typeKey = type || 'all';
   const cacheKey = `generations:${user_id}:${typeKey}:${page}:${pageSize}`;
 
+  if (isLocalGenerationStoreEnabled(user_id)) {
+    const generations = await listLocalGenerations(user_id, type || undefined);
+    const pagedGenerations = generations.slice(skip, skip + pageSize);
+    return NextResponse.json({
+      data: pagedGenerations.map(formatLocalGeneration),
+      total: generations.length,
+      hasMore: skip + pageSize < generations.length,
+      local: true,
+    });
+  }
+
   const cached = getCache<{ data: unknown[]; total: number; hasMore: boolean }>(cacheKey);
   if (cached) {
     return NextResponse.json(cached);
@@ -176,27 +245,39 @@ export async function GET(req: NextRequest) {
   const where: { user_id: string; generation_type?: 'batch' | 'single' } = { user_id };
   if (type) where.generation_type = type;
 
-  const [generations, total] = await Promise.all([
-    prisma.generations.findMany({
-      where,
-      include: {
-        generated_images: { orderBy: { image_index: 'asc' } },
-        projects: { select: { name: true, uploaded_photos: true } },
-        templates: { select: { name: true } },
-      },
-      orderBy: { created_at: 'desc' },
-      skip,
-      take: pageSize,
-    }),
-    prisma.generations.count({ where }),
-  ]);
+  try {
+    const [generations, total] = await Promise.all([
+      prisma.generations.findMany({
+        where,
+        include: {
+          generated_images: { orderBy: { image_index: 'asc' } },
+          projects: { select: { name: true, uploaded_photos: true } },
+          templates: { select: { name: true } },
+        },
+        orderBy: { created_at: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+      prisma.generations.count({ where }),
+    ]);
 
-  const responseBody = {
-    data: generations.map(mapGeneration),
-    total,
-    hasMore: skip + pageSize < total,
-  };
+    const responseBody = {
+      data: generations.map(mapGeneration),
+      total,
+      hasMore: skip + pageSize < total,
+    };
 
-  setCache(cacheKey, responseBody, GENERATIONS_CACHE_TTL_MS);
-  return NextResponse.json(responseBody);
+    setCache(cacheKey, responseBody, GENERATIONS_CACHE_TTL_MS);
+    return NextResponse.json(responseBody);
+  } catch (error) {
+    if (!isLocalGenerationStoreEnabled(user_id)) throw error;
+    const generations = await listLocalGenerations(user_id, type || undefined);
+    const pagedGenerations = generations.slice(skip, skip + pageSize);
+    return NextResponse.json({
+      data: pagedGenerations.map(formatLocalGeneration),
+      total: generations.length,
+      hasMore: skip + pageSize < generations.length,
+      local: true,
+    });
+  }
 }

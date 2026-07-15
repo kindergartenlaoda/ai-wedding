@@ -9,6 +9,25 @@ interface UseStreamImageGenerationProps {
   onSuccess: (message: string) => void;
 }
 
+async function readErrorMessage(response: Response): Promise<string> {
+  const fallback = `API请求失败: ${response.status} ${response.statusText}`;
+  const text = await response.text().catch(() => '');
+  if (!text) return fallback;
+
+  try {
+    const data = JSON.parse(text) as { error?: unknown; message?: unknown };
+    const value = data.error ?? data.message;
+    if (typeof value === 'string' && value.trim()) return value;
+    if (value && typeof value === 'object' && 'message' in value) {
+      const nested = (value as { message?: unknown }).message;
+      if (typeof nested === 'string' && nested.trim()) return nested;
+    }
+  } catch {
+    // Fall through to the raw response preview.
+  }
+
+  return `${fallback}: ${text.slice(0, 300)}`;
+}
 export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageGenerationProps) {
   const { user } = useAuth();
   const [generationState, setGenerationState] = useState<GenerationState>({
@@ -17,98 +36,83 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
     streamingContent: '',
   });
 
-  const uploadGeneratedImageToMinio = async (
-    imageDataUrl: string,
+  const persistGeneratedImage = async (
+    generatedImage: string,
     originalImage: string,
     params: GenerateParams,
     settings: ImageGenerationSettings
   ): Promise<void> => {
     try {
-      const response = await fetch('/api/upload-image', {
+      if (!user?.id) {
+        console.warn('用户未登录，跳过保存生成历史');
+        return;
+      }
+
+      const uploadIfNeeded = async (image: string, folder: string): Promise<string> => {
+        if (!image.startsWith('data:')) return image;
+        try {
+          const response = await fetch('/api/upload-image', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image, folder }),
+          });
+          if (!response.ok) return image;
+          const result = await response.json() as { presignedUrl?: string; url?: string };
+          return result.presignedUrl || result.url || image;
+        } catch {
+          return image;
+        }
+      };
+
+      const [resultImageUrl, originalImageUrl] = await Promise.all([
+        uploadIfNeeded(generatedImage, 'generate-single/results'),
+        uploadIfNeeded(originalImage, 'generate-single/uploads'),
+      ]);
+
+      const promptForSave = params.mode === 'template'
+        ? `[template:${params.templateId}:${params.promptIndex}]${params.additionalPrompt ? ` ${params.additionalPrompt}` : ''}`
+        : params.customPrompt;
+
+      const createResponse = await fetch('/api/generations', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: imageDataUrl,
-          folder: 'generate-single/results',
+          generation_type: 'single',
+          template_id: params.mode === 'template' ? params.templateId : undefined,
+          prompt: promptForSave,
+          original_image: originalImageUrl,
+          settings,
+          credits_used: 15,
+          domain: 'wedding',
         }),
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        const resultImageUrl = result.presignedUrl || result.url || imageDataUrl;
-        console.log('生成的图片已上传到 MinIO:', resultImageUrl);
-        
-        // 静默保存到数据库
-        try {
-          // 从 AuthContext 获取用户 ID（避免重复调用 API）
-          if (!user?.id) {
-            console.warn('用户未登录，跳过保存到数据库');
-            return;
-          }
-
-          // 如果 originalImage 是 base64，需要先上传到 MinIO
-          let originalImageUrl = originalImage;
-          if (originalImage.startsWith('data:')) {
-            console.log('原图是 base64，上传到 MinIO...');
-            try {
-              const uploadResponse = await fetch('/api/upload-image', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  image: originalImage,
-                  folder: 'generate-single/uploads',
-                }),
-              });
-
-              if (uploadResponse.ok) {
-                const uploadResult = await uploadResponse.json();
-                originalImageUrl = uploadResult.presignedUrl || uploadResult.url || originalImage;
-                console.log('原图已上传到 MinIO:', originalImageUrl);
-              } else {
-                console.warn('原图上传到 MinIO 失败，使用 base64');
-              }
-            } catch (uploadErr) {
-              console.warn('原图上传到 MinIO 异常，使用 base64:', uploadErr);
-            }
-          }
-
-          const promptForSave = params.mode === 'template'
-            ? `[template:${params.templateId}:${params.promptIndex}]`
-            : params.customPrompt;
-
-          const saveRes = await fetch('/api/single-generations', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              prompt: promptForSave,
-              original_image: originalImageUrl,
-              result_image: resultImageUrl,
-              settings: {
-                facePreservation: settings.facePreservation,
-                creativityLevel: settings.creativityLevel,
-              },
-              credits_used: 15,
-            }),
-          });
-
-          if (!saveRes.ok) {
-            console.warn('保存生成记录到数据库失败（不影响主流程）');
-          } else {
-            console.log('生成记录已保存到数据库');
-          }
-        } catch (dbErr) {
-          console.warn('保存生成记录异常（不影响主流程）:', dbErr);
-        }
-
-        onSuccess('图片生成完成并已保存！');
-      } else {
-        console.warn('上传生成图片到 MinIO 失败');
+      if (!createResponse.ok) {
+        throw new Error(await readErrorMessage(createResponse));
       }
-    } catch (err) {
-      console.warn('上传生成图片到 MinIO 异常:', err);
+
+      const generation = await createResponse.json() as { id: string };
+      const completeResponse = await fetch(`/api/generations/${generation.id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          preview_images: [resultImageUrl],
+          high_res_images: [resultImageUrl],
+        }),
+      });
+
+      if (!completeResponse.ok) {
+        throw new Error(await readErrorMessage(completeResponse));
+      }
+
+      onSuccess('图片生成完成并已保存到历史！');
+    } catch (error) {
+      console.warn('保存生成历史失败（不影响本次结果）:', error);
     }
   };
 
@@ -132,10 +136,13 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
             mode: 'template' as const,
             template_id: params.templateId,
             prompt_index: params.promptIndex,
+            additional_prompt: params.additionalPrompt,
             image_inputs: [originalImage],
             source,
             face_preservation: settings.facePreservation,
             creativity_level: settings.creativityLevel,
+            image_quality: settings.imageQuality,
+            image_size: settings.imageSize,
           }
         : {
             mode: 'custom' as const,
@@ -144,6 +151,8 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
             source,
             face_preservation: settings.facePreservation,
             creativity_level: settings.creativityLevel,
+            image_quality: settings.imageQuality,
+            image_size: settings.imageSize,
           };
 
       const response = await fetch('/api/generate-single', {
@@ -154,7 +163,7 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
       });
 
       if (!response.ok) {
-        throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+        throw new Error(await readErrorMessage(response));
       }
 
       const reader = response.body?.getReader();
@@ -346,12 +355,7 @@ export function useStreamImageGeneration({ onError, onSuccess }: UseStreamImageG
           }));
           onSuccess('图片生成完成！');
 
-          // 只对 data URL 上传到 MinIO，HTTP URL 跳过
-          if (imageDataUrl.startsWith('data:')) {
-            await uploadGeneratedImageToMinio(imageDataUrl, originalImage, params, settings);
-          } else {
-            console.log('跳过 HTTP URL 图片的 MinIO 上传:', imageDataUrl);
-          }
+          await persistGeneratedImage(imageDataUrl, originalImage, params, settings);
         } else {
           throw new Error('未能从响应中提取图片数据');
         }

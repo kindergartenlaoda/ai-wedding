@@ -11,6 +11,11 @@ import {
   enhancePromptWithSettings,
   mapCreativityToParams,
   filterSensitiveData,
+  callOpenAIImageEndpoint,
+  buildOpenAIImageEndpointStream,
+  ImageEndpointError,
+  isOpenAIImageEndpointModel,
+  buildOpenAICompatibleEndpoint,
 } from '@/lib/generation-shared';
 import {
   deductCreditsForGeneration,
@@ -24,6 +29,9 @@ export const runtime = 'nodejs';
 const ENV_IMAGE_API_BASE_URL = process.env.IMAGE_API_BASE_URL;
 const ENV_IMAGE_API_KEY = process.env.IMAGE_API_KEY;
 const ENV_IMAGE_CHAT_MODEL = process.env.IMAGE_CHAT_MODEL || 'gemini-2.5-flash-image';
+const ENV_IMAGE_OUTPUT_SIZE = process.env.IMAGE_OUTPUT_SIZE || '1024x1536';
+const ENV_IMAGE_OUTPUT_QUALITY = process.env.IMAGE_OUTPUT_QUALITY || 'high';
+const LOCAL_ADMIN_MODE = process.env.LOCAL_ADMIN_MODE === 'true';
 
 const CREDITS_PER_GENERATION = 15;
 
@@ -31,68 +39,73 @@ export async function POST(req: Request) {
   const requestId = `single_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const log = createRequestLogger('generate-single', requestId);
 
-  log.info('开始处理单图生成请求（带积分抵扣）');
+  log.info('开始处理单图生成请求');
 
   let userId: string | null = null;
   let originalCredits: number | null = null;
 
   try {
-    // 1) 认证校验
+    // 1) 认证校验。仅本地管理员模式在认证后免计费，普通模式保持原有登录要求。
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
     userId = authResult.user.id;
-    log.info({ userId }, '用户认证成功');
+    const isLocalAdmin = LOCAL_ADMIN_MODE && userId === 'local-admin';
+    const shouldChargeCredits = !isLocalAdmin;
+    log.info({ userId, localAdminMode: LOCAL_ADMIN_MODE, shouldChargeCredits }, '用户认证成功');
 
     // 2) 速率限制
-    const rl = checkRateLimit(userId);
+    const rl = isLocalAdmin
+      ? { allowed: true, count: 0, retryAfter: undefined }
+      : checkRateLimit(userId);
     if (!rl.allowed) {
       log.warn({ userId, count: rl.count, limit: RL_LIMIT }, '速率限制超过');
       return rateLimitResponse(rl.retryAfter!);
     }
     log.debug({ count: rl.count, limit: RL_LIMIT }, '速率限制检查通过');
 
-    // 3) 检查并扣除积分（通过 credit-service 确保事务原子性）
-    const currentBalance = await getUserCreditBalance(userId);
-    log.info({ credits: currentBalance }, '用户积分余额');
+    // 3) 检查并扣除积分；本地管理员模式免计费，普通模式保持原有积分逻辑
+    let currentBalance: number | null = null;
+    if (shouldChargeCredits) {
+      currentBalance = await getUserCreditBalance(userId);
+      log.info({ credits: currentBalance }, '用户积分余额');
 
-    if (currentBalance < CREDITS_PER_GENERATION) {
-      log.warn({ current: currentBalance, required: CREDITS_PER_GENERATION }, '积分不足');
-      return new Response(
-        JSON.stringify({
-          error: '积分不足',
-          current_credits: currentBalance,
-          required_credits: CREDITS_PER_GENERATION,
-          message: `当前积分 ${currentBalance}，需要 ${CREDITS_PER_GENERATION} 积分才能生成`
-        }),
-        { status: 402, headers: { 'Content-Type': 'application/json' } }
-      );
+      if (currentBalance < CREDITS_PER_GENERATION) {
+        log.warn({ current: currentBalance, required: CREDITS_PER_GENERATION }, '积分不足');
+        return new Response(
+          JSON.stringify({
+            error: '积分不足',
+            current_credits: currentBalance,
+            required_credits: CREDITS_PER_GENERATION,
+            message: `当前积分 ${currentBalance}，需要 ${CREDITS_PER_GENERATION} 积分才能生成`
+          }),
+          { status: 402, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      try {
+        await deductCreditsForGeneration(
+          userId,
+          'pending-' + requestId,
+          CREDITS_PER_GENERATION,
+          '单图生成消费积分'
+        );
+      } catch (deductError) {
+        log.error({ error: deductError }, '扣除积分失败');
+        return jsonError('扣除积分失败，请重试', 500);
+      }
+
+      originalCredits = currentBalance;
+      log.info({ deducted: CREDITS_PER_GENERATION, remaining: currentBalance - CREDITS_PER_GENERATION }, '成功扣除积分');
+    } else {
+      log.info({ userId }, '本地管理员模式：跳过积分扣减');
     }
-
-    // 先扣积分（生成 ID 在后续步骤创建，这里用临时占位）
-    // 注意：generate-single 不创建 generations 记录，积分扣除用 generationId='pending'
-    // 实际 generationId 在生成完成后由前端调用 /api/generations 创建
-    try {
-      await deductCreditsForGeneration(
-        userId,
-        'pending-' + requestId,
-        CREDITS_PER_GENERATION,
-        '单图生成消费积分'
-      );
-    } catch (deductError) {
-      log.error({ error: deductError }, '扣除积分失败');
-      return jsonError('扣除积分失败，请重试', 500);
-    }
-
-    // 记录原始余额用于退款
-    originalCredits = currentBalance;
-    log.info({ deducted: CREDITS_PER_GENERATION, remaining: currentBalance - CREDITS_PER_GENERATION }, '成功扣除积分');
 
     // 4) 参数验证（V2：支持 template_id 模式和 custom_prompt 模式）
     const body = await req.json();
     const validation = validateData(GenerateImageV2Schema, body);
     if (!validation.success) {
       log.error({ error: validation.error }, '参数验证失败');
-      await refundCredits(userId, originalCredits, log);
+      await refundCreditsIfNeeded(userId, originalCredits, log);
       return jsonError(validation.error, 400);
     }
 
@@ -101,6 +114,8 @@ export async function POST(req: Request) {
     const source = data.source;
     const facePreservation = (data.face_preservation || 'high') as FacePreservationLevel;
     const creativityLevel = (data.creativity_level || 'conservative') as CreativityLevel;
+    const imageSize = data.image_size || (LOCAL_ADMIN_MODE ? ENV_IMAGE_OUTPUT_SIZE : '1024x1024');
+    const imageQuality = data.image_quality || (LOCAL_ADMIN_MODE ? ENV_IMAGE_OUTPUT_QUALITY : 'auto');
 
     // 5) 解析提示词（服务端完成，不依赖前端传入 prompt）
     let rawPrompt: string;
@@ -110,12 +125,16 @@ export async function POST(req: Request) {
         log.info({ templateId: data.template_id, promptIndex: data.prompt_index }, '从模板解析提示词');
       } catch (resolveErr) {
         log.error({ error: resolveErr }, '模板提示词解析失败');
-        await refundCredits(userId, originalCredits, log);
+        await refundCreditsIfNeeded(userId, originalCredits, log);
         return jsonError(resolveErr instanceof Error ? resolveErr.message : '模板提示词解析失败', 400);
       }
     } else {
       rawPrompt = data.custom_prompt;
       log.info({ promptLength: rawPrompt.length }, '使用自定义提示词');
+    }
+
+    if ('additional_prompt' in data && data.additional_prompt?.trim()) {
+      rawPrompt = rawPrompt + '\n\nAdditional scene and user requirements:\n' + data.additional_prompt.trim();
     }
 
     const composedPrompt = enhancePromptWithSettings(rawPrompt, facePreservation);
@@ -153,7 +172,7 @@ export async function POST(req: Request) {
 
     if (!apiKey) {
       log.error('IMAGE_API_KEY 未配置');
-      await refundCredits(userId, originalCredits, log);
+      await refundCreditsIfNeeded(userId, originalCredits, log);
       return jsonError('Server misconfigured: IMAGE_API_KEY is missing', 500);
     }
 
@@ -164,6 +183,11 @@ export async function POST(req: Request) {
       return handle302AI(req, log, {
         apiBaseUrl, apiKey, chatModel, composedPrompt,
         image_inputs, userId, originalCredits,
+      });
+    } else if (isOpenAIImageEndpointModel(chatModel)) {
+      return handleOpenAIImagesAPI(log, {
+        apiBaseUrl, apiKey, chatModel, composedPrompt,
+        image_inputs, imageSize, imageQuality, facePreservation, userId, originalCredits,
       });
     } else {
       return handleOpenAICompat(req, log, {
@@ -192,8 +216,11 @@ interface Handle302Params {
   chatModel: string;
   composedPrompt: string;
   image_inputs?: string[];
-  userId: string;
-  originalCredits: number;
+  imageSize?: string;
+  imageQuality?: string;
+  facePreservation?: FacePreservationLevel;
+  userId: string | null;
+  originalCredits: number | null;
 }
 
 async function handle302AI(
@@ -250,7 +277,7 @@ async function handle302AI(
   if (!upstreamResponse.ok) {
     const errorText = await upstreamResponse.text();
     log.error({ status: upstreamResponse.status, error: sanitize.truncate(errorText, 500) }, '302.ai API 返回错误');
-    await refundCredits(userId, originalCredits, log);
+    await refundCreditsIfNeeded(userId, originalCredits, log);
     return jsonError(`API请求失败: ${upstreamResponse.status} ${errorText}`, upstreamResponse.status);
   }
 
@@ -261,6 +288,54 @@ async function handle302AI(
   return new Response(build302Stream(responseData, log), {
     headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' },
   });
+}
+
+async function handleOpenAIImagesAPI(
+  log: ReturnType<typeof createRequestLogger>,
+  params: Handle302Params,
+) {
+  const {
+    apiBaseUrl,
+    apiKey,
+    chatModel,
+    composedPrompt,
+    image_inputs,
+    imageSize,
+    imageQuality,
+    facePreservation,
+    userId,
+    originalCredits,
+  } = params;
+
+  log.info('使用 OpenAI Images API 格式');
+
+  try {
+    const images = await callOpenAIImageEndpoint({
+      apiBaseUrl,
+      apiKey,
+      model: chatModel,
+      prompt: composedPrompt,
+      image_inputs,
+      size: imageSize,
+      quality: imageQuality as 'auto' | 'low' | 'medium' | 'high' | undefined,
+      inputFidelity: facePreservation === 'high' ? 'high' : undefined,
+      n: 1,
+      log,
+    });
+
+    return new Response(buildOpenAIImageEndpointStream(images, log), {
+      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' },
+    });
+  } catch (error) {
+    const status = error instanceof ImageEndpointError ? error.status : 500;
+    const detail = error instanceof ImageEndpointError ? error.detail : error instanceof Error ? error.message : 'Unknown error';
+    log.error({ status, error: sanitize.errorMessage(detail) }, 'OpenAI Images API 返回错误');
+    await refundCreditsIfNeeded(userId, originalCredits, log);
+    const message = LOCAL_ADMIN_MODE
+      ? `图片生成失败：${sanitize.truncate(detail, 300)}`
+      : '图片生成失败，请稍后重试';
+    return jsonError(message, status);
+  }
 }
 
 function build302Stream(
@@ -315,8 +390,8 @@ interface HandleOpenAIParams {
   image_inputs?: string[];
   temperature?: number;
   top_p?: number;
-  userId: string;
-  originalCredits: number;
+  userId: string | null;
+  originalCredits: number | null;
 }
 
 async function handleOpenAICompat(
@@ -355,7 +430,7 @@ async function handleOpenAICompat(
     stream_options: { include_usage: true },
   };
 
-  const endpoint = `${apiBaseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+  const endpoint = buildOpenAICompatibleEndpoint(apiBaseUrl, '/chat/completions');
   log.info({ endpoint, model: chatModel, contentCount: chatContent.length }, '调用上游 API');
 
   const fetchStartTime = Date.now();
@@ -371,7 +446,7 @@ async function handleOpenAICompat(
   if (!upstreamResponse.ok) {
     const errorData = await upstreamResponse.text();
     log.error({ status: upstreamResponse.status, error: sanitize.errorMessage(errorData) }, '上游 API 返回错误');
-    await refundCredits(userId, originalCredits, log);
+    await refundCreditsIfNeeded(userId, originalCredits, log);
     return jsonError(`图片生成失败，请稍后重试`, upstreamResponse.status);
   }
 
@@ -389,6 +464,15 @@ function jsonError(message: string, status: number): Response {
     JSON.stringify({ error: message }),
     { status, headers: { 'Content-Type': 'application/json' } }
   );
+}
+
+async function refundCreditsIfNeeded(
+  userId: string | null,
+  originalCredits: number | null,
+  log: ReturnType<typeof createRequestLogger>,
+) {
+  if (!userId || originalCredits === null) return;
+  await refundCredits(userId, originalCredits, log);
 }
 
 async function refundCredits(

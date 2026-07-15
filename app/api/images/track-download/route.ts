@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
+import { createLocalDownload, isLocalFeatureStoreEnabled } from '@/lib/local-feature-store';
 
 export const runtime = 'nodejs';
 
@@ -14,6 +15,17 @@ export async function POST(req: Request) {
     const { generation_id, index, image_type = 'preview', order_id } = body || {};
     if (!generation_id || typeof index !== 'number') {
       return NextResponse.json({ error: 'Bad request' }, { status: 400 });
+    }
+
+    if (isLocalFeatureStoreEnabled(user_id)) {
+      await createLocalDownload({
+        userId: user_id,
+        generationId: generation_id,
+        imageIndex: index,
+        imageType: image_type,
+        orderId: order_id,
+      });
+      return NextResponse.json({ ok: true, local: true });
     }
 
     await prisma.image_downloads.create({

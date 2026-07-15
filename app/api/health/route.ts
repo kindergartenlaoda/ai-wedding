@@ -1,12 +1,25 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Health Check API - 验证应用和数据库状态
  * 用于 Docker 健康检查和监控系统
  */
 export async function GET() {
   const timestamp = new Date().toISOString();
+
+  if (process.env.LOCAL_ADMIN_MODE === 'true') {
+    return NextResponse.json({
+      status: 'healthy',
+      timestamp,
+      services: {
+        app: 'running',
+        database: 'optional-local-mode'
+      }
+    });
+  }
 
   try {
     // 验证数据库连接（执行简单查询）

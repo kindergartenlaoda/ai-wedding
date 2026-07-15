@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-admin';
 import { prisma } from '@/lib/prisma';
 import { clearTemplateCache } from '@/lib/generation-shared';
+import {
+  deleteLocalAdminTemplate,
+  isLocalAdminStoreEnabled,
+  listLocalDomains,
+  updateLocalAdminTemplate,
+} from '@/lib/local-admin-store';
 import { z } from 'zod';
 
 const updateTemplateSchema = z.object({
@@ -18,18 +24,14 @@ const updateTemplateSchema = z.object({
   sort_order: z.number().int().optional(),
 }).refine(
   (data) => {
-    // 如果提供了 prompt_descriptions，必须同时提供 prompt_list
+    const promptList = data.prompt_list ?? [];
     if (data.prompt_descriptions && data.prompt_descriptions.length > 0) {
-      if (!data.prompt_list || data.prompt_list.length === 0) {
-        return false;
-      }
-      // 长度必须一致
-      return data.prompt_descriptions.length === data.prompt_list.length;
+      return promptList.length > 0 && data.prompt_descriptions.length === promptList.length;
     }
     return true;
   },
   {
-    message: 'prompt_descriptions 必须与 prompt_list 同时提供且长度一致',
+    message: 'prompt_descriptions must be provided with prompt_list and lengths must match',
     path: ['prompt_descriptions'],
   }
 );
@@ -38,16 +40,11 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-/**
- * PUT /api/admin/templates/[id]
- * Update an existing template
- */
 export async function PUT(req: NextRequest, context: RouteContext) {
   const authResult = await requireAdmin(req);
   if (authResult instanceof Response) return authResult;
 
   const { id } = await context.params;
-
   const parsed = updateTemplateSchema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json(
@@ -57,44 +54,54 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   }
   const body = parsed.data;
 
-  // Verify domain exists if domain is being updated
-  if (body.domain !== undefined) {
-    const domain = await prisma.domains.findUnique({
-      where: { slug: body.domain },
-      select: { id: true },
-    });
-    if (!domain) {
-      return NextResponse.json(
-        { error: `Domain "${body.domain}" does not exist` },
-        { status: 400 }
-      );
+  if (isLocalAdminStoreEnabled()) {
+    if (body.domain !== undefined) {
+      const domains = await listLocalDomains();
+      if (!domains.some((domain) => domain.slug === body.domain)) {
+        return NextResponse.json({ error: `Domain "${body.domain}" does not exist` }, { status: 400 });
+      }
     }
-  }
-
-  const updateData: Record<string, unknown> = {};
-  if (body.domain !== undefined) updateData.domain = body.domain;
-  if (body.name !== undefined) updateData.name = body.name;
-  if (body.description !== undefined) updateData.description = body.description;
-  if (body.category !== undefined) updateData.category = body.category;
-  if (body.preview_image_url !== undefined) updateData.preview_image_url = body.preview_image_url;
-  if (body.prompt_config !== undefined) updateData.prompt_config = body.prompt_config;
-  if (body.prompt_list !== undefined) updateData.prompt_list = body.prompt_list;
-  if (body.prompt_descriptions !== undefined) updateData.prompt_descriptions = body.prompt_descriptions;
-  if (body.price_credits !== undefined) updateData.price_credits = body.price_credits;
-  if (body.is_active !== undefined) updateData.is_active = body.is_active;
-  if (body.sort_order !== undefined) updateData.sort_order = body.sort_order;
-
-  if (Object.keys(updateData).length === 0) {
-    return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    const template = await updateLocalAdminTemplate(id, body);
+    if (!template) {
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+    }
+    clearTemplateCache(id);
+    return NextResponse.json({ template, local: true });
   }
 
   try {
+    if (body.domain !== undefined) {
+      const domain = await prisma.domains.findUnique({
+        where: { slug: body.domain },
+        select: { id: true },
+      });
+      if (!domain) {
+        return NextResponse.json({ error: `Domain "${body.domain}" does not exist` }, { status: 400 });
+      }
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (body.domain !== undefined) updateData.domain = body.domain;
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.category !== undefined) updateData.category = body.category;
+    if (body.preview_image_url !== undefined) updateData.preview_image_url = body.preview_image_url;
+    if (body.prompt_config !== undefined) updateData.prompt_config = body.prompt_config;
+    if (body.prompt_list !== undefined) updateData.prompt_list = body.prompt_list;
+    if (body.prompt_descriptions !== undefined) updateData.prompt_descriptions = body.prompt_descriptions;
+    if (body.price_credits !== undefined) updateData.price_credits = body.price_credits;
+    if (body.is_active !== undefined) updateData.is_active = body.is_active;
+    if (body.sort_order !== undefined) updateData.sort_order = body.sort_order;
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
     const template = await prisma.templates.update({
       where: { id },
       data: updateData as Parameters<typeof prisma.templates.update>[0]['data'],
     });
 
-    // 清除缓存，确保更新立即生效
     clearTemplateCache(id);
 
     return NextResponse.json({
@@ -114,35 +121,51 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         created_at: template.created_at.toISOString(),
       },
     });
-  } catch (e) {
-    if ((e as { code?: string })?.code === 'P2025') {
+  } catch (error) {
+    if (!isLocalAdminStoreEnabled()) throw error;
+    if (body.domain !== undefined) {
+      const domains = await listLocalDomains();
+      if (!domains.some((domain) => domain.slug === body.domain)) {
+        return NextResponse.json({ error: `Domain "${body.domain}" does not exist` }, { status: 400 });
+      }
+    }
+    const template = await updateLocalAdminTemplate(id, body);
+    if (!template) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 });
     }
-    throw e;
+    clearTemplateCache(id);
+    return NextResponse.json({ template, local: true });
   }
 }
 
-/**
- * DELETE /api/admin/templates/[id]
- * Delete a template
- */
-export async function DELETE(_req: NextRequest, context: RouteContext) {
-  const authResult = await requireAdmin(_req);
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  const authResult = await requireAdmin(req);
   if (authResult instanceof Response) return authResult;
 
   const { id } = await context.params;
 
-  try {
-    await prisma.templates.delete({ where: { id } });
-
-    // 清除缓存
-    clearTemplateCache(id);
-
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (e) {
-    if ((e as { code?: string })?.code === 'P2025') {
+  if (isLocalAdminStoreEnabled()) {
+    const deleted = await deleteLocalAdminTemplate(id);
+    if (!deleted) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 });
     }
-    throw e;
+    clearTemplateCache(id);
+    return NextResponse.json({ success: true, local: true }, { status: 200 });
+  }
+
+  try {
+    await prisma.templates.delete({ where: { id } });
+    clearTemplateCache(id);
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch {
+    if (!isLocalAdminStoreEnabled()) {
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+    }
+    const deleted = await deleteLocalAdminTemplate(id);
+    if (!deleted) {
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+    }
+    clearTemplateCache(id);
+    return NextResponse.json({ success: true, local: true }, { status: 200 });
   }
 }

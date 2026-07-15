@@ -39,9 +39,11 @@ export function StepUpload({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [freezing, setFreezing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [additionalPrompt, setAdditionalPrompt] = useState('');
 
   // 生成数量选择
-  const maxImages = template.prompt_count || 1;
+  const isLocalAdminMode = process.env.NEXT_PUBLIC_LOCAL_ADMIN_MODE === 'true';
+  const maxImages = isLocalAdminMode ? 8 : (template.prompt_count || 1);
 
   // 从 localStorage 读取用户上次选择的数量
   const [imageCount, setImageCount] = useState(() => {
@@ -180,6 +182,7 @@ export function StepUpload({
         type: 'START_GENERATE',
         photos: validPhotos,
         imageCount,
+        additionalPrompt: additionalPrompt.trim() || undefined,
       });
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : '冻结积分失败');
@@ -384,6 +387,21 @@ export function StepUpload({
             <div className="flex gap-2 items-center p-3 mb-4 rounded-lg border bg-red-500/10 border-red-500/20">
               <AlertCircle className="flex-shrink-0 w-4 h-4 text-red-400" />
               <span className="text-sm text-red-300">{errorMsg}</span>
+            </div>
+          )}
+
+          {validPhotos.length > 0 && (
+            <div className="p-5 mb-6 rounded-lg border bg-white/[0.03] border-white/10">
+              <label className="block mb-3 text-sm font-medium text-alabaster">
+                附加场景与要求
+              </label>
+              <textarea
+                value={additionalPrompt}
+                onChange={(event) => setAdditionalPrompt(event.target.value)}
+                maxLength={1500}
+                placeholder="例如：巴黎街头雨夜、暖色电影光、保留模板服装与人物五官、全身构图"
+                className="w-full min-h-[96px] resize-y rounded-sm border border-white/10 bg-black/30 px-4 py-3 text-sm text-alabaster outline-none transition-colors placeholder:text-pearl/30 focus:border-gold/50"
+              />
             </div>
           )}
 

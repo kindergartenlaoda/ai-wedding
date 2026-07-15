@@ -3,6 +3,12 @@ import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import type { ProjectWithTemplate } from '@/types/database';
 import { getCache, invalidateCacheByPrefix, setCache } from '@/lib/server-cache';
+import {
+  createLocalProject,
+  formatLocalProject,
+  isLocalGenerationStoreEnabled,
+  listLocalProjects,
+} from '@/lib/local-generation-store';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
@@ -30,30 +36,55 @@ export async function POST(req: NextRequest) {
   const user_id = authResult.user.id;
 
   const body = await req.json();
-  const { name, uploaded_photos } = body as { name?: string; uploaded_photos?: string[] };
+  const { name, uploaded_photos, domain } = body as {
+    name?: string;
+    uploaded_photos?: string[];
+    domain?: string;
+  };
 
   if (!name) {
     return NextResponse.json({ error: 'Missing name' }, { status: 400 });
   }
 
-  const project = await prisma.projects.create({
-    data: {
-      user_id,
+  if (isLocalGenerationStoreEnabled(user_id)) {
+    const project = await createLocalProject({
+      userId: user_id,
       name,
-      status: 'draft',
-      uploaded_photos: (uploaded_photos || []) as string[],
-    },
-  });
+      domain,
+      uploadedPhotos: uploaded_photos || [],
+    });
+    return NextResponse.json({ ...formatLocalProject(project), local: true }, { status: 201 });
+  }
 
-  invalidateCacheByPrefix(`projects:${user_id}:`);
+  try {
+    const project = await prisma.projects.create({
+      data: {
+        user_id,
+        name,
+        status: 'draft',
+        uploaded_photos: (uploaded_photos || []) as string[],
+      },
+    });
 
-  return NextResponse.json({
-    id: project.id,
-    name: project.name,
-    status: project.status,
-    uploaded_photos: project.uploaded_photos,
-    created_at: project.created_at.toISOString(),
-  }, { status: 201 });
+    invalidateCacheByPrefix(`projects:${user_id}:`);
+
+    return NextResponse.json({
+      id: project.id,
+      name: project.name,
+      status: project.status,
+      uploaded_photos: project.uploaded_photos,
+      created_at: project.created_at.toISOString(),
+    }, { status: 201 });
+  } catch (error) {
+    if (!isLocalGenerationStoreEnabled(user_id)) throw error;
+    const project = await createLocalProject({
+      userId: user_id,
+      name,
+      domain,
+      uploadedPhotos: uploaded_photos || [],
+    });
+    return NextResponse.json(formatLocalProject(project), { status: 201 });
+  }
 }
 
 /**
@@ -69,6 +100,17 @@ export async function GET(req: NextRequest) {
   const { page, pageSize, skip } = parsePagination(searchParams);
   const cacheKey = `projects:${user_id}:${page}:${pageSize}`;
 
+  if (isLocalGenerationStoreEnabled(user_id)) {
+    const projects = await listLocalProjects(user_id);
+    const pagedProjects = projects.slice(skip, skip + pageSize);
+    return NextResponse.json({
+      data: pagedProjects.map(formatLocalProject),
+      total: projects.length,
+      hasMore: skip + pageSize < projects.length,
+      local: true,
+    });
+  }
+
   const cached = getCache<{
     data: ProjectWithTemplate[];
     total: number;
@@ -78,23 +120,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(cached);
   }
 
-  const [projects, total] = await Promise.all([
-    prisma.projects.findMany({
-      where: { user_id },
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        uploaded_photos: true,
-        created_at: true,
-        updated_at: true,
-      },
-      orderBy: { created_at: 'desc' },
-      skip,
-      take: pageSize,
-    }),
-    prisma.projects.count({ where: { user_id } }),
-  ]);
+  try {
+    const [projects, total] = await Promise.all([
+      prisma.projects.findMany({
+        where: { user_id },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          uploaded_photos: true,
+          created_at: true,
+          updated_at: true,
+        },
+        orderBy: { created_at: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+      prisma.projects.count({ where: { user_id } }),
+    ]);
 
   const projectIds = projects.map((p) => p.id);
   const latestGenerations = projectIds.length > 0
@@ -156,7 +199,18 @@ export async function GET(req: NextRequest) {
     hasMore: skip + pageSize < total,
   };
 
-  setCache(cacheKey, responseBody, PROJECTS_CACHE_TTL_MS);
+    setCache(cacheKey, responseBody, PROJECTS_CACHE_TTL_MS);
 
-  return NextResponse.json(responseBody);
+    return NextResponse.json(responseBody);
+  } catch (error) {
+    if (!isLocalGenerationStoreEnabled(user_id)) throw error;
+    const projects = await listLocalProjects(user_id);
+    const pagedProjects = projects.slice(skip, skip + pageSize);
+    return NextResponse.json({
+      data: pagedProjects.map(formatLocalProject),
+      total: projects.length,
+      hasMore: skip + pageSize < projects.length,
+      local: true,
+    });
+  }
 }

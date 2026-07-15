@@ -116,7 +116,6 @@ async function generateThumbnails(
   objectName: string,
   client: Minio.Client,
   bucketName: string,
-  config: MinioConfig,
 ): Promise<{ thumbnailUrl?: string; mediumUrl?: string }> {
   const result: { thumbnailUrl?: string; mediumUrl?: string } = {};
 
@@ -213,7 +212,7 @@ export async function uploadImage(options: UploadImageOptions): Promise<UploadIm
     console.log(`✅ 预签名 URL 生成成功: ${presignedUrl.substring(0, 100)}...`);
 
     // 异步生成缩略图（不阻塞主流程返回）
-    const thumbnails = await generateThumbnails(buffer_copy(options.buffer), objectName, client, bucketName, config);
+    const thumbnails = await generateThumbnails(buffer_copy(options.buffer), objectName, client, bucketName);
 
     return {
       url: publicUrl,

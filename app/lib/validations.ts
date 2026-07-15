@@ -95,6 +95,8 @@ const generateCommonFields = {
   source: z.enum(['openRouter', '302', 'openAi']).optional(),
   face_preservation: z.enum(['high', 'medium', 'low']).default('high'),
   creativity_level: z.enum(['conservative', 'balanced', 'creative']).default('conservative'),
+  image_size: z.enum(['auto', '1024x1024', '1536x1024', '1024x1536']).optional(),
+  image_quality: z.enum(['auto', 'low', 'medium', 'high']).optional(),
 };
 
 /**
@@ -106,6 +108,7 @@ export const GenerateImageV2Schema = z.discriminatedUnion('mode', [
     mode: z.literal('template'),
     template_id: z.string().min(1, '模板ID不能为空'),
     prompt_index: z.number().int().min(0).default(0),
+    additional_prompt: z.string().max(1500).optional(),
     ...generateCommonFields,
   }).strict(),
   z.object({

@@ -3,6 +3,13 @@ import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import { mapGenerationWithRelations } from '@/lib/generation-mapper';
 import { invalidateCacheByPrefix } from '@/lib/server-cache';
+import {
+  deleteLocalGeneration,
+  formatLocalGeneration,
+  getLocalGeneration,
+  isLocalGenerationStoreEnabled,
+  updateLocalGeneration,
+} from '@/lib/local-generation-store';
 
 /**
  * PATCH /api/generations/[id]
@@ -19,10 +26,29 @@ export async function PATCH(
   const { id } = await context.params;
   const body = await req.json();
 
-  const existing = await prisma.generations.findFirst({
-    where: { id, user_id },
-    select: { id: true },
-  });
+  if (isLocalGenerationStoreEnabled(user_id)) {
+    const generation = await updateLocalGeneration(id, user_id, body);
+    if (!generation) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    return NextResponse.json({ success: true, local: true });
+  }
+
+  let existing: { id: string } | null = null;
+  try {
+    existing = await prisma.generations.findFirst({
+      where: { id, user_id },
+      select: { id: true },
+    });
+  } catch (error) {
+    if (!isLocalGenerationStoreEnabled(user_id)) throw error;
+    const generation = await updateLocalGeneration(id, user_id, body);
+    if (!generation) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    return NextResponse.json({ success: true, local: true });
+  }
+
   if (!existing) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -115,14 +141,32 @@ export async function GET(
 
   const { id } = await context.params;
 
-  const generation = await prisma.generations.findFirst({
-    where: { id, user_id },
-    include: {
-      projects: { select: { name: true, uploaded_photos: true } },
-      templates: { select: { name: true } },
-      generated_images: { orderBy: { image_index: 'asc' } },
-    },
-  });
+  if (isLocalGenerationStoreEnabled(user_id)) {
+    const localGeneration = await getLocalGeneration(id, user_id);
+    if (!localGeneration) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    return NextResponse.json({ ...formatLocalGeneration(localGeneration), local: true });
+  }
+
+  let generation;
+  try {
+    generation = await prisma.generations.findFirst({
+      where: { id, user_id },
+      include: {
+        projects: { select: { name: true, uploaded_photos: true } },
+        templates: { select: { name: true } },
+        generated_images: { orderBy: { image_index: 'asc' } },
+      },
+    });
+  } catch (error) {
+    if (!isLocalGenerationStoreEnabled(user_id)) throw error;
+    const localGeneration = await getLocalGeneration(id, user_id);
+    if (!localGeneration) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    return NextResponse.json({ ...formatLocalGeneration(localGeneration), local: true });
+  }
 
   if (!generation) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -145,9 +189,27 @@ export async function DELETE(
 
   const { id } = await context.params;
 
-  const existing = await prisma.generations.findFirst({
-    where: { id, user_id },
-  });
+  if (isLocalGenerationStoreEnabled(user_id)) {
+    const deleted = await deleteLocalGeneration(id, user_id);
+    if (!deleted) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    return NextResponse.json({ success: true, local: true });
+  }
+
+  let existing;
+  try {
+    existing = await prisma.generations.findFirst({
+      where: { id, user_id },
+    });
+  } catch (error) {
+    if (!isLocalGenerationStoreEnabled(user_id)) throw error;
+    const deleted = await deleteLocalGeneration(id, user_id);
+    if (!deleted) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    return NextResponse.json({ success: true, local: true });
+  }
 
   if (!existing) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });

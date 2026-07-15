@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getFallbackTemplates } from '@/lib/fallback-templates';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const domain = searchParams.get('domain');
+
+    if (process.env.LOCAL_ADMIN_MODE === 'true') {
+      return NextResponse.json({
+        data: getFallbackTemplates(domain || undefined),
+        fallback: true,
+        local: true,
+      });
+    }
 
     const where: { is_active: boolean; domain?: string } = { is_active: true };
     if (domain) where.domain = domain;
@@ -58,7 +67,12 @@ export async function GET(request: NextRequest) {
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    const domain = request.nextUrl.searchParams.get('domain') || undefined;
+    console.warn('Templates database unavailable, using fallback templates:', message);
+    return NextResponse.json({
+      data: getFallbackTemplates(domain),
+      fallback: true,
+      warning: 'Database unavailable; using built-in templates',
+    });
   }
 }
-

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
+import { getActiveLocalModelConfig, isLocalModelConfigStoreEnabled } from '@/lib/local-model-config-store';
 import type { ModelConfig, ModelConfigType } from '@/types/model-config';
 import { ModelConfigType as PrismaModelConfigType } from '../../../../generated/prisma/enums';
 import { logger } from '@/lib/logger';
@@ -14,10 +15,6 @@ const TYPE_MAP: Record<string, (typeof PrismaModelConfigType)[keyof typeof Prism
   other: PrismaModelConfigType.other,
 };
 
-/**
- * GET /api/model-configs/active?type=generate-image
- * 获取指定类型的激活配置（需要认证）
- */
 export async function GET(req: NextRequest) {
   try {
     const authResult = await requireAuth();
@@ -27,41 +24,56 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get('type') as ModelConfigType;
 
     if (!type) {
-      return NextResponse.json({ error: '缺少 type 参数' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing type parameter' }, { status: 400 });
     }
 
     const prismaType = TYPE_MAP[type];
     if (!prismaType) {
-      return NextResponse.json({ error: '无效的 type 参数' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 });
     }
 
-    const config = await prisma.model_configs.findFirst({
-      where: { type: prismaType, status: 'active' },
-    });
-
-    if (!config) {
-      return NextResponse.json({ data: null });
+    if (isLocalModelConfigStoreEnabled()) {
+      const localConfig = await getActiveLocalModelConfig(type);
+      return NextResponse.json({ data: localConfig, local: true });
     }
 
-    const data: ModelConfig = {
-      id: config.id,
-      type: config.type as ModelConfig['type'],
-      name: config.name,
-      api_base_url: config.api_base_url,
-      api_key: config.api_key,
-      model_name: config.model_name,
-      status: config.status as ModelConfig['status'],
-      source: config.source as ModelConfig['source'],
-      description: config.description ?? undefined,
-      created_at: config.created_at.toISOString(),
-      updated_at: config.updated_at.toISOString(),
-      created_by: config.created_by ?? undefined,
-    };
+    try {
+      const config = await prisma.model_configs.findFirst({
+        where: { type: prismaType, status: 'active' },
+      });
 
-    return NextResponse.json({ data });
+      if (!config) {
+        if (isLocalModelConfigStoreEnabled()) {
+          const localConfig = await getActiveLocalModelConfig(type);
+          return NextResponse.json({ data: localConfig, local: true });
+        }
+        return NextResponse.json({ data: null });
+      }
+
+      const data: ModelConfig = {
+        id: config.id,
+        type: config.type as ModelConfig['type'],
+        name: config.name,
+        api_base_url: config.api_base_url,
+        api_key: config.api_key,
+        model_name: config.model_name,
+        status: config.status as ModelConfig['status'],
+        source: config.source as ModelConfig['source'],
+        description: config.description ?? undefined,
+        created_at: config.created_at.toISOString(),
+        updated_at: config.updated_at.toISOString(),
+        created_by: config.created_by ?? undefined,
+      };
+
+      return NextResponse.json({ data });
+    } catch (error) {
+      if (!isLocalModelConfigStoreEnabled()) throw error;
+      const config = await getActiveLocalModelConfig(type);
+      return NextResponse.json({ data: config, local: true });
+    }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unexpected error';
-    logger.error({ error: err }, '获取激活配置异常');
+    logger.error({ error: err }, 'Failed to get active model config');
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

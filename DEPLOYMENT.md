@@ -108,7 +108,7 @@ graph TD
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/qqzhangyanhua/ai-wedding.git
+git clone https://github.com/kindergartenlaoda/ai-wedding.git
 cd ai-wedding
 
 # 2. 一键部署（交互式引导配置 + 启动）
@@ -144,7 +144,7 @@ bash deploy.sh restore    # 恢复数据库
 
 ```powershell
 # 1. 克隆项目
-git clone https://github.com/qqzhangyanhua/ai-wedding.git
+git clone https://github.com/kindergartenlaoda/ai-wedding.git
 cd ai-wedding
 
 # 2. 允许运行脚本（仅首次需要）
@@ -288,7 +288,7 @@ pnpm add -g pm2
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/qqzhangyanhua/ai-wedding.git
+git clone https://github.com/kindergartenlaoda/ai-wedding.git
 cd ai-wedding
 
 # 2. 配置环境变量
@@ -699,9 +699,9 @@ docker --version && docker compose version
 如果上述方法无法解决你的问题：
 
 1. **查看完整日志**：收集错误日志并仔细阅读错误信息
-2. **搜索 Issues**：在 [GitHub Issues](https://github.com/qqzhangyanhua/ai-wedding/issues) 搜索类似问题
+2. **搜索 Issues**：在 [GitHub Issues](https://github.com/kindergartenlaoda/ai-wedding/issues) 搜索类似问题
 3. **提交 Issue**：提供详细信息（操作系统、Docker 版本、错误日志、复现步骤）
-4. **加入讨论**：在 [Discussions](https://github.com/qqzhangyanhua/ai-wedding/discussions) 与社区交流
+4. **加入讨论**：在 [Discussions](https://github.com/kindergartenlaoda/ai-wedding/discussions) 与社区交流
 
 ---
 

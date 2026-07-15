@@ -170,6 +170,7 @@ export class PromptBuilder {
    * Build analysis prompt
    */
   getAnalysisPrompt(imageDescription?: string): string {
+    void imageDescription;
     const requirementsList = this.config.requirements
       .map((req, index) => `${index + 1}. ${req}`)
       .join('\n');

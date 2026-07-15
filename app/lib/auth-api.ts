@@ -11,11 +11,23 @@ export interface SessionUser {
   name?: string | null;
 }
 
+const LOCAL_ADMIN_USER: SessionUser = {
+  id: 'local-admin',
+  email: process.env.ADMIN_EMAIL || 'admin@local.test',
+  name: 'Local Admin',
+};
+
+function isLocalAdminMode(): boolean {
+  return process.env.LOCAL_ADMIN_MODE === 'true';
+}
+
 /**
  * Get the current session user from NextAuth (reads from cookies).
  * Returns null if not authenticated.
  */
 export async function getSessionUser(): Promise<SessionUser | null> {
+  if (isLocalAdminMode()) return LOCAL_ADMIN_USER;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   return {

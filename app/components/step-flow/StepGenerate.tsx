@@ -126,6 +126,7 @@ export function StepGenerate({ state, dispatch }: StepGenerateProps) {
         template: state.template,
         photos: state.photos,
         imageCount: state.imageCount,
+        additionalPrompt: state.additionalPrompt,
       },
       (progress) => {
         dispatch({

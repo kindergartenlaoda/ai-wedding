@@ -5,6 +5,8 @@ import { createRequestLogger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
+const LOCAL_ADMIN_MODE = process.env.LOCAL_ADMIN_MODE === 'true';
+
 export async function POST(req: Request) {
   const requestId = `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const log = createRequestLogger('upload-image', requestId);
@@ -40,13 +42,29 @@ export async function POST(req: Request) {
 
       // 判断是 URL 还是 base64
       let result;
-      if (image.startsWith('http://') || image.startsWith('https://')) {
-        log.debug('检测到 URL 格式，从远程下载');
-        const { uploadFromUrl } = await import('@/lib/storage-client');
-        result = await uploadFromUrl(image, folder || 'uploads');
-      } else {
-        log.debug('检测到 base64/dataURL 格式');
-        result = await uploadDataUrlImage(image, folder || 'uploads');
+      try {
+        if (image.startsWith('http://') || image.startsWith('https://')) {
+          log.debug('检测到 URL 格式，从远程下载');
+          const { uploadFromUrl } = await import('@/lib/storage-client');
+          result = await uploadFromUrl(image, folder || 'uploads');
+        } else {
+          log.debug('检测到 base64/dataURL 格式');
+          result = await uploadDataUrlImage(image, folder || 'uploads');
+        }
+      } catch (storageError) {
+        if (!LOCAL_ADMIN_MODE) throw storageError;
+        log.warn({ error: storageError instanceof Error ? storageError.message : 'Unknown' }, '对象存储不可用，使用原图回退');
+        return NextResponse.json({
+          success: true,
+          fallback: true,
+          url: image,
+          publicUrl: image,
+          presignedUrl: image,
+          objectName: null,
+          bucket: null,
+          thumbnailUrl: image,
+          mediumUrl: image,
+        });
       }
 
       log.info({ url: result.url }, '图片上传成功');
@@ -83,25 +101,43 @@ export async function POST(req: Request) {
       const buffer = Buffer.from(arrayBuffer);
 
       // 上传到 OSS
-      const result = await uploadImage({
-        buffer,
-        originalName: file.name,
-        contentType: file.type || 'image/png',
-        folder,
-      });
+      try {
+        const result = await uploadImage({
+          buffer,
+          originalName: file.name,
+          contentType: file.type || 'image/png',
+          folder,
+        });
 
-      log.info({ url: result.url }, '图片上传成功');
+        log.info({ url: result.url }, '图片上传成功');
 
-      return NextResponse.json({
-        success: true,
-        url: result.url,
-        publicUrl: result.publicUrl,
-        presignedUrl: result.presignedUrl,
-        objectName: result.objectName,
-        bucket: result.bucket,
-        thumbnailUrl: result.thumbnailUrl,
-        mediumUrl: result.mediumUrl,
-      });
+        return NextResponse.json({
+          success: true,
+          url: result.url,
+          publicUrl: result.publicUrl,
+          presignedUrl: result.presignedUrl,
+          objectName: result.objectName,
+          bucket: result.bucket,
+          thumbnailUrl: result.thumbnailUrl,
+          mediumUrl: result.mediumUrl,
+        });
+      } catch (storageError) {
+        if (!LOCAL_ADMIN_MODE) throw storageError;
+        const mimeType = file.type || 'image/png';
+        const dataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
+        log.warn({ error: storageError instanceof Error ? storageError.message : 'Unknown' }, '对象存储不可用，使用本地 data URL 回退');
+        return NextResponse.json({
+          success: true,
+          fallback: true,
+          url: dataUrl,
+          publicUrl: dataUrl,
+          presignedUrl: dataUrl,
+          objectName: null,
+          bucket: null,
+          thumbnailUrl: dataUrl,
+          mediumUrl: dataUrl,
+        });
+      }
 
     } else {
       log.error({ contentType }, '不支持的 Content-Type');
@@ -121,4 +157,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { listLocalDomains } from '@/lib/local-admin-store';
+
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/public/domains
@@ -7,6 +10,15 @@ import { prisma } from '@/lib/prisma';
  * Returns only domains where is_active = true, sorted by sort_order
  */
 export async function GET() {
+    if (process.env.LOCAL_ADMIN_MODE === 'true') {
+        const domains = await listLocalDomains();
+        return NextResponse.json({
+            data: domains.filter((domain) => domain.is_active),
+            fallback: true,
+            local: true,
+        });
+    }
+
     try {
         const domains = await prisma.domains.findMany({
             where: { is_active: true },

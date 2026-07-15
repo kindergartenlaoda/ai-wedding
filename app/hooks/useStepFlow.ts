@@ -64,6 +64,7 @@ export function stepFlowReducer(
         template: state.template,
         photos: action.photos,
         imageCount: action.imageCount || 1,
+        additionalPrompt: action.additionalPrompt,
         progress: 0,
         progressText: '正在准备...',
       };

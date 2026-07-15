@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
+import { isLocalAdminCreditBypass, normalizeLocalCreditAmount } from '@/lib/local-credit-mode';
 
 /**
  * POST /api/credits/unfreeze
@@ -14,6 +15,14 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { amount } = body as { amount?: number };
+
+  if (isLocalAdminCreditBypass(user_id)) {
+    return NextResponse.json({
+      success: true,
+      unfrozen: normalizeLocalCreditAmount(amount),
+      local: true,
+    });
+  }
 
   if (typeof amount !== 'number' || amount <= 0) {
     return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });

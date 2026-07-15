@@ -37,7 +37,8 @@ export function validateFileSize(size: number): { valid: boolean; error?: string
  * Validate file type
  */
 export function validateFileType(type: string): { valid: boolean; error?: string } {
-  if (!UPLOAD_CONFIG.ALLOWED_TYPES.includes(type as any)) {
+  const allowedTypes: readonly string[] = UPLOAD_CONFIG.ALLOWED_TYPES;
+  if (!allowedTypes.includes(type)) {
     return {
       valid: false,
       error: `不支持的文件类型，仅支持 ${UPLOAD_CONFIG.ALLOWED_TYPES_TEXT}`,

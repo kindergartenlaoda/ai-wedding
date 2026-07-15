@@ -70,7 +70,7 @@ export interface AdminTemplate extends Omit<Template, 'prompt_count' | 'prompt_d
  * 前端生成参数：模板模式 vs 自定义模式
  */
 export type GenerateParams =
-  | { mode: 'template'; templateId: string; promptIndex: number }
+  | { mode: 'template'; templateId: string; promptIndex: number; additionalPrompt?: string }
   | { mode: 'custom'; customPrompt: string };
 
 export interface Project {

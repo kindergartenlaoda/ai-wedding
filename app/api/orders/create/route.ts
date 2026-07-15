@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import Stripe from 'stripe';
+import { createLocalOrder, isLocalFeatureStoreEnabled } from '@/lib/local-feature-store';
 
 export const runtime = 'nodejs';
 
@@ -30,6 +31,25 @@ export async function POST(req: Request) {
     }
     const plan = PLAN_MAP[planKey];
     const currency = 'USD';
+
+    if (isLocalFeatureStoreEnabled(user_id)) {
+      const order = await createLocalOrder({
+        userId: user_id,
+        amount: plan.amount,
+        currency,
+        paymentMethod: 'local-mock',
+        credits: plan.credits,
+        status: 'completed',
+      });
+      return NextResponse.json({
+        order_id: order.id,
+        payment_intent_id: order.payment_intent_id,
+        checkout_url: null,
+        status: order.status,
+        creditsAdded: order.credits,
+        local: true,
+      });
+    }
 
     const order = await prisma.orders.create({
       data: {

@@ -3,7 +3,9 @@ import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import { getPromptStrategy } from '@/lib/prompt-strategies';
 import { GeneratePromptsSchema, validateData } from '@/lib/validations';
-import { checkRateLimit, rateLimitResponse, RL_LIMIT } from '@/lib/generation-shared';
+import { buildOpenAICompatibleEndpoint, checkRateLimit, rateLimitResponse, RL_LIMIT } from '@/lib/generation-shared';
+import { getActiveLocalModelConfig, isLocalModelConfigStoreEnabled } from '@/lib/local-model-config-store';
+import { createLocalPromptGeneration, isLocalFeatureStoreEnabled } from '@/lib/local-feature-store';
 import {
   deductCreditsForGeneration,
   refundCreditsForGeneration,
@@ -34,6 +36,11 @@ async function getActivePromptsConfig(log: ReturnType<typeof createRequestLogger
     
     if (!config) {
       log.warn('未找到任何可用配置');
+      if (isLocalModelConfigStoreEnabled()) {
+        const localConfig = await getActiveLocalModelConfig('generate-prompts')
+          || await getActiveLocalModelConfig('identify-image');
+        if (localConfig) return localConfig;
+      }
       return null;
     }
     
@@ -55,6 +62,10 @@ async function getActivePromptsConfig(log: ReturnType<typeof createRequestLogger
     };
   } catch (err) {
     log.error({ error: err }, '获取激活提示词生成配置异常');
+    if (isLocalModelConfigStoreEnabled()) {
+      return await getActiveLocalModelConfig('generate-prompts')
+        || await getActiveLocalModelConfig('identify-image');
+    }
     return null;
   }
 }
@@ -67,7 +78,7 @@ async function generatePromptsWithStrategy(
   analysisPrompt: string,
   log: ReturnType<typeof createRequestLogger>
 ): Promise<PromptItem[]> {
-  const endpoint = `${api_base_url.replace(/\/$/, '')}/v1/chat/completions`;
+  const endpoint = buildOpenAICompatibleEndpoint(api_base_url, '/chat/completions');
 
   const base64Data = imageBase64.includes('base64,')
     ? imageBase64
@@ -212,7 +223,8 @@ export async function POST(req: NextRequest) {
     }
     log.debug({ count: rl.count, limit: RL_LIMIT }, '速率限制检查通过');
 
-    const balance = await getUserCreditBalance(userId);
+    const localFeatureStore = isLocalFeatureStoreEnabled(userId);
+    const balance = localFeatureStore ? 999999 : await getUserCreditBalance(userId);
     log.info({ credits: balance }, '用户积分余额');
 
     if (balance < CREDITS_PER_PROMPT_GENERATION) {
@@ -226,16 +238,18 @@ export async function POST(req: NextRequest) {
     }
 
     const tempId = `prompt_${requestId}`;
-    try {
-      await deductCreditsForGeneration(
-        userId,
-        tempId,
-        CREDITS_PER_PROMPT_GENERATION,
-        '提示词生成消费积分'
-      );
-    } catch (deductError) {
-      log.error({ error: deductError }, '扣除积分失败');
-      return NextResponse.json({ error: '扣除积分失败，请重试' }, { status: 500 });
+    if (!localFeatureStore) {
+      try {
+        await deductCreditsForGeneration(
+          userId,
+          tempId,
+          CREDITS_PER_PROMPT_GENERATION,
+          '提示词生成消费积分'
+        );
+      } catch (deductError) {
+        log.error({ error: deductError }, '扣除积分失败');
+        return NextResponse.json({ error: '扣除积分失败，请重试' }, { status: 500 });
+      }
     }
 
     log.info({ deducted: CREDITS_PER_PROMPT_GENERATION, remaining: balance - CREDITS_PER_PROMPT_GENERATION }, '成功扣除积分');
@@ -244,7 +258,9 @@ export async function POST(req: NextRequest) {
     const validation = validateData(GeneratePromptsSchema, body);
     if (!validation.success) {
       log.error({ error: validation.error }, '参数验证失败');
-      await refundCreditsForGeneration(userId, tempId, CREDITS_PER_PROMPT_GENERATION, '验证失败退款');
+      if (!localFeatureStore) {
+        await refundCreditsForGeneration(userId, tempId, CREDITS_PER_PROMPT_GENERATION, '验证失败退款');
+      }
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
@@ -254,7 +270,9 @@ export async function POST(req: NextRequest) {
 
     if (!dbConfig) {
       log.error('未找到激活的提示词生成配置');
-      await refundCreditsForGeneration(userId, tempId, CREDITS_PER_PROMPT_GENERATION, '配置不可用退款');
+      if (!localFeatureStore) {
+        await refundCreditsForGeneration(userId, tempId, CREDITS_PER_PROMPT_GENERATION, '配置不可用退款');
+      }
       return NextResponse.json(
         { error: '暂无可用的提示词生成配置，请联系管理员' },
         { status: 500 }
@@ -280,15 +298,23 @@ export async function POST(req: NextRequest) {
 
     log.info({ count: prompts.length }, '成功生成提示词');
 
-    const record = await prisma.prompt_generations.create({
-      data: {
-        user_id: userId,
-        domain,
-        prompts: prompts as unknown as Prisma.InputJsonValue,
-        model_config_id: dbConfig.id,
-        credits_used: CREDITS_PER_PROMPT_GENERATION,
-      },
-    });
+    const record = localFeatureStore
+      ? await createLocalPromptGeneration({
+          userId,
+          domain,
+          prompts,
+          modelConfigId: dbConfig.id,
+          creditsUsed: CREDITS_PER_PROMPT_GENERATION,
+        })
+      : await prisma.prompt_generations.create({
+          data: {
+            user_id: userId,
+            domain,
+            prompts: prompts as unknown as Prisma.InputJsonValue,
+            model_config_id: dbConfig.id,
+            credits_used: CREDITS_PER_PROMPT_GENERATION,
+          },
+        });
 
     log.info({ recordId: record.id }, '保存历史记录成功');
 
@@ -301,7 +327,7 @@ export async function POST(req: NextRequest) {
     const message = err instanceof Error ? err.message : 'Unexpected error';
     log.error({ error: err }, '发生异常');
 
-    if (userId) {
+    if (userId && !isLocalFeatureStoreEnabled(userId)) {
       await refundCreditsForGeneration(
         userId,
         `prompt_${requestId}`,

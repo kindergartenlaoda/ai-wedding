@@ -8,6 +8,8 @@ interface StateProps {
   onNavigate: (page: string) => void;
 }
 
+const isLocalAdminMode = process.env.NEXT_PUBLIC_LOCAL_ADMIN_MODE === 'true';
+
 export const LoadingState = () => (
   <div className="min-h-screen bg-obsidian py-12">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -79,7 +81,7 @@ export const EmptyState = ({ generation, tab, onNavigate }: StateProps & { gener
                 : generation?.status === 'failed'
                   ? '生成失败，请重试或联系客服'
                   : tab === 'high_res'
-                    ? '高清图片需要购买后才能查看'
+                    ? (isLocalAdminMode ? '当前没有可用的高清图片' : '高清图片需要购买后才能查看')
                     : '当前没有可用的图片'
             }
           </p>

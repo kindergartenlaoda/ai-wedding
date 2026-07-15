@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-api';
 import { prisma } from '@/lib/prisma';
 import { refundCreditsForGeneration } from '@/lib/credit-service';
+import { isLocalAdminCreditBypass, normalizeLocalCreditAmount } from '@/lib/local-credit-mode';
 
 /**
  * POST /api/credits/refund
@@ -20,6 +21,14 @@ export async function POST(req: NextRequest) {
     generation_id?: string;
     error_message?: string;
   };
+
+  if (isLocalAdminCreditBypass(user_id)) {
+    return NextResponse.json({
+      success: true,
+      refunded: normalizeLocalCreditAmount(credits),
+      local: true,
+    });
+  }
 
   if (typeof credits !== 'number' || credits <= 0) {
     return NextResponse.json({ error: 'Invalid credits' }, { status: 400 });

@@ -1530,6 +1530,76 @@ const weddingTemplates: TemplateSeed[] = [
 ];
 
 // ============================================================
+// Product domain
+// ============================================================
+const productTemplates: TemplateSeed[] = [
+  {
+    name: '电商纯白主图',
+    description: '标准白底商品主图，突出材质与轮廓',
+    category: 'ecommerce',
+    domain: 'product',
+    preview_image_url: null,
+    prompt_config: { basePrompt: 'Professional e-commerce product photography on a seamless pure white background' },
+    prompt_list: [
+      'Professional e-commerce product photography. Preserve the uploaded product shape, proportions, branding, text, color, material, and every identifying detail exactly. Place the product centered on a seamless pure white background with soft studio lighting, a subtle natural contact shadow, crisp edges, realistic material texture, no props, no extra objects, no redesign, high-end commercial retouching.',
+      'Marketplace-ready catalog image of the exact uploaded product, isolated against a clean white background. Keep all logos, labels, packaging geometry, colors, surface texture, and small details unchanged. Front three-quarter composition, balanced diffused lighting, accurate color, sharp focus, realistic soft shadow, premium commercial product photo.',
+    ],
+    prompt_descriptions: ['纯白背景标准主图', '三分之四角度目录图'],
+    price_credits: 10,
+    is_active: true,
+    sort_order: 1,
+  },
+  {
+    name: '生活方式场景图',
+    description: '将商品自然融入真实使用环境',
+    category: 'lifestyle',
+    domain: 'product',
+    preview_image_url: null,
+    prompt_config: { basePrompt: 'Premium lifestyle product photography in a realistic use environment' },
+    prompt_list: [
+      'Premium lifestyle product photography featuring the exact uploaded product in a realistic, tasteful use environment. Preserve product design, logo, label text, color, dimensions, and material exactly. Natural window light, clean contemporary setting, believable scale and placement, shallow depth of field, product remains the clear focal point, commercial advertising quality.',
+      'Create an editorial lifestyle advertisement for the uploaded product. Keep the product itself completely unchanged and recognizable. Place it in a contextually appropriate real-world scene with restrained supporting props, natural lighting, realistic reflections and shadows, sophisticated composition, high-detail commercial photography, no competing brand elements.',
+    ],
+    prompt_descriptions: ['自然光真实使用场景', '编辑感生活方式广告'],
+    price_credits: 10,
+    is_active: true,
+    sort_order: 2,
+  },
+  {
+    name: '创意俯拍陈列',
+    description: '适合社交媒体与活动推广的俯拍构图',
+    category: 'flat-lay',
+    domain: 'product',
+    preview_image_url: null,
+    prompt_config: { basePrompt: 'Creative top-down flat lay product photography' },
+    prompt_list: [
+      'Creative top-down flat lay photograph of the exact uploaded product. Preserve all product details, packaging text, logo, color, and proportions. Arrange a small number of relevant props around it with disciplined spacing, clean graphic composition, soft directional light, realistic shadows, modern campaign aesthetic, product remains unobstructed and dominant.',
+      'High-end social media flat lay featuring the uploaded product exactly as provided. Use a coordinated but contrasting background and minimal contextual props. Keep every label and identifying feature accurate and readable, crisp overhead perspective, refined color balance, realistic texture, polished commercial photography.',
+    ],
+    prompt_descriptions: ['简洁创意俯拍', '社交媒体活动陈列'],
+    price_credits: 10,
+    is_active: true,
+    sort_order: 3,
+  },
+  {
+    name: '高端品牌广告',
+    description: '电影级灯光与高级材质氛围',
+    category: 'luxury',
+    domain: 'product',
+    preview_image_url: null,
+    prompt_config: { basePrompt: 'Luxury cinematic product advertising photography' },
+    prompt_list: [
+      'Luxury cinematic advertising photograph of the exact uploaded product. Preserve its shape, branding, typography, colors, finish, and proportions without redesign. Dramatic controlled studio lighting, premium dark neutral set, precise rim highlights, realistic reflections, subtle atmospheric depth, bold hero composition, ultra-detailed commercial campaign quality.',
+      'High-fashion product campaign image using the uploaded product unchanged. Elegant architectural pedestal, refined material backdrop, sculpted light and shadow, accurate surface rendering, clean negative space for advertising copy, sophisticated premium mood, sharp product focus, no invented logos or altered packaging.',
+    ],
+    prompt_descriptions: ['电影级深色英雄图', '高级材质品牌广告'],
+    price_credits: 10,
+    is_active: true,
+    sort_order: 4,
+  },
+];
+
+// ============================================================
 // Export all templates
 // ============================================================
 export const templatesSeedData: TemplateSeed[] = [
@@ -1543,4 +1613,5 @@ export const templatesSeedData: TemplateSeed[] = [
   ...maternityTemplates,
   ...portraitTemplates,
   ...weddingTemplates,
+  ...productTemplates,
 ];

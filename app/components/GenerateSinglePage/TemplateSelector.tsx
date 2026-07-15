@@ -45,8 +45,9 @@ export function TemplateSelector({
           <p className="text-sm text-pearl/60">请稍后再试或联系管理员</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
-          {templates.slice(0, 12).map((template) => (
+        <div className="max-h-[640px] overflow-y-auto pr-2">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
+            {templates.map((template) => (
             <button
               key={template.id}
               type="button"
@@ -91,7 +92,8 @@ export function TemplateSelector({
                 <p className="text-xs font-medium truncate text-alabaster tracking-widest uppercase text-center">{template.name}</p>
               </div>
             </button>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 

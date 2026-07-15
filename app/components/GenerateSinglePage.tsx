@@ -32,7 +32,9 @@ export function GenerateSinglePage() {
   });
   const [settings, setSettings] = useState<ImageGenerationSettings>({
     facePreservation: 'high',
-    creativityLevel: 'conservative'
+    creativityLevel: 'conservative',
+    imageQuality: 'high',
+    imageSize: '1024x1536',
   });
 
   const { uploadState, fileInputRef, handleFileSelect, handleDragOver, handleDragLeave, handleDrop } = useImageUpload({

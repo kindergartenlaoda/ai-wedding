@@ -16,6 +16,7 @@ generated/
 out/
 .vercel/
 tsconfig.tsbuildinfo
+.local/
 
 .vscode/*
 !.vscode/extensions.json

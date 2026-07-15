@@ -47,7 +47,7 @@ export const usePricingLogic = (onNavigate: (page: string) => void) => {
           } else {
             throw new Error('Invalid checkout URL');
           }
-        } catch (urlErr) {
+        } catch {
           throw new Error('Invalid checkout URL format');
         }
         return;
@@ -137,7 +137,7 @@ export const usePricingLogic = (onNavigate: (page: string) => void) => {
           } else {
             throw new Error('Invalid checkout URL');
           }
-        } catch (urlErr) {
+        } catch {
           throw new Error('Invalid checkout URL format');
         }
       } else {

@@ -96,9 +96,9 @@ export function useGenerations(options: UseGenerationsOptions = {}) {
     }
   }, [fetchGenerations, initialLoad]);
 
-  const refreshGenerations = async () => {
+  const refreshGenerations = useCallback(async () => {
     await fetchGenerations(0, false);
-  };
+  }, [fetchGenerations]);
 
   const loadMore = async () => {
     if (!loading && hasMore) {

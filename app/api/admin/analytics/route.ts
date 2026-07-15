@@ -3,6 +3,32 @@ import { requireAdmin } from '@/lib/auth-admin';
 import { prisma } from '@/lib/prisma';
 import type { AnalyticsData } from '@/types/analytics';
 
+export const dynamic = 'force-dynamic';
+
+const EMPTY_ANALYTICS: AnalyticsData = {
+  overview: {
+    totalUsers: 0,
+    totalGenerations: 0,
+    completedGenerations: 0,
+    totalOrders: 0,
+    recentUsers: 0,
+    recentGenerations: 0,
+  },
+  funnel: {
+    registered: 0,
+    firstGeneration: 0,
+    paid: 0,
+  },
+  templateHotlist: [],
+  domainDistribution: [],
+  dailyRegistrations: [],
+  dailyGenerations: [],
+  feedback: {
+    averageRating: null,
+    totalFeedbacks: 0,
+  },
+};
+
 /**
  * GET /api/admin/analytics
  * Admin analytics dashboard data.
@@ -171,6 +197,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(analyticsData);
   } catch (error) {
     console.error('Analytics fetch error:', error);
+    if (process.env.LOCAL_ADMIN_MODE === 'true') {
+      return NextResponse.json({ ...EMPTY_ANALYTICS, local: true });
+    }
     return NextResponse.json(
       { error: '获取分析数据失败' },
       { status: 500 }

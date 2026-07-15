@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Coins } from 'lucide-react';
+import { Coins } from 'lucide-react';
 import type { GenerationDomain } from '@/types/domain';
 import type { Template } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,10 +19,8 @@ interface StepStyleProps {
 }
 
 export function StepStyle({
-  domain,
   templates,
   onSelect,
-  onBack,
   fullWidth,
 }: StepStyleProps) {
   const router = useRouter();

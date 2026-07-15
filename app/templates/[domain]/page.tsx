@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
+import { getFallbackTemplates } from '@/lib/fallback-templates';
+import { DOMAIN_CONFIG } from '@/types/domain';
 
 interface TemplateDomainPageProps {
   params: Promise<{ domain: string }>;
@@ -10,19 +12,33 @@ interface TemplateDomainPageProps {
 
 export default async function TemplateDomainPage({ params }: TemplateDomainPageProps) {
   const { domain } = await params;
+  const isLocalAdminMode = process.env.LOCAL_ADMIN_MODE === 'true';
 
-  const domainInfo = await prisma.domains.findUnique({
-    where: { slug: domain },
-  });
+  let domainInfo: { name: string; description?: string | null };
+  let templates;
 
-  if (!domainInfo || !domainInfo.is_active) {
-    notFound();
+  if (isLocalAdminMode) {
+    const localDomainInfo = Object.values(DOMAIN_CONFIG).find((item) => item.id === domain);
+    if (!localDomainInfo) {
+      notFound();
+    }
+    domainInfo = localDomainInfo;
+    templates = getFallbackTemplates(domain);
+  } else {
+    const dbDomainInfo = await prisma.domains.findUnique({
+      where: { slug: domain },
+    });
+
+    if (!dbDomainInfo || !dbDomainInfo.is_active) {
+      notFound();
+    }
+
+    domainInfo = dbDomainInfo;
+    templates = await prisma.templates.findMany({
+      where: { domain, is_active: true },
+      orderBy: { sort_order: 'asc' },
+    });
   }
-
-  const templates = await prisma.templates.findMany({
-    where: { domain, is_active: true },
-    orderBy: { sort_order: 'asc' },
-  });
 
   return (
     <div className="min-h-screen bg-obsidian">

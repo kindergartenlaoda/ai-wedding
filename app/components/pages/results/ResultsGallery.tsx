@@ -34,6 +34,8 @@ export const ResultsGallery = ({
   toggleImageSelection,
 }: ResultsGalleryProps) => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const isLocalAdminMode = process.env.NEXT_PUBLIC_LOCAL_ADMIN_MODE === 'true';
+  const highResUnlocked = Boolean(generation?.high_res_images?.length);
 
   return (
     <>
@@ -85,7 +87,7 @@ export const ResultsGallery = ({
               <button
                 onClick={handlePurchase}
                 disabled={selectedImages.size === 0}
-                className="px-8 py-3 bg-obsidian text-alabaster rounded-sm hover:bg-gold hover:text-obsidian transition-all disabled:opacity-50 uppercase tracking-widest text-xs flex items-center gap-2"
+                className={`${isLocalAdminMode ? 'hidden' : 'flex'} px-8 py-3 bg-obsidian text-alabaster rounded-sm hover:bg-gold hover:text-obsidian transition-all disabled:opacity-50 uppercase tracking-widest text-xs items-center gap-2`}
               >
                 <Download className="w-4 h-4" />
                 购买所选 ({selectedImages.size})
@@ -102,9 +104,9 @@ export const ResultsGallery = ({
               <button
                 onClick={() => setTab('high_res')}
                 className={`px-8 py-2.5 rounded-sm text-xs font-medium tracking-widest uppercase transition-all border ${tab === 'high_res' ? 'bg-gold text-obsidian border-gold' : 'bg-transparent text-pearl/60 border-white/10'}`}
-                disabled={!generation?.high_res_images?.length}
+                disabled={!highResUnlocked}
               >
-                高清{!generation?.high_res_images?.length ? ' (未解锁)' : ''}
+                {isLocalAdminMode ? '高清输出' : `高清${!generation?.high_res_images?.length ? ' (未解锁)' : ''}`}
               </button>
             </div>
 

@@ -16,7 +16,8 @@ export interface GenerationFlowParams {
   domain: GenerationDomain;
   template: Template;
   photos: ValidatedPhoto[];
-  imageCount?: number;  // 用户选择的生成数量，默认为全部
+  imageCount?: number;
+  additionalPrompt?: string;
 }
 
 export interface GenerationFlowResult {
@@ -158,8 +159,10 @@ async function createGeneration(
 async function generateSingleImage(
   templateId: string,
   promptIndex: number,
-  photoUrls: string[]
+  photoUrls: string[],
+  additionalPrompt?: string,
 ): Promise<string | null> {
+  const isLocalAdminMode = process.env.NEXT_PUBLIC_LOCAL_ADMIN_MODE === 'true';
   const res = await fetch('/api/generate-stream', {
     method: 'POST',
     credentials: 'include',
@@ -168,7 +171,12 @@ async function generateSingleImage(
       mode: 'template',
       template_id: templateId,
       prompt_index: promptIndex,
+      additional_prompt: additionalPrompt || undefined,
       image_inputs: photoUrls,
+      ...(isLocalAdminMode ? {
+        image_size: '1024x1536',
+        image_quality: 'high',
+      } : {}),
     }),
   });
 
@@ -273,6 +281,7 @@ async function updateGenerationStatus(
   status: 'completed' | 'failed',
   images?: string[]
 ): Promise<void> {
+  const isLocalAdminMode = process.env.NEXT_PUBLIC_LOCAL_ADMIN_MODE === 'true';
   await fetch(`/api/generations/${generationId}`, {
     method: 'PATCH',
     credentials: 'include',
@@ -280,6 +289,7 @@ async function updateGenerationStatus(
     body: JSON.stringify({
       status,
       preview_images: images,
+      ...(isLocalAdminMode ? { high_res_images: images } : {}),
     }),
   });
 }
@@ -307,11 +317,13 @@ export async function startGeneration(
   params: GenerationFlowParams,
   onProgress?: ProgressCallback
 ): Promise<GenerationFlowResult> {
-  const { domain, template, photos, imageCount } = params;
+  const { domain, template, photos, imageCount, additionalPrompt } = params;
   const photoUrls = photos.map(p => p.minioUrl).filter(Boolean);
 
   const promptCount = template.prompt_count || 1;
-  const count = imageCount ? Math.min(imageCount, promptCount) : promptCount;
+  const isLocalAdminMode = process.env.NEXT_PUBLIC_LOCAL_ADMIN_MODE === 'true';
+  const maxCount = isLocalAdminMode ? 8 : promptCount;
+  const count = imageCount ? Math.min(imageCount, maxCount) : promptCount;
 
   let projectId: string | null = null;
   let generationId: string | null = null;
@@ -370,7 +382,12 @@ export async function startGeneration(
     const allImages: string[] = [];
 
     for (let i = 0; i < count; i++) {
-      const imageDataUrl = await generateSingleImage(template.id, i, photoUrls);
+      const imageDataUrl = await generateSingleImage(
+        template.id,
+        i % promptCount,
+        photoUrls,
+        additionalPrompt,
+      );
 
       if (imageDataUrl) {
         allImages.push(imageDataUrl);

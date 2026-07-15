@@ -14,10 +14,6 @@ export function useTemplateSelection() {
 
   const handleCustomPromptChange = (value: string): void => {
     setCustomPrompt(value);
-    if (value.trim() && selectedTemplate) {
-      setSelectedTemplate(null);
-      setSelectedPromptIndex(0);
-    }
   };
 
   const getGenerateParams = (): GenerateParams | null => {
@@ -26,6 +22,7 @@ export function useTemplateSelection() {
         mode: 'template',
         templateId: selectedTemplate.id,
         promptIndex: selectedPromptIndex,
+        additionalPrompt: customPrompt.trim() || undefined,
       };
     }
     if (customPrompt.trim()) {

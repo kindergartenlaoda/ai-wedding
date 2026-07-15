@@ -1,6 +1,8 @@
 export interface ImageGenerationSettings {
   facePreservation: 'high' | 'medium' | 'low';
   creativityLevel: 'conservative' | 'balanced' | 'creative';
+  imageQuality: 'auto' | 'low' | 'medium' | 'high';
+  imageSize: 'auto' | '1024x1024' | '1536x1024' | '1024x1536';
 }
 
 export interface ImageUploadState {

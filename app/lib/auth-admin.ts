@@ -17,12 +17,34 @@ export interface AdminProfile {
   updated_at: Date;
 }
 
+function isLocalAdminMode(): boolean {
+  return process.env.LOCAL_ADMIN_MODE === 'true';
+}
+
+function localAdminProfile(): AdminProfile {
+  const now = new Date();
+  return {
+    id: 'local-admin-profile',
+    user_id: 'local-admin',
+    credits: 999999,
+    role: 'admin',
+    invite_code: null,
+    invited_by: null,
+    invite_count: 0,
+    reward_credits: 0,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
 /**
  * Verify admin role from NextAuth session + Prisma profile.
  * Returns user profile if admin, throws error otherwise.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- req kept for API compatibility
 export async function verifyAdmin(req: NextRequest): Promise<AdminProfile> {
+  if (isLocalAdminMode()) return localAdminProfile();
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     throw new Error('Missing authorization');

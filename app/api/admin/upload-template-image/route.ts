@@ -86,12 +86,27 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Upload to storage
-    const result = await uploadImage({
-      buffer,
-      contentType: file.type,
-      originalName: file.name,
-      folder: 'templates',
-    });
+    let result: Awaited<ReturnType<typeof uploadImage>>;
+    try {
+      result = await uploadImage({
+        buffer,
+        contentType: file.type,
+        originalName: file.name,
+        folder: 'templates',
+      });
+    } catch (uploadError) {
+      if (process.env.LOCAL_ADMIN_MODE === 'true' && profile.user_id === 'local-admin') {
+        const dataUrl = `data:${file.type};base64,${buffer.toString('base64')}`;
+        logger.warn({ error: uploadError, userId: profile.user_id }, 'Storage unavailable, using local data URL');
+        return NextResponse.json({
+          url: dataUrl,
+          presignedUrl: dataUrl,
+          objectName: `local-template-${Date.now()}-${file.name}`,
+          local: true,
+        });
+      }
+      throw uploadError;
+    }
 
     // Log successful upload
     const duration = Date.now() - startTime;
